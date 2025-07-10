@@ -1,17 +1,12 @@
 {
   "canisters": {
-    "backend": {
-      "main": "backend/app.mo",
+    "bot-plan": {
       "type": "motoko",
-      "args": "--enhanced-orthogonal-persistence"
+      "main": "backend/bot-plan/bot-plan.mo"
     },
-    "frontend": {
-      "dependencies": ["backend"],
-      "frontend": {
-        "entrypoint": "frontend/index.html"
-      },
-      "source": ["frontend/dist"],
-      "type": "assets"
+    "round-table": {
+      "type": "motoko",
+      "main": "backend/round-table/round-table.mo"
     }
   },
   "output_env_file": ".env",
@@ -19,5 +14,10 @@
     "build": {
       "packtool": "mops sources"
     }
-  }
+  },
+  "networks": {
+  "local": { "bind": "127.0.0.1:4943", "type": "ephemeral" },
+  "ic": { "type": "persistent" }
+}
+
 }

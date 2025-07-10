@@ -1,0 +1,5 @@
+.devcontainer/*
+.mops
+.env
+/node_modules
+*/node_modules

@@ -1,4 +1,3 @@
-# Motoko dependencies (https://mops.one/)
-
 [dependencies]
 base = "0.14.9"
+ckbtc-types = "0.1.2"
