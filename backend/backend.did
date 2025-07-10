@@ -1,0 +1,22 @@
+// This file defines the Candid interface for the backend service.
+
+// Define the variant for the possible results of a statement verification.
+type VerdictResult = variant { 
+    True; 
+    False; 
+    Unknown 
+};
+
+// Define the record structure for the verdict returned by the service.
+type Verdict = record {
+  resultado: VerdictResult;
+  confianca: float64;
+  fonte: text;
+  hash: text;
+  timestamp: int;
+};
+
+// Define the service interface for verifying statements.
+service : {
+  verifyStatement: (text) -> (Verdict) query;
+}

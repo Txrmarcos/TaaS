@@ -3,6 +3,7 @@
     "backend": {
       "main": "backend/app.mo",
       "type": "motoko",
+      "candid": "backend/backend.did",
       "args": "--enhanced-orthogonal-persistence"
     },
     "frontend": {

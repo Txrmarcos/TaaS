@@ -1,0 +1,9 @@
+# Ignore temporary files and folders
+
+.dfx/
+node_modules/
+frontend/dist/
+.env
+*.wasm
+*.mo~
+.mops/
