@@ -16,6 +16,7 @@ actor RoundtableCanister {
     id: Nat;
     name: Text;
     url: Text;
+    pr_link: Text;
     description: Text;
     proposer: Principal;
     created_at: Time.Time;
@@ -28,13 +29,14 @@ actor RoundtableCanister {
   stable var proposals: [Proposal] = [];
   stable var nextId: Nat = 0;
 
-  public func propose_source(name: Text, url: Text, description: Text): async Nat {
+  public func propose_source(name: Text, url: Text, pr_link: Text, description: Text): async Nat {
     let caller = Principal.fromActor(RoundtableCanister);
 
     let newProposal: Proposal = {
       id = nextId;
       name = name;
       url = url;
+      pr_link = pr_link;
       description = description;
       proposer = caller;
       created_at = Time.now();
@@ -81,6 +83,7 @@ actor RoundtableCanister {
           id = proposal.id;
           name = proposal.name;
           url = proposal.url;
+          pr_link = proposal.pr_link; 
           description = proposal.description;
           proposer = proposal.proposer;
           created_at = proposal.created_at;

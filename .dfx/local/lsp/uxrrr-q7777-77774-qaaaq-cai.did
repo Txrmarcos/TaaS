@@ -1,0 +1,20 @@
+type UserStatus = 
+ record {
+   plan: Plan;
+   requestsLeft: nat;
+   resetAt: Time;
+ };
+type Time = int;
+type Plan = 
+ variant {
+   Premium;
+   Pro;
+   Standard;
+ };
+service : {
+  check_balance: () -> (nat);
+  get_user_status: () -> (opt UserStatus) query;
+  prompt: (prompt: text) -> (text);
+  subscribe: (plan: Plan) -> (text);
+  use_request: () -> (bool);
+}

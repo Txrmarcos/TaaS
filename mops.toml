@@ -1,3 +1,4 @@
 [dependencies]
 base = "0.14.9"
 ckbtc-types = "0.1.2"
+llm = "2.1.0"
