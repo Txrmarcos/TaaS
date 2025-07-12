@@ -1,13 +1,26 @@
 {
   "canisters": {
     "bot-plan": {
+      "dependencies": ["llm"],
       "type": "motoko",
       "main": "backend/bot-plan/bot-plan.mo"
+      
     },
     "round-table": {
       "type": "motoko",
       "main": "backend/round-table/round-table.mo"
-    }
+    },
+    "llm": {
+    "candid": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.did",
+    "type": "custom",
+    "specified_id": "w36hm-eqaaa-aaaal-qr76a-cai",
+    "remote": {
+      "id": {
+        "ic": "w36hm-eqaaa-aaaal-qr76a-cai"
+      }
+    },
+    "wasm": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.wasm"
+  }
   },
   "output_env_file": ".env",
   "defaults": {

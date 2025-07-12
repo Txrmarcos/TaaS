@@ -46,7 +46,7 @@ actor BotPlanCanister {
   public shared({caller}) func check_balance() : async Nat {
     let subaccount = principalToSubaccount(caller);
     let account : LedgerTypes.Account = {
-      owner = Principal.fromText("YOUR_CANISTER_PRINCIPAL_HERE"); // Coloca seu canister principal real
+      owner = Principal.fromText("uxrrr-q7777-77774-qaaaq-cai");
       subaccount = ?Blob.toArray(subaccount);
     };
 
