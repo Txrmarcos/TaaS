@@ -198,7 +198,9 @@ actor BotPlanCanister {
 
       users := Trie.put(users, key, Text.equal, finalStatus).0;
 
-      return "✅ Prompt processado com sucesso! Restantes: " # Nat.toText(finalStatus.requestsLeft);
+      let response = await LLM.prompt(#Llama3_1_8B, prompt);
+
+      return "🤖 Resposta do LLM:\n\n" # response # "\n\nRestantes: " # Nat.toText(finalStatus.requestsLeft);
     };
   };
 };
