@@ -1,0 +1,21 @@
+// Version: 1.0.0
+type ProposalStatus__626782101 = {#Approved; #Pending; #Rejected};
+type Proposal__283398322 =
+  {
+    created_at : Time__709206284;
+    description : Text;
+    id : Nat;
+    name : Text;
+    pr_link : Text;
+    proposer : Principal;
+    status : ProposalStatus__626782101;
+    url : Text;
+    voters : [Principal];
+    votes_against : Nat;
+    votes_for : Nat
+  };
+type Time__709206284 = Int;
+actor {
+  stable var nextId : Nat;
+  stable var proposals : [Proposal__283398322]
+};

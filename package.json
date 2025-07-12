@@ -1,5 +1,5 @@
 {
-  "name": "hello_world",
+  "name": "TaaS",
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "prebuild": "npm run prebuild --workspaces --if-present",
@@ -8,5 +8,8 @@
   "type": "module",
   "workspaces": [
     "frontend"
-  ]
+  ],
+  "dependencies": {
+    "@dfinity/agent": "^2.4.1"
+  }
 }
