@@ -4,7 +4,7 @@
       "dependencies": ["llm"],
       "type": "motoko",
       "main": "backend/bot-plan/bot-plan.mo"
-      
+
     },
     "round-table": {
       "type": "motoko",
@@ -29,6 +29,10 @@
     }
   },
   "networks": {
+  "testnet": {
+    "providers": ["https://testnet.dfinity.network"],
+    "type": "persistent"
+  },
   "local": { "bind": "127.0.0.1:4943", "type": "ephemeral" },
   "ic": { "type": "persistent" }
 }
