@@ -165,10 +165,6 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen bg-[#0B0E13] relative overflow-hidden">
-            {/* Background Effects */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(255,77,0,0.15),transparent)] pointer-events-none"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(0,200,255,0.15),transparent)] pointer-events-none"></div>
-
             <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
                 <div className="w-full max-w-md mx-auto">
                     {/* Header */}
