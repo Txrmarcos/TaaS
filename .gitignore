@@ -1,5 +1,6 @@
 .devcontainer/*
 .mops
+.dfx/
 .env
 /node_modules
 */node_modules
