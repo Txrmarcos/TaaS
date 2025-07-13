@@ -4,9 +4,9 @@ import type { IDL } from '@dfinity/candid';
 
 export type Time = bigint;
 export interface Verdict {
+  'result' : VerdictResult,
   'source' : string,
   'hash' : string,
-  'resultado' : VerdictResult,
   'timestamp' : Time,
   'confidence' : number,
 }
@@ -14,8 +14,7 @@ export type VerdictResult = { 'True' : null } |
   { 'False' : null } |
   { 'Unknown' : null };
 export interface _SERVICE {
-  'greet' : ActorMethod<[string], string>,
-  'setGreeting' : ActorMethod<[string], undefined>,
+  'getVerdictByHash' : ActorMethod<[string], [] | [Verdict]>,
   'verifyStatement' : ActorMethod<[string], Verdict>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

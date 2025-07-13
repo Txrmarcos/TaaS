@@ -22,24 +22,30 @@
       import { backend } from 'declarations/backend';
       // Add an event listener to the form
       document.querySelector('form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        // Get the name from the input field
-        const name = document.getElementById('name').value.toString();
+        e.preventDefault(); 
+        // Get the claim from the input field
+        const claim = document.getElementById('claim').value.toString();
         // Calling the method "greet" on the backend actor with the name
-        const greeting = await backend.greet(name);
+        const veredict = await backend.verifyStatement(claim);
         // Display the greeting returned by the backend actor
-        document.getElementById('greeting').innerText = greeting;
+        document.getElementById('veredict').innerText = `
+        Result: ${Object.keys(veredict.result)[0]}
+        Confidence: ${veredict.confidence}
+        Source: ${veredict.source}
+        Hash: ${veredict.hash}
+        Timestamp: ${veredict.timestamp}
+        `
       });
     </script>
   </head>
   <body>
     <main>
       <form>
-        <label for="name">Enter your name: &nbsp;</label>
-        <input id="name" alt="Name" type="text" />
+        <label for="claim">Enter your claim: &nbsp;</label>
+        <input id="claim" alt="claim" type="text" />
         <button type="submit">Click Me!</button>
       </form>
-      <section id="greeting"></section>
+      <section id="veredict"></section>
     </main>
   </body>
 </html>

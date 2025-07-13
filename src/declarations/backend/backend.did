@@ -8,13 +8,12 @@ type Verdict =
  record {
    confidence: float64;
    hash: text;
-   resultado: VerdictResult;
+   result: VerdictResult;
    source: text;
    timestamp: Time;
  };
 type Time = int;
 service : {
-  greet: (text) -> (text) query;
-  setGreeting: (text) -> ();
-  verifyStatement: (text) -> (Verdict) query;
+  getVerdictByHash: (text) -> (opt Verdict) query;
+  verifyStatement: (text) -> (Verdict);
 }
