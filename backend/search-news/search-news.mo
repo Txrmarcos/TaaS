@@ -29,10 +29,10 @@ actor SearchNews {
     results: [NewsResult];
   };
 
-  let botPlanCanister = actor("lqy7q-dh777-77777-aaaaq-cai") : actor {
+  // TODO: Replace with your actual BotPlanCanister ID
+  let botPlanCanister = actor("uxrrr-q7777-77774-qaaaq-cai") : actor {
     use_request_for : (Principal) -> async Bool;
   };
-
 
   // Whitelist dinâmica - começa com domínios padrão
   stable var whitelist : [Text] = [
@@ -40,7 +40,6 @@ actor SearchNews {
   ];
 
   public func addToWhitelist(domain: Text): async Bool {
-    
     if (Array.find<Text>(whitelist, func(d) { Text.equal(d, domain) }) != null) {
       Debug.print("⚠️ Domain already in whitelist: " # domain);
       return true;

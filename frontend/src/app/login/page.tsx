@@ -32,17 +32,6 @@ export default function LoginPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
 
-    useEffect(() => {
-        AuthClient.create().then(async (client) => {
-            setAuthClient(client);
-            if (await client.isAuthenticated()) {
-                const identity = client.getIdentity();
-                setPrincipal(identity.getPrincipal());
-                setIsAuthenticated(true);
-                await fetchStatus();
-            }
-        });
-    }, []);
 
     useEffect(() => {
         const initializeAuth = async () =>
@@ -57,7 +46,6 @@ export default function LoginPage() {
             });
 
         setIsInitializing(false);
-
         initializeAuth();
     }, []);
 

@@ -37,7 +37,7 @@ actor BotPlanCanister {
 
   stable var users: Trie.Trie<Text, UserStatus> = Trie.empty();
   
-  private let MY_WALLET_PRINCIPAL = "SEU_PRINCIPAL_AQUI"; // Substitua pelo seu principal
+  private let MY_WALLET_PRINCIPAL = "YOUR_ACTUAL_PRINCIPAL_HERE";
   private let TRANSFER_FEE = 10;
 
   func getQuota(p: Plan): Nat {
@@ -188,7 +188,19 @@ actor BotPlanCanister {
     let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
 
     switch (Trie.find(users, key, Text.equal)) {
-      case (?status) { return ?status };
+      case (?status) { 
+        let now = Time.now();
+        if (now >= status.resetAt) {
+          let resetStatus : UserStatus = {
+            plan = status.plan;
+            requestsLeft = getQuota(status.plan);
+            resetAt = now + (24 * 60 * 60 * 1_000_000_000);
+          };
+          users := Trie.put(users, key, Text.equal, resetStatus).0;
+          return ?resetStatus;
+        };
+        return ?status;
+      };
       case (null) {
         let quota = getQuota(#Standard);
         let resetTime = Time.now() + (24 * 60 * 60 * 1_000_000_000);
@@ -203,53 +215,8 @@ actor BotPlanCanister {
     };
   };
 
-  public shared({caller}) func prompt(prompt: Text): async Text {
-    let callerText = Principal.toText(caller);
-    let key : Trie.Key<Text> = {
-      hash = Text.hash(callerText);
-      key = callerText;
-    };
 
-    switch (Trie.find(users, key, Text.equal)) {
-      case (null) {
-        return "❌ Você não possui plano ativo. Use a função 'subscribe'.";
-      };
-      case (?status) {
-        let now = Time.now();
-        var effectiveStatus = if (now >= status.resetAt) {
-          {
-            plan = status.plan;
-            requestsLeft = getQuota(status.plan);
-            resetAt = now + (24 * 60 * 60 * 1_000_000_000);
-          }
-        } else {
-          status
-        };
-
-        if (effectiveStatus.requestsLeft == 0) {
-          return "❌ Limite diário atingido para o plano " # debug_show(effectiveStatus.plan);
-        };
-
-        let finalStatus : UserStatus = {
-          plan = effectiveStatus.plan;
-          requestsLeft = effectiveStatus.requestsLeft - 1;
-          resetAt = effectiveStatus.resetAt;
-        };
-
-        users := Trie.put(users, key, Text.equal, finalStatus).0;
-
-        try {
-          let response = await LLM.prompt(#Llama3_1_8B, prompt);
-          return "🤖 Resposta:\n\n" # response # "\n📊 Plano: " # debug_show(finalStatus.plan) # " | Restantes: " # Nat.toText(finalStatus.requestsLeft);
-        } catch (_) {
-          users := Trie.put(users, key, Text.equal, effectiveStatus).0;
-          return "❌ Erro ao processar a requisição.";
-        };
-      };
-    };
-  };
-
-  public shared({caller}) func use_request_for(p: Principal) : async Bool {
+  public shared func use_request_for(p: Principal) : async Bool {
     let callerText = Principal.toText(p);
     let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
 

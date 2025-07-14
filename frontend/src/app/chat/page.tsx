@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { botActor } from "../utils/canister";
+import { searchNewsActor } from "../utils/canister";
 import { AuthClient } from "@dfinity/auth-client";
 import { UserStatus } from "../login/page";
 
@@ -59,7 +60,8 @@ export default function BotTestPage() {
         try {
             setLoading(true);
             setResponse("");
-            const res = await botActor.prompt(prompt);
+            const res = await searchNewsActor.searchNews(prompt);
+            console.log("Resposta da IA:", res);
             setResponse(res as string);
             fetchStatus();
         } catch (err) {
