@@ -1,0 +1,11 @@
+{
+  "name": "taas-bot",
+  "scripts": {
+    "update-bot": "node scripts/atualizar.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "@dfinity/agent": "^0.17.0",
+    "node-fetch": "^3.3.2"
+  }
+}

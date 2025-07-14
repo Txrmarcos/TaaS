@@ -1,10 +1,13 @@
 # Ignore temporary files and folders
 
 .dfx/
-node_modules/
 frontend/dist/
 .env
 *.wasm
 *.mo~
 .mops/
+src/*.devcontainer/*
+/node_modules
+*/node_modules
 src/*
+canister_ids.json
