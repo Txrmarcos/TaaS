@@ -29,6 +29,34 @@ actor SearchNews {
     results: [NewsResult];
   };
 
+  // Whitelist dinâmica - começa com domínios padrão
+  stable var whitelist : [Text] = [
+    "bbc.com", "cnn.com", "reuters.com", "nytimes.com", "globo.com"
+  ];
+
+  public func addToWhitelist(domain: Text): async Bool {
+    
+    if (Array.find<Text>(whitelist, func(d) { Text.equal(d, domain) }) != null) {
+      Debug.print("⚠️ Domain already in whitelist: " # domain);
+      return true;
+    };
+    
+    whitelist := Array.append(whitelist, [domain]);
+    Debug.print("✅ Added domain to whitelist: " # domain);
+    return true;
+  };
+
+  // Função para remover domínio da whitelist
+  public func removeFromWhitelist(domain: Text): async Bool {
+    whitelist := Array.filter<Text>(whitelist, func(d) { not Text.equal(d, domain) });
+    Debug.print("🗑️ Removed domain from whitelist: " # domain);
+    return true;
+  };
+
+  public query func getWhitelist(): async [Text] {
+    return whitelist;
+  };
+
   func parseJson(jsonText: Text) : [NewsResult] {
     switch (JSON.fromText(jsonText, null)) {
       case (#err(err)) {
@@ -36,7 +64,6 @@ actor SearchNews {
         [];
       };
       case (#ok(blob)) {
-        // Try to deserialize as SearchResult
         let searchResult: ?SearchResult = from_candid(blob);
         switch (searchResult) {
           case (?result) {
@@ -57,8 +84,8 @@ actor SearchNews {
     });
   };
 
-  func isWhitelistedDomain(url: Text, whitelist: [Text]) : Bool {
-    Option.isSome(Array.find(whitelist, func(domain: Text) : Bool {
+  func isWhitelistedDomain(url: Text, domainList: [Text]) : Bool {
+    Option.isSome(Array.find(domainList, func(domain: Text) : Bool {
       Text.contains(url, #text domain)
     }));
   };
@@ -70,6 +97,7 @@ actor SearchNews {
 
     Debug.print("🔍 Query: " # userQuery);
     Debug.print("🌐 URL: " # url);
+    Debug.print("📋 Current whitelist: " # debug_show(whitelist));
 
     let headers : [IC.http_header] = [
       { name = "Host"; value = host },
@@ -98,17 +126,12 @@ actor SearchNews {
         case (?jsonText) {
           let news = parseJson(jsonText);
 
-          let whitelist : [Text] = [
-            "bbc.com", "cnn.com", "reuters.com", "nytimes.com", "globo.com"
-          ];
-
-          // Fixed: Array.filter expects a predicate that returns Bool
           let filtered = Array.filter(news, func(r: NewsResult) : Bool {
             isWhitelistedDomain(r.url, whitelist)
           });
 
           if (filtered.size() == 0) {
-            return "No relevant news found for your query: " # userQuery;
+            return "No relevant news found for your query: " # userQuery # "\nCurrent whitelist: " # debug_show(whitelist);
           };
 
           let combined = Text.join("\n\n", Iter.fromArray(Array.map(filtered, func(r: NewsResult) : Text {
