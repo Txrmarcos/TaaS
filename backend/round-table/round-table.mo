@@ -2,7 +2,6 @@ import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
-import Option "mo:base/Option";
 
 actor RoundtableCanister {
 
