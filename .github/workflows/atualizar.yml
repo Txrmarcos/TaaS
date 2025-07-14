@@ -1,0 +1,25 @@
+name: Atualizar Propostas
+
+on:
+  schedule:
+    - cron: "*/1 * * * *"  # roda a cada 1 minuto
+  workflow_dispatch:       # permite rodar manualmente
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout do repositório
+      uses: actions/checkout@v3
+
+    - name: Instalar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Instalar dependências
+      run: npm install
+
+    - name: Rodar atualização de propostas
+      run: node updateBot.js
