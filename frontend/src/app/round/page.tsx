@@ -11,7 +11,7 @@ import {
     CheckCircle,
     XCircle,
 } from "lucide-react";
-import { roundtableActor } from "../utils/canister";
+import { roundtableActor, searchNewsActor } from "../utils/canister";
 
 type Proposal = {
     id: number;
@@ -28,6 +28,7 @@ type Proposal = {
 };
 
 export default function RoundtablePage() {
+
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [name, setName] = useState("");
     const [url, setUrl] = useState("");
@@ -37,6 +38,7 @@ export default function RoundtablePage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
 
+
     const fetchProposals = async () => {
         try {
             const list = await roundtableActor.list_proposals();
@@ -45,10 +47,25 @@ export default function RoundtablePage() {
             console.error(err);
         }
     };
-
+  
     useEffect(() => {
-        fetchProposals();
+      fetchProposals();
     }, []);
+
+    const fetchWhitelist = async () => {
+    try {
+      setIsLoadingWhitelist(true);
+      const domains = await searchNewsActor.getWhitelist();
+      setWhitelist(domains as string[]);
+    } catch (err) {
+      console.error("Erro ao buscar whitelist:", err);
+      setWhitelist([]);
+    } finally {
+      setIsLoadingWhitelist(false);
+    }
+    };
+
+
 
     const submitProposal = async () => {
         if (!name.trim() || !url.trim() || !prLink.trim() || !desc.trim()) {
@@ -130,7 +147,6 @@ export default function RoundtablePage() {
                                 >
                                     TaaS
                                 </span>
-
                                 <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
                                     On-Chain
                                 </span>

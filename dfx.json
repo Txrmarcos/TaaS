@@ -1,36 +1,42 @@
 {
   "canisters": {
     "bot-plan": {
-      "dependencies": ["llm"],
-      "type": "motoko",
-      "main": "backend/bot-plan/bot-plan.mo"
-      
+        "dependencies": ["llm"],
+        "type": "motoko",
+        "main": "backend/bot-plan/bot-plan.mo"
     },
     "round-table": {
-      "type": "motoko",
-      "main": "backend/round-table/round-table.mo"
+        "type": "motoko",
+        "main": "backend/round-table/round-table.mo"
+    },
+    "search-news": {
+        "type": "motoko",
+        "main": "backend/search-news/search-news.mo"
     },
     "llm": {
-    "candid": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.did",
-    "type": "custom",
-    "specified_id": "w36hm-eqaaa-aaaal-qr76a-cai",
-    "remote": {
-      "id": {
-        "ic": "w36hm-eqaaa-aaaal-qr76a-cai"
-      }
+        "candid": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.did",
+        "type": "custom",
+        "specified_id": "w36hm-eqaaa-aaaal-qr76a-cai",
+        "remote": {
+            "id": {
+                "ic": "w36hm-eqaaa-aaaal-qr76a-cai"
+            }
+        },
+        "wasm": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.wasm"
+      } 
     },
-    "wasm": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.wasm"
-  }
-  },
-  "output_env_file": ".env",
-  "defaults": {
-    "build": {
-      "packtool": "mops sources"
-    }
-  },
+    "output_env_file": ".env",
+    "defaults": {
+        "build": {
+            "packtool": "mops sources"
+        }
+    },
   "networks": {
+  "testnet": {
+    "providers": ["https://testnet.dfinity.network"],
+    "type": "persistent"
+  },
   "local": { "bind": "127.0.0.1:4943", "type": "ephemeral" },
   "ic": { "type": "persistent" }
-}
-
+  }
 }

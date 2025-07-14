@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Principal } from "@dfinity/principal";
+import { HttpAgent } from "@dfinity/agent";
+import { AccountIdentifier, SubAccount, LedgerCanister } from "@dfinity/ledger-icp";
 import { botActor } from "../utils/canister";
 
 export interface UserStatus {
@@ -12,6 +14,13 @@ export interface UserStatus {
     };
     resetAt: bigint;
     requestsLeft: bigint;
+}
+
+export function principalToAccountIdentifier(principal: Principal, subaccount?: Uint8Array): string {
+  return AccountIdentifier.fromPrincipal({
+    principal,
+    subAccount: subaccount ? SubAccount.fromBytes(subaccount) : undefined
+  }).toHex();
 }
 
 export default function LoginPage() {
@@ -119,6 +128,7 @@ export default function LoginPage() {
                 return;
         }
 
+
         try {
             const res = await actor.subscribe(planObj);
             alert(res);
@@ -179,7 +189,6 @@ export default function LoginPage() {
                             Conecte-se ao futuro descentralizado
                         </p>
                     </div>
-
                     {/* Main Content */}
                     <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/20">
                         {isAuthenticated && principal ? (
@@ -385,4 +394,5 @@ export default function LoginPage() {
             </div>
         </div>
     );
+
 }
