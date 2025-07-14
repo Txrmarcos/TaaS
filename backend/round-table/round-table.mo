@@ -31,7 +31,7 @@ actor RoundtableCanister {
   stable var proposals: [Proposal] = [];
   stable var nextId: Nat = 0;
 
-  let searchNews = actor "uzt4z-lp777-77774-qaabq-cai" : actor {
+  let searchNews = actor "l62sy-yx777-77777-aaabq-cai" : actor {
     addToWhitelist: (Text) -> async Bool;
   };
 

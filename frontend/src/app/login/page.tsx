@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Principal } from "@dfinity/principal";
+import { HttpAgent } from "@dfinity/agent";
+import { AccountIdentifier, SubAccount, LedgerCanister } from "@dfinity/ledger-icp";
 import { botActor } from "../utils/canister";
 
 export interface UserStatus {
@@ -14,44 +16,65 @@ export interface UserStatus {
   requestsLeft: bigint;
 }
 
+export function principalToAccountIdentifier(principal: Principal, subaccount?: Uint8Array): string {
+  return AccountIdentifier.fromPrincipal({
+    principal,
+    subAccount: subaccount ? SubAccount.fromBytes(subaccount) : undefined
+  }).toHex();
+}
+
 export default function LoginPage() {
   const [authClient, setAuthClient] = useState<any>(null);
-  const [principal, setPrincipal] = useState<any>(null);
+  const [principal, setPrincipal] = useState<Principal | null>(null);
   const [actor, setActor] = useState<any>(botActor);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [icpBalance, setIcpBalance] = useState<string | null>(null);
 
   useEffect(() => {
-    AuthClient.create().then(async (client) => {
+    const initializeAuth = async () => {
+      const client = await AuthClient.create();
       setAuthClient(client);
+
       if (await client.isAuthenticated()) {
         const identity = client.getIdentity();
-        setPrincipal(identity.getPrincipal());
+        const principal = identity.getPrincipal();
+        setPrincipal(principal);
         setIsAuthenticated(true);
         await fetchStatus();
+        await fetchIcpBalance(principal, identity);
       }
-    });
-  }, []);
 
-  useEffect(() => {
-      const initializeAuth = async () => AuthClient.create().then(async (client) => {
-      setAuthClient(client);
-      if (await client.isAuthenticated()) {
-        const identity = client.getIdentity();
-        setPrincipal(identity.getPrincipal());
-        setIsAuthenticated(true);
-        await fetchStatus();
-      }
-    });
-      
+      setIsInitializing(false);
+    };
 
-    setIsInitializing(false);
-    
-    
     initializeAuth();
   }, []);
+
+  const fetchIcpBalance = async (principal: Principal, identity: any) => {
+  const accountIdHex = principalToAccountIdentifier(principal);
+  console.log("AccountIdentifier:", accountIdHex);
+
+  const agent = new HttpAgent({ identity });
+
+
+  const ledger = LedgerCanister.create({ agent });
+
+  try {
+    const balance = await ledger.accountBalance({
+      accountIdentifier: accountIdHex,
+    });
+
+    const icp = Number(balance) / 10 ** 8;
+    setIcpBalance(icp.toFixed(4));
+  } catch (err) {
+    console.error("Erro ao buscar saldo ICP:", err);
+    setIcpBalance(null);
+  }
+};
+
 
   const login = async () => {
     if (!authClient) return;
@@ -61,9 +84,11 @@ export default function LoginPage() {
         identityProvider: "https://identity.ic0.app/#authorize",
         onSuccess: async () => {
           const identity = authClient.getIdentity();
-          setPrincipal(identity.getPrincipal());
+          const principal = identity.getPrincipal();
+          setPrincipal(principal);
           setIsAuthenticated(true);
           await fetchStatus();
+          await fetchIcpBalance(principal, identity);
         },
         onError: (err: any) => {
           console.error("Erro no login:", err);
@@ -83,6 +108,7 @@ export default function LoginPage() {
       setIsAuthenticated(false);
       setStatus(null);
       setActor(null);
+      setIcpBalance(null);
     } finally {
       setIsLoading(false);
     }
@@ -92,33 +118,16 @@ export default function LoginPage() {
     try {
       const res = await botActor.get_user_status() as any;
       console.log("Status do usuário:", res);
-      if (res) {
-        setStatus(res[0] as UserStatus);
-      } else {
-        setStatus(null);
-      }
+      setStatus(res?.[0] ?? null);
     } catch (err) {
       console.error(err);
     }
   };
 
-    const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
+  const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
     if (!actor) return alert("Faça login primeiro!");
 
-    let planObj;
-    switch (plan) {
-      case "Standard":
-        planObj = { Standard: null };
-        break;
-      case "Pro":
-        planObj = { Pro: null };
-        break;
-      case "Premium":
-        planObj = { Premium: null };
-        break;
-      default:
-        return;
-    }
+    const planObj = { [plan]: null };
 
     try {
       const res = await actor.subscribe(planObj);
@@ -159,13 +168,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(120,_119,_198,_0.3),transparent)] pointer-events-none"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(120,_119,_198,_0.3),transparent)] pointer-events-none"></div>
-      
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
         <div className="w-full max-w-md mx-auto">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full mb-4 shadow-lg">
               <span className="text-2xl">🚀</span>
@@ -174,11 +178,9 @@ export default function LoginPage() {
             <p className="text-gray-300">Conecte-se ao futuro descentralizado</p>
           </div>
 
-          {/* Main Content */}
           <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/20">
             {isAuthenticated && principal ? (
               <div className="space-y-6">
-                {/* User Info */}
                 <div className="text-center">
                   <div className="inline-flex items-center justify-center w-12 h-12 bg-green-500/20 rounded-full mb-3">
                     <span className="text-green-400 text-xl">✓</span>
@@ -186,11 +188,15 @@ export default function LoginPage() {
                   <h2 className="text-xl font-semibold text-white mb-2">Conectado com sucesso!</h2>
                   <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
                     <p className="text-xs text-gray-300 mb-1">Principal ID:</p>
-                    <p className="text-sm text-white font-mono break-all">{principal?.toText()}</p>
+                    <p className="text-sm text-white font-mono break-all">{principal.toText()}</p>
                   </div>
                 </div>
 
-                {/* Status Card */}
+                <div className="mt-4 bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                  <p className="text-xs text-gray-300 mb-1">Saldo ICP:</p>
+                  <p className="text-sm text-white font-semibold">{icpBalance ?? "Carregando..."}</p>
+                </div>
+
                 {status ? (
                   <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700 space-y-3">
                     <h3 className="text-lg font-semibold text-white flex items-center">
@@ -207,7 +213,7 @@ export default function LoginPage() {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-300">Requests Restantes:</span>
                         <span className="text-white font-semibold">
-                          {status.requestsLeft ? status.requestsLeft.toString() : "N/A"}
+                          {status.requestsLeft?.toString() ?? "N/A"}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
@@ -227,49 +233,26 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                {/* Subscription Plans */}
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-white">Escolha seu Plano</h3>
                   <div className="grid grid-cols-1 gap-3">
-                    <button
-                      onClick={() => subscribePlan("Standard")}
-                      disabled={isLoading}
-                      className="flex items-center justify-between p-4 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                    >
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
-                        <span className="text-green-400 font-semibold">Standard</span>
-                      </div>
-                      <span className="text-green-400 group-hover:translate-x-1 transition-transform">→</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => subscribePlan("Pro")}
-                      disabled={isLoading}
-                      className="flex items-center justify-between p-4 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                    >
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
-                        <span className="text-yellow-400 font-semibold">Pro</span>
-                      </div>
-                      <span className="text-yellow-400 group-hover:translate-x-1 transition-transform">→</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => subscribePlan("Premium")}
-                      disabled={isLoading}
-                      className="flex items-center justify-between p-4 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                    >
-                      <div className="flex items-center">
-                        <div className="w-3 h-3 bg-pink-400 rounded-full mr-3"></div>
-                        <span className="text-pink-400 font-semibold">Premium</span>
-                      </div>
-                      <span className="text-pink-400 group-hover:translate-x-1 transition-transform">→</span>
-                    </button>
+                    {["Standard", "Pro", "Premium"].map((plan) => (
+                      <button
+                        key={plan}
+                        onClick={() => subscribePlan(plan as any)}
+                        disabled={isLoading}
+                        className={`flex items-center justify-between p-4 bg-${plan === "Standard" ? "green" : plan === "Pro" ? "yellow" : "pink"}-500/10 hover:bg-${plan === "Standard" ? "green" : plan === "Pro" ? "yellow" : "pink"}-500/20 border border-${plan === "Standard" ? "green" : plan === "Pro" ? "yellow" : "pink"}-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50`}
+                      >
+                        <div className="flex items-center">
+                          <div className={`w-3 h-3 bg-${plan === "Standard" ? "green" : plan === "Pro" ? "yellow" : "pink"}-400 rounded-full mr-3`}></div>
+                          <span className={`text-${plan === "Standard" ? "green" : plan === "Pro" ? "yellow" : "pink"}-400 font-semibold`}>{plan}</span>
+                        </div>
+                        <span className={`text-${plan === "Standard" ? "green" : plan === "Pro" ? "yellow" : "pink"}-400 group-hover:translate-x-1 transition-transform`}>→</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Logout Button */}
                 <button
                   onClick={logout}
                   disabled={isLoading}
@@ -286,7 +269,7 @@ export default function LoginPage() {
                     Autentique-se usando seu Internet Identity para acessar a plataforma
                   </p>
                 </div>
-                
+
                 <button
                   onClick={login}
                   disabled={isLoading}
@@ -299,7 +282,7 @@ export default function LoginPage() {
                   )}
                   {isLoading ? "Conectando..." : "Entrar com Internet Identity"}
                 </button>
-                
+
                 <div className="text-xs text-gray-400 space-y-1">
                   <p>Sua identidade é protegida pela blockchain da Internet Computer</p>
                   <p>Sem senhas, sem dados pessoais armazenados</p>
@@ -308,7 +291,6 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* Footer */}
           <div className="text-center mt-8 text-gray-400 text-sm">
             <p>Powered by Internet Computer Protocol</p>
           </div>

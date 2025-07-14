@@ -9,6 +9,7 @@ import Time "mo:base/Time";
 import Nat8 "mo:base/Nat8";
 import LLM "mo:llm";
 import Debug "mo:base/Debug";
+import Result "mo:base/Result";
 
 actor BotPlanCanister {
 
@@ -16,6 +17,14 @@ actor BotPlanCanister {
 
   let ledger = actor "mc6ru-gyaaa-aaaar-qaaaq-cai" : actor {
     icrc1_balance_of: query ({ account: LedgerTypes.Account }) -> async Nat;
+    icrc1_transfer: ({ 
+      from_subaccount: ?Blob;
+      to: LedgerTypes.Account;
+      amount: Nat;
+      fee: ?Nat;
+      memo: ?Blob;
+      created_at_time: ?Nat64;
+    }) -> async Result.Result<Nat, LedgerTypes.TransferError>;
   };
 
   type Plan = { #Standard; #Pro; #Premium };
@@ -27,6 +36,11 @@ actor BotPlanCanister {
   };
 
   stable var users: Trie.Trie<Text, UserStatus> = Trie.empty();
+  
+  // SUA CARTEIRA - SUBSTITUA PELO SEU PRINCIPAL
+  private let MY_WALLET_PRINCIPAL = "SEU_PRINCIPAL_AQUI"; // Substitua pelo seu principal
+  
+  private let TRANSFER_FEE = 10;
 
   func getQuota(p: Plan): Nat {
     switch (p) {
@@ -59,6 +73,42 @@ actor BotPlanCanister {
     } catch (_error) {
       Debug.print("Error fetching balance from ledger");
       return 0;
+    };
+  };
+
+  // Nova função para transferir pagamento para sua carteira
+  private func transferPayment(caller: Principal, amount: Nat) : async Result.Result<Nat, Text> {
+    let subaccount = principalToSubaccount(caller);
+    
+    let myAccount : LedgerTypes.Account = {
+      owner = Principal.fromText(MY_WALLET_PRINCIPAL);
+      subaccount = null;
+    };
+
+    let transferArgs = {
+      from_subaccount = ?subaccount;
+      to = myAccount;
+      amount = amount;
+      fee = ?TRANSFER_FEE;
+      memo = null;
+      created_at_time = null;
+    };
+
+    try {
+      let result = await ledger.icrc1_transfer(transferArgs);
+      switch (result) {
+        case (#ok(blockIndex)) {
+          Debug.print("Transfer successful! Block index: " # Nat.toText(blockIndex));
+          #ok(blockIndex)
+        };
+        case (#err(error)) {
+          Debug.print("Transfer failed: " # debug_show(error));
+          #err("Transfer failed: " # debug_show(error))
+        };
+      };
+    } catch (error) {
+      Debug.print("Transfer error occurred");
+      #err("Transfer error occurred");
     };
   };
 
@@ -97,15 +147,28 @@ actor BotPlanCanister {
       return "✅ Plano gratuito ativado!";
     };
 
+    // Verificar saldo atual
     let balance = await checkUserBalance(caller);
     Debug.print("Saldo do usuário: " # Nat.toText(balance));
 
-    if (balance >= price_e8s) {
-      activatePlan(plan, caller);
-      Debug.print("Pagamento confirmado e plano ativado.");
-      return "💎 Pagamento confirmado! Plano " # debug_show(plan) # " ativado com sucesso!";
+    let totalRequired = price_e8s + TRANSFER_FEE;
+    
+    if (balance >= totalRequired) {
+      let transferResult = await transferPayment(caller, price_e8s);
+      
+      switch (transferResult) {
+        case (#ok(blockIndex)) {
+          activatePlan(plan, caller);
+          Debug.print("💰 PAGAMENTO RECEBIDO! Transferido para sua carteira. Block: " # Nat.toText(blockIndex));
+          return "💎 Pagamento processado automaticamente! Plano " # debug_show(plan) # " ativado!\n🧾 Transação: " # Nat.toText(blockIndex) # "\n💰 Valor transferido para sua carteira!";
+        };
+        case (#err(errorMsg)) {
+          Debug.print("Erro na transferência automática: " # errorMsg);
+          return "❌ Erro ao processar pagamento automático: " # errorMsg # "\nVerifique se você tem saldo suficiente e tente novamente.";
+        };
+      };
     } else {
-      Debug.print("Saldo insuficiente. Plano não ativado.");
+      // Instruções para o usuário depositar
       let subaccount = principalToSubaccount(caller);
       let sub_hex = Blob.toArray(subaccount);
       let sub_hex_text = Array.foldLeft<Nat8, Text>(
@@ -115,11 +178,11 @@ actor BotPlanCanister {
           acc # (if (b < 16) { "0" } else { "" }) # Nat8.toText(b)
         }
       );
-      return "⚠️ Saldo insuficiente.\n\nPara ativar o plano " # debug_show(plan) # ", envie " # Nat.toText(price_e8s) # " e8s ckBTC para:\n\n🏦 Principal: dkwk6-4aaaa-aaaaf-qbbxa-cai\n📋 Subaccount: " # sub_hex_text # "\n\n💰 Saldo atual: " # Nat.toText(balance) # " e8s\n💎 Necessário: " # Nat.toText(price_e8s) # " e8s";
+      return "⚠️ Saldo insuficiente para ativação automática.\n\n📋 INSTRUÇÕES:\n1️⃣ Envie " # Nat.toText(totalRequired) # " e8s ckBTC para:\n\n🏦 Principal: dkwk6-4aaaa-aaaaf-qbbxa-cai\n📋 Subaccount: " # sub_hex_text # "\n\n2️⃣ Após o depósito, chame novamente subscribe(" # debug_show(plan) # ")\n3️⃣ O pagamento será transferido automaticamente para o desenvolvedor\n4️⃣ Seu plano será ativado instantaneamente!\n\n💰 Saldo atual: " # Nat.toText(balance) # " e8s\n💎 Necessário: " # Nat.toText(totalRequired) # " e8s";
     };
   };
 
-    func activatePlan(plan: Plan, caller: Principal) {
+  func activatePlan(plan: Plan, caller: Principal) {
     let quota = getQuota(plan);
     let resetTime = Time.now() + (24 * 60 * 60 * 1_000_000_000);
 
@@ -228,4 +291,6 @@ actor BotPlanCanister {
       };
     };
   };
+
+
 };
