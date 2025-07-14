@@ -1,7 +1,12 @@
-.devcontainer/*
-.mops
+# Ignore temporary files and folders
+
 .dfx/
+frontend/dist/
 .env
+*.wasm
+*.mo~
+.mops/
+src/*.devcontainer/*
 /node_modules
 */node_modules
 src/*
