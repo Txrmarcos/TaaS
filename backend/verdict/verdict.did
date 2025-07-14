@@ -9,11 +9,12 @@ type VerdictResult = variant {
 
 // Define the record structure for the verdict returned by the service.
 type Verdict = record {
-  resultado: VerdictResult;
-  confianca: float64;
-  fonte: text;
+  result: VerdictResult;
+  confidence: float64;
+  source: text;
   hash: text;
   timestamp: int;
+  llm_message: text;
 };
 
 // Define the service interface for verifying statements.

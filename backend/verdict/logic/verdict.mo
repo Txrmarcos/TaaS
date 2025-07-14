@@ -9,5 +9,6 @@ module {
     source: Text;
     hash: Text;
     timestamp: Time.Time;
+    llm_message: Text;
   };
 }

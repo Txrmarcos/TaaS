@@ -2,3 +2,4 @@
 
 [dependencies]
 base = "0.14.9"
+sha2 = "0.1.0"

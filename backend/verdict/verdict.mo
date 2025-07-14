@@ -3,15 +3,14 @@
 import Time "mo:base/Time";
 import Array "mo:base/Array";
 
-import Verdict "logic/veredict";
+import Verdict "logic/verdict";
 import Hash "logic/hash";
-import Veredict "logic/veredict";
 
 persistent actor TaaS {
 
-  // --- Persistent Storage ---
+  // --- Persistent Storage On-chain ---
 
-  stable var storedVeredicts : [(Text, Veredict.Verdict)] = [];
+  stable var storedVeredicts : [(Text, Verdict.Verdict)] = [];
 
   // --- Main public function to verify a statement and store it ---
 
@@ -20,12 +19,13 @@ persistent actor TaaS {
   let simulated = if (claim.size() % 2 == 0) { #True } else { #False };
   let hash = Hash.calculateHash(claim);
 
-  let verdict : Veredict.Verdict = {
+  let verdict : Verdict.Verdict = {
     result = simulated;
     confidence = 0.93;
     source = "https://example.org/source";
     hash = hash;
     timestamp = Time.now();
+    llm_message = "Simulated response from LLM for claim: " # claim;
   };
   
   // Save it

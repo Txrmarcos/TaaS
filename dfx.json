@@ -1,18 +1,10 @@
 {
   "canisters": {
-    "backend": {
-      "main": "backend/app.mo",
+    "verdict": {
+      "main": "backend/verdict/verdict.mo",
       "type": "motoko",
-      "candid": "backend/backend.did",
+      "candid": "backend/verdict/verdict.did",
       "args": "--enhanced-orthogonal-persistence"
-    },
-    "frontend": {
-      "dependencies": ["backend"],
-      "frontend": {
-        "entrypoint": "frontend/index.html"
-      },
-      "source": ["frontend/dist"],
-      "type": "assets"
     }
   },
   "output_env_file": ".env",

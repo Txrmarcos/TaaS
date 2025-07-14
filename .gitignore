@@ -7,3 +7,4 @@ frontend/dist/
 *.wasm
 *.mo~
 .mops/
+src/*
