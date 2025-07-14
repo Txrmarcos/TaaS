@@ -2,7 +2,7 @@ import { HttpAgent, Actor } from "@dfinity/agent";
 import fetch from "node-fetch";
 import { idlFactory as roundtableIDL } from "../.dfx/local/canisters/RoundtableCanister"; // ou caminho real
 
-const canisterId = "rrkah-fqaaa-aaaaa-aaaaq-cai"; // Altere para o seu
+const canisterId = "l62sy-yx777-77777-aaabq-cai"; // Altere para o seu
 const host = "http://127.0.0.1:4943"; // Ou https://ic0.app se for mainnet
 
 global.fetch = fetch;
