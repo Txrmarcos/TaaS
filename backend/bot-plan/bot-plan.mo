@@ -13,7 +13,7 @@ import Result "mo:base/Result";
 
 actor BotPlanCanister {
 
-  type Tokens = Nat; 
+  type Tokens = Nat;
 
   let ledger = actor "mc6ru-gyaaa-aaaar-qaaaq-cai" : actor {
     icrc1_balance_of: query ({ account: LedgerTypes.Account }) -> async Nat;
@@ -37,9 +37,7 @@ actor BotPlanCanister {
 
   stable var users: Trie.Trie<Text, UserStatus> = Trie.empty();
   
-  // SUA CARTEIRA - SUBSTITUA PELO SEU PRINCIPAL
   private let MY_WALLET_PRINCIPAL = "SEU_PRINCIPAL_AQUI"; // Substitua pelo seu principal
-  
   private let TRANSFER_FEE = 10;
 
   func getQuota(p: Plan): Nat {
@@ -76,7 +74,6 @@ actor BotPlanCanister {
     };
   };
 
-  // Nova função para transferir pagamento para sua carteira
   private func transferPayment(caller: Principal, amount: Nat) : async Result.Result<Nat, Text> {
     let subaccount = principalToSubaccount(caller);
     
@@ -117,8 +114,6 @@ actor BotPlanCanister {
   };
 
   public shared({caller}) func subscribe(plan: Plan) : async Text {
-    Debug.print("Iniciando subscribe para caller: " # Principal.toText(caller));
-
     let callerText = Principal.toText(caller);
     let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
 
@@ -126,8 +121,7 @@ actor BotPlanCanister {
       case (?existingStatus) {
         let now = Time.now();
         if (now < existingStatus.resetAt) {
-          Debug.print("Usuário já possui plano ativo: " # debug_show(existingStatus.plan));
-          return "⚠️ Você já possui um plano ativo: " # debug_show(existingStatus.plan) # ". Aguarde o reset ou use suas requisições restantes.";
+          return "⚠️ Você já possui um plano ativo: " # debug_show(existingStatus.plan);
         };
       };
       case (null) {};
@@ -139,18 +133,12 @@ actor BotPlanCanister {
       case (#Premium) { 10_000_000 };
     };
 
-    Debug.print("Plano escolhido: " # debug_show(plan) # ", Preço (e8s): " # Nat.toText(price_e8s));
-
     if (price_e8s == 0) {
       activatePlan(plan, caller);
-      Debug.print("Plano gratuito ativado com sucesso para " # Principal.toText(caller));
       return "✅ Plano gratuito ativado!";
     };
 
-    // Verificar saldo atual
     let balance = await checkUserBalance(caller);
-    Debug.print("Saldo do usuário: " # Nat.toText(balance));
-
     let totalRequired = price_e8s + TRANSFER_FEE;
     
     if (balance >= totalRequired) {
@@ -159,16 +147,13 @@ actor BotPlanCanister {
       switch (transferResult) {
         case (#ok(blockIndex)) {
           activatePlan(plan, caller);
-          Debug.print("💰 PAGAMENTO RECEBIDO! Transferido para sua carteira. Block: " # Nat.toText(blockIndex));
-          return "💎 Pagamento processado automaticamente! Plano " # debug_show(plan) # " ativado!\n🧾 Transação: " # Nat.toText(blockIndex) # "\n💰 Valor transferido para sua carteira!";
+          return "💎 Pagamento processado! Plano ativado. Transação: " # Nat.toText(blockIndex);
         };
         case (#err(errorMsg)) {
-          Debug.print("Erro na transferência automática: " # errorMsg);
-          return "❌ Erro ao processar pagamento automático: " # errorMsg # "\nVerifique se você tem saldo suficiente e tente novamente.";
+          return "❌ Erro ao transferir: " # errorMsg;
         };
       };
     } else {
-      // Instruções para o usuário depositar
       let subaccount = principalToSubaccount(caller);
       let sub_hex = Blob.toArray(subaccount);
       let sub_hex_text = Array.foldLeft<Nat8, Text>(
@@ -178,7 +163,7 @@ actor BotPlanCanister {
           acc # (if (b < 16) { "0" } else { "" }) # Nat8.toText(b)
         }
       );
-      return "⚠️ Saldo insuficiente para ativação automática.\n\n📋 INSTRUÇÕES:\n1️⃣ Envie " # Nat.toText(totalRequired) # " e8s ckBTC para:\n\n🏦 Principal: dkwk6-4aaaa-aaaaf-qbbxa-cai\n📋 Subaccount: " # sub_hex_text # "\n\n2️⃣ Após o depósito, chame novamente subscribe(" # debug_show(plan) # ")\n3️⃣ O pagamento será transferido automaticamente para o desenvolvedor\n4️⃣ Seu plano será ativado instantaneamente!\n\n💰 Saldo atual: " # Nat.toText(balance) # " e8s\n💎 Necessário: " # Nat.toText(totalRequired) # " e8s";
+      return "⚠️ Saldo insuficiente.\nEnvie " # Nat.toText(totalRequired) # " e8s para dkwk6-4aaaa-aaaaf-qbbxa-cai\nSubaccount: " # sub_hex_text;
     };
   };
 
@@ -195,11 +180,77 @@ actor BotPlanCanister {
     let callerText = Principal.toText(caller);
     let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
 
-    users := Trie.put<Text, UserStatus>(users, key, Text.equal, newStatus).0;
+    users := Trie.put(users, key, Text.equal, newStatus).0;
   };
 
-  public shared({caller}) func use_request() : async Bool {
+  public shared({caller}) func get_user_status() : async ?UserStatus {
     let callerText = Principal.toText(caller);
+    let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
+
+    switch (Trie.find(users, key, Text.equal)) {
+      case (?status) { return ?status };
+      case (null) {
+        let quota = getQuota(#Standard);
+        let resetTime = Time.now() + (24 * 60 * 60 * 1_000_000_000);
+        let newStatus : UserStatus = {
+          plan = #Standard;
+          requestsLeft = quota;
+          resetAt = resetTime;
+        };
+        users := Trie.put(users, key, Text.equal, newStatus).0;
+        return ?newStatus;
+      };
+    };
+  };
+
+  public shared({caller}) func prompt(prompt: Text): async Text {
+    let callerText = Principal.toText(caller);
+    let key : Trie.Key<Text> = {
+      hash = Text.hash(callerText);
+      key = callerText;
+    };
+
+    switch (Trie.find(users, key, Text.equal)) {
+      case (null) {
+        return "❌ Você não possui plano ativo. Use a função 'subscribe'.";
+      };
+      case (?status) {
+        let now = Time.now();
+        var effectiveStatus = if (now >= status.resetAt) {
+          {
+            plan = status.plan;
+            requestsLeft = getQuota(status.plan);
+            resetAt = now + (24 * 60 * 60 * 1_000_000_000);
+          }
+        } else {
+          status
+        };
+
+        if (effectiveStatus.requestsLeft == 0) {
+          return "❌ Limite diário atingido para o plano " # debug_show(effectiveStatus.plan);
+        };
+
+        let finalStatus : UserStatus = {
+          plan = effectiveStatus.plan;
+          requestsLeft = effectiveStatus.requestsLeft - 1;
+          resetAt = effectiveStatus.resetAt;
+        };
+
+        users := Trie.put(users, key, Text.equal, finalStatus).0;
+
+        try {
+          let response = await LLM.prompt(#Llama3_1_8B, prompt);
+          return "🤖 Resposta:\n\n" # response # "\n📊 Plano: " # debug_show(finalStatus.plan) # " | Restantes: " # Nat.toText(finalStatus.requestsLeft);
+        } catch (_) {
+          users := Trie.put(users, key, Text.equal, effectiveStatus).0;
+          return "❌ Erro ao processar a requisição.";
+        };
+      };
+    };
+  };
+
+  public shared({caller}) func use_request_for(p: Principal) : async Bool {
+    let callerText = Principal.toText(p);
     let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
 
     switch (Trie.find(users, key, Text.equal)) {
@@ -232,65 +283,5 @@ actor BotPlanCanister {
       };
     };
   };
-
-  public shared query({caller}) func get_user_status() : async ?UserStatus {
-    let callerText = Principal.toText(caller);
-    let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
-    Trie.find(users, key, Text.equal)
-  };
-
-  public shared({caller}) func prompt(prompt: Text): async Text {
-    let callerText = Principal.toText(caller);
-    let key : Trie.Key<Text> = {
-      hash = Text.hash(callerText);
-      key = callerText;
-    };
-
-    switch (Trie.find(users, key, Text.equal)) {
-      case (null) {
-        return "❌ Você não possui plano ativo. Use a função 'subscribe' para ativar um plano.";
-      };
-      case (?status) {
-        let now = Time.now();
-        var effectiveStatus = if (now >= status.resetAt) {
-          {
-            plan = status.plan;
-            requestsLeft = getQuota(status.plan);
-            resetAt = now + (24 * 60 * 60 * 1_000_000_000);
-          }
-        } else {
-          status
-        };
-
-        if (effectiveStatus.requestsLeft == 0) {
-          return "❌ Limite diário atingido para o plano " # debug_show(effectiveStatus.plan) # ". Tente novamente amanhã ou faça upgrade do seu plano!";
-        };
-
-        let finalStatus : UserStatus = {
-          plan = effectiveStatus.plan;
-          requestsLeft = effectiveStatus.requestsLeft - 1;
-          resetAt = effectiveStatus.resetAt;
-        };
-
-        users := Trie.put(users, key, Text.equal, finalStatus).0;
-
-        try {
-          let response = await LLM.prompt(#Llama3_1_8B, prompt);
-          return "🤖 Resposta do LLM:\n\n" # response # "\n\n📊 Plano: " # debug_show(finalStatus.plan) # " | Restantes: " # Nat.toText(finalStatus.requestsLeft);
-        } catch (error) {
-          // Reverter o contador se houve erro
-          let revertStatus : UserStatus = {
-            plan = effectiveStatus.plan;
-            requestsLeft = effectiveStatus.requestsLeft;
-            resetAt = effectiveStatus.resetAt;
-          };
-          users := Trie.put(users, key, Text.equal, revertStatus).0;
-          
-          return "❌ Erro ao processar sua solicitação. Tente novamente. Erro: ";
-        };
-      };
-    };
-  };
-
 
 };

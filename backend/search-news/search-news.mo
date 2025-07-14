@@ -29,6 +29,11 @@ actor SearchNews {
     results: [NewsResult];
   };
 
+  let botPlanCanister = actor("lqy7q-dh777-77777-aaaaq-cai") : actor {
+    use_request_for : (Principal) -> async Bool;
+  };
+
+
   // Whitelist dinâmica - começa com domínios padrão
   stable var whitelist : [Text] = [
     "bbc.com", "cnn.com", "reuters.com", "nytimes.com", "globo.com"
@@ -90,7 +95,13 @@ actor SearchNews {
     }));
   };
 
-  public func searchNews(userQuery: Text) : async Text {
+  public shared({caller}) func searchNews(userQuery: Text) : async Text {
+    let allowed = await botPlanCanister.use_request_for(caller);
+    if (not allowed) {
+      return "❌ Você atingiu o limite do seu plano ou não tem um plano ativo. Por favor, assine ou aguarde o reset.";
+    };
+    Debug.print("Permissão ON (bateu no canister do bot-plan)");
+
     let host = "searx.perennialte.ch";
     let encodedQuery = encodeQuery(userQuery);
     let url = "https://" # host # "/search?q=" # encodedQuery # "&categories=news&format=json";
