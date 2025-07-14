@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import {
   Plus, ExternalLink, ThumbsUp, ThumbsDown, Users, Globe, Clock, CheckCircle, XCircle,
 } from "lucide-react";
-import { roundtableActor } from "../utils/canister";
+import { roundtableActor, searchNewsActor } from "../utils/canister";
 
 type Proposal = {
   id: number;
@@ -28,6 +28,9 @@ export default function RoundtablePage() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [whitelist, setWhitelist] = useState<string[]>([]);
+  const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(false);
+
 
   const fetchProposals = async () => {
     try {
@@ -36,6 +39,19 @@ export default function RoundtablePage() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const fetchWhitelist = async () => {
+  try {
+    setIsLoadingWhitelist(true);
+    const domains = await searchNewsActor.getWhitelist();
+    setWhitelist(domains as string[]);
+  } catch (err) {
+    console.error("Erro ao buscar whitelist:", err);
+    setWhitelist([]);
+  } finally {
+    setIsLoadingWhitelist(false);
+  }
   };
 
   useEffect(() => {
@@ -133,7 +149,14 @@ export default function RoundtablePage() {
             Plataforma descentralizada para propostas e votações de fontes de dados confiáveis
           </p>
         </div>
-
+        <div className="flex justify-center mb-4">
+          <button
+            onClick={fetchWhitelist}
+            className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 shadow-md"
+          >
+            📜 Ver Whitelist
+          </button>
+        </div>
         <div className="flex justify-center mb-8">
           <button
             onClick={() => setShowForm(!showForm)}
@@ -143,7 +166,20 @@ export default function RoundtablePage() {
             <span className="font-semibold">Nova Proposta</span>
           </button>
         </div>
+        {whitelist.length > 0 && (
+          <div className="max-w-3xl mx-auto mb-8 bg-white/5 p-6 rounded-xl border border-white/10 shadow-lg">
+            <h3 className="text-xl font-bold text-white mb-4">🌐 Domínios na Whitelist</h3>
+            <ul className="list-disc list-inside space-y-2 text-gray-300">
+              {whitelist.map((domain, index) => (
+                <li key={index}>{domain}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
+        {isLoadingWhitelist && (
+          <div className="text-center text-gray-400 mb-4">⏳ Carregando whitelist...</div>
+        )}  
         {showForm && (
           <div className="max-w-2xl mx-auto mb-12">
             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl">
