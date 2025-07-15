@@ -34,6 +34,16 @@ export default function LoginPage() {
     const [icpBalance, setIcpBalance] = useState<string | null>(null);
     const [ckBalance, setCkBalance] = useState<string | null>(null);
     const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+    
+    // Novos estados para depósito Bitcoin
+    const [bitcoinAddress, setBitcoinAddress] = useState<string | null>(null);
+    const [showBitcoinDeposit, setShowBitcoinDeposit] = useState(false);
+    const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
+
+
+    // Novos estados para depósito ICP
+    const [showIcpDeposit, setShowIcpDeposit] = useState(false);
+    const [icpDepositAddress, setIcpDepositAddress] = useState<string | null>(null);
 
     useEffect(() => {
         const initializeAuth = async () =>
@@ -47,12 +57,63 @@ export default function LoginPage() {
                     console.log("Identidade autenticada:", identity.getPrincipal().toText());
                     await fetchICPBalance(identity.getPrincipal());
                     await fetchCkBTCBalance(identity.getPrincipal());
+                    await generateIcpDepositAddress(identity.getPrincipal());
                 }
             });
 
         setIsInitializing(false);
         initializeAuth();
     }, []);
+
+        // Função para gerar endereço ICP
+    const generateIcpDepositAddress = (userPrincipal: Principal) => {
+        try {
+            const accountIdentifier = AccountIdentifier.fromPrincipal({
+                principal: userPrincipal,
+            });
+            setIcpDepositAddress(accountIdentifier.toHex());
+        } catch (error) {
+            console.error("Erro ao gerar endereço ICP:", error);
+        }
+    };
+
+    // Função para gerar endereço Bitcoin
+    const generateBitcoinAddress = async () => {
+        if (!principal) return;
+        
+        setIsGeneratingAddress(true);
+        try {
+            const agent = new HttpAgent({
+                host: "https://ic0.app",
+            });
+
+            // ID do canister ckBTC Minter
+            const ckBTCMinterCanisterId = "mqygn-kiaaa-aaaar-qaadq-cai";
+
+            // Criar o ator para o ckBTC Minter
+            const ckBTCMinter = await import("@dfinity/ckbtc");
+            
+            const minter = ckBTCMinter.CkBTCMinterCanister.create({
+                agent,
+                canisterId: Principal.fromText(ckBTCMinterCanisterId),
+            });
+
+            // Gerar endereço Bitcoin
+            const btcAddress = await minter.getBtcAddress({
+                owner: principal,
+                // subaccount is optional, so you can omit it or use new Uint8Array(32)
+                // subaccount: new Uint8Array(32)
+            });
+
+            setBitcoinAddress(btcAddress);
+            
+        } catch (error) {
+            console.error("Erro ao gerar endereço Bitcoin:", error);
+            alert("Erro ao gerar endereço Bitcoin. Tente novamente.");
+        } finally {
+            setIsGeneratingAddress(false);
+        }
+    };
 
     const fetchCkBTCBalance = async (userPrincipal: Principal) => {
         setIsLoadingBalance(true);
@@ -87,28 +148,19 @@ export default function LoginPage() {
         }
     };
 
-
     const fetchICPBalance = async (userPrincipal: Principal) => {
         setIsLoadingBalance(true);
         try {
-            // Versão simplificada que funciona com as dependências atuais
             const agent = new HttpAgent({
                 host: "https://ic0.app",
             });
 
-            // // Só faz fetch da root key em desenvolvimento
-            // if (process.env.NODE_ENV !== "production" ) {
-            //     await agent.fetchRootKey();
-            // }
-
-            // Usa o AccountIdentifier diretamente
             const accountIdentifier = AccountIdentifier.fromPrincipal({
                 principal: userPrincipal,
             });
 
             console.log("Account ID:", accountIdentifier.toHex());
 
-            // Tenta criar o ledger canister
             const ledger = LedgerCanister.create({
                 agent,
                 canisterId: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
@@ -121,14 +173,12 @@ export default function LoginPage() {
 
             console.log("Saldo retornado:", balance);
             
-            // Converte de e8s para ICP
             const icpAmount = (Number(balance) / 100_000_000).toFixed(8);
             setIcpBalance(icpAmount);
             
         } catch (error) {
             console.error("Detalhes do erro:", error);
             
-            // Se der erro, vamos mostrar informações para debug
             const errorMessage = error instanceof Error ? error.message : String(error);
             
             if (errorMessage.includes("update method")) {
@@ -136,7 +186,6 @@ export default function LoginPage() {
             } else if (errorMessage.includes("agent")) {
                 setIcpBalance("Erro de conexão com IC");
             } else {
-                // Para desenvolvimento, mostra um valor fake
                 setIcpBalance("0.00000000");
             }
         } finally {
@@ -158,6 +207,7 @@ export default function LoginPage() {
                     await fetchStatus();
                     await fetchICPBalance(userPrincipal);
                     await fetchCkBTCBalance(userPrincipal);
+                    await generateIcpDepositAddress(userPrincipal);
                 },
                 onError: (err: any) => {
                     console.error("Erro no login:", err);
@@ -179,6 +229,9 @@ export default function LoginPage() {
             setActor(null);
             setIcpBalance(null);
             setCkBalance(null);
+            setBitcoinAddress(null);
+            setShowBitcoinDeposit(false);
+            setShowIcpDeposit(false);
         } finally {
             setIsLoading(false);
         }
@@ -233,6 +286,11 @@ export default function LoginPage() {
         }
     };
 
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+        alert("Copiado para a área de transferência!");
+    };
+
     const getPlanColor = (planName: string) => {
         switch (planName) {
             case "Standard":
@@ -283,6 +341,7 @@ export default function LoginPage() {
                             Conecte-se ao futuro descentralizado
                         </p>
                     </div>
+                    
                     {/* Main Content */}
                     <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/20">
                         {isAuthenticated && principal ? (
@@ -312,7 +371,7 @@ export default function LoginPage() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mr-3">
-                                                <span className="text-blue-400 font-bold">₿</span>
+                                                <span className="text-blue-400 font-bold">∞</span>
                                             </div>
                                             <div>
                                                 <h3 className="text-lg font-semibold text-white">
@@ -336,16 +395,84 @@ export default function LoginPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={refreshBalance}
-                                        disabled={isLoadingBalance}
-                                        className="mt-3 w-full py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 text-sm font-semibold disabled:opacity-50"
-                                    >
-                                        {isLoadingBalance ? "Atualizando..." : "Atualizar Saldo"}
-                                    </button>
+                                    <div className="mt-3 grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={refreshBalance}
+                                            disabled={isLoadingBalance}
+                                            className="py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 text-sm font-semibold disabled:opacity-50"
+                                        >
+                                            {isLoadingBalance ? "Atualizando..." : "Atualizar"}
+                                        </button>
+                                        <button
+                                            onClick={() => setShowIcpDeposit(!showIcpDeposit)}
+                                            className="py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 rounded-lg transition-all duration-200 text-sm font-semibold"
+                                        >
+                                            Depositar ICP
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* ICP Deposit Section */}
+                                {showIcpDeposit && icpDepositAddress && (
+                                    <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-xl p-5 border border-cyan-500/20">
+                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                            <span className="text-cyan-400 mr-2">∞</span>
+                                            Depósito de ICP
+                                        </h3>
+                                        
+                                        <div className="space-y-4">
+                                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                                                <p className="text-xs text-white/70 mb-2">
+                                                    Seu endereço ICP (Account Identifier):
+                                                </p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-sm text-white font-mono break-all mr-2">
+                                                        {icpDepositAddress}
+                                                    </p>
+                                                    <button
+                                                        onClick={() => copyToClipboard(icpDepositAddress)}
+                                                        className="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                                                    >
+                                                        Copiar
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                                                <p className="text-xs text-white/70 mb-2">
+                                                    Ou use seu Principal ID:
+                                                </p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-sm text-white font-mono break-all mr-2">
+                                                        {principal?.toText()}
+                                                    </p>
+                                                    <button
+                                                        onClick={() => copyToClipboard(principal?.toText())}
+                                                        className="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                                                    >
+                                                        Copiar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                                                <p className="text-blue-400 text-sm font-semibold mb-2">
+                                                    ℹ️ Instruções:
+                                                </p>
+                                                <div className="text-white/80 text-xs space-y-1">
+                                                    <p>• Envie ICP para o Account Identifier ou Principal ID acima</p>
+                                                    <p>• Valor mínimo: 0.0001 ICP</p>
+                                                    <p>• Use o Account Identifier para exchanges</p>
+                                                    <p>• Use o Principal ID para dApps e carteiras IC</p>
+                                                    <p>• Transações são processadas quase instantaneamente</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* ckBTC Balance Card */}
-                                <div className="bg-gradient-to-r from-yellow-500/10 to-cyan-500/10 rounded-xl p-5 border border-yellow-500/20">
+                                <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-xl p-5 border border-yellow-500/20">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center">
                                             <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center mr-3">
@@ -356,7 +483,7 @@ export default function LoginPage() {
                                                     Saldo ckBTC
                                                 </h3>
                                                 <p className="text-white/60 text-sm">
-                                                    Internet Computer Protocol
+                                                    Chain-key Bitcoin
                                                 </p>
                                             </div>
                                         </div>
@@ -366,21 +493,90 @@ export default function LoginPage() {
                                             ) : (
                                                 <div>
                                                     <p className="text-2xl font-bold text-yellow-400">
-                                                        {icpBalance || "0.00000000"}
+                                                        {ckBalance || "0.00000000"}
                                                     </p>
                                                     <p className="text-white/60 text-sm">ckBTC</p>
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={refreshBalance}
-                                        disabled={isLoadingBalance}
-                                        className="mt-3 w-full py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 text-yellow-400 rounded-lg transition-all duration-200 text-sm font-semibold disabled:opacity-50"
-                                    >
-                                        {isLoadingBalance ? "Atualizando..." : "Atualizar Saldo"}
-                                    </button>
+                                    <div className="mt-3 grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={refreshBalance}
+                                            disabled={isLoadingBalance}
+                                            className="py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 text-yellow-400 rounded-lg transition-all duration-200 text-sm font-semibold disabled:opacity-50"
+                                        >
+                                            {isLoadingBalance ? "Atualizando..." : "Atualizar"}
+                                        </button>
+                                        <button
+                                            onClick={() => setShowBitcoinDeposit(!showBitcoinDeposit)}
+                                            className="py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded-lg transition-all duration-200 text-sm font-semibold"
+                                        >
+                                            Depositar BTC
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* Bitcoin Deposit Section */}
+                                {showBitcoinDeposit && (
+                                    <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl p-5 border border-orange-500/20">
+                                        <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                                            <span className="text-orange-400 mr-2">₿</span>
+                                            Depósito de Bitcoin
+                                        </h3>
+                                        
+                                        {!bitcoinAddress ? (
+                                            <div className="text-center">
+                                                <p className="text-white/80 mb-4">
+                                                    Gere seu endereço Bitcoin único para depositar
+                                                </p>
+                                                <button
+                                                    onClick={generateBitcoinAddress}
+                                                    disabled={isGeneratingAddress}
+                                                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 hover:opacity-90 text-white rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 flex items-center justify-center"
+                                                >
+                                                    {isGeneratingAddress ? (
+                                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                                                    ) : (
+                                                        <span className="mr-2">🔐</span>
+                                                    )}
+                                                    {isGeneratingAddress ? "Gerando..." : "Gerar Endereço Bitcoin"}
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                                                    <p className="text-xs text-white/70 mb-2">
+                                                        Seu endereço Bitcoin:
+                                                    </p>
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-sm text-white font-mono break-all mr-2">
+                                                            {bitcoinAddress}
+                                                        </p>
+                                                        <button
+                                                            onClick={() => copyToClipboard(bitcoinAddress)}
+                                                            className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                                                        >
+                                                            Copiar
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+                                                    <p className="text-blue-400 text-sm font-semibold mb-2">
+                                                        ℹ️ Instruções:
+                                                    </p>
+                                                    <div className="text-white/80 text-xs space-y-1">
+                                                        <p>• Envie Bitcoin para o endereço acima</p>
+                                                        <p>• Valor mínimo: 0.001 BTC</p>
+                                                        <p>• Após confirmação, você receberá ckBTC</p>
+                                                        <p>• Processo pode levar algumas horas</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Status Card */}
                                 {status ? (
