@@ -10,6 +10,8 @@
     "frontend"
   ],
   "dependencies": {
-    "@dfinity/agent": "^2.4.1"
+    "@dfinity/agent": "^2.4.1",
+    "@dfinity/ledger-icp": "^3.0.0",
+    "@dfinity/ledger-icrc": "^2.9.0"
   }
 }

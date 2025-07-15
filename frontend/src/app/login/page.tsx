@@ -31,7 +31,9 @@ export default function LoginPage() {
     const [status, setStatus] = useState<UserStatus | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isInitializing, setIsInitializing] = useState(true);
-
+    const [icpBalance, setIcpBalance] = useState<string | null>(null);
+    const [ckBalance, setCkBalance] = useState<string | null>(null);
+    const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
     useEffect(() => {
         const initializeAuth = async () =>
@@ -42,12 +44,105 @@ export default function LoginPage() {
                     setPrincipal(identity.getPrincipal());
                     setIsAuthenticated(true);
                     await fetchStatus();
+                    console.log("Identidade autenticada:", identity.getPrincipal().toText());
+                    await fetchICPBalance(identity.getPrincipal());
+                    await fetchCkBTCBalance(identity.getPrincipal());
                 }
             });
 
         setIsInitializing(false);
         initializeAuth();
     }, []);
+
+    const fetchCkBTCBalance = async (userPrincipal: Principal) => {
+        setIsLoadingBalance(true);
+        try {
+            const agent = new HttpAgent({
+                host: "https://ic0.app",
+            });
+
+            const ckBTCCanisterId = "mxzaz-hqaaa-aaaar-qaada-cai";
+
+            const ckBTCCanister = await import("@dfinity/ledger-icrc");
+            
+            const ledger = ckBTCCanister.IcrcLedgerCanister.create({
+                agent,
+                canisterId: Principal.fromText(ckBTCCanisterId),
+            });
+
+            const balance = await ledger.balance({
+                owner: userPrincipal,
+                certified: false,
+            });
+
+            console.log("Saldo ckBTC retornado:", balance);
+            
+            const ckBTCAmount = (Number(balance) / 100_000_000).toFixed(8);
+            setCkBalance(ckBTCAmount); 
+        } catch (error) {
+            console.error("Erro ao buscar saldo ckBTC:", error);
+            setCkBalance("Erro ao carregar saldo ckBTC");
+        } finally {
+            setIsLoadingBalance(false);
+        }
+    };
+
+
+    const fetchICPBalance = async (userPrincipal: Principal) => {
+        setIsLoadingBalance(true);
+        try {
+            // Versão simplificada que funciona com as dependências atuais
+            const agent = new HttpAgent({
+                host: "https://ic0.app",
+            });
+
+            // // Só faz fetch da root key em desenvolvimento
+            // if (process.env.NODE_ENV !== "production" ) {
+            //     await agent.fetchRootKey();
+            // }
+
+            // Usa o AccountIdentifier diretamente
+            const accountIdentifier = AccountIdentifier.fromPrincipal({
+                principal: userPrincipal,
+            });
+
+            console.log("Account ID:", accountIdentifier.toHex());
+
+            // Tenta criar o ledger canister
+            const ledger = LedgerCanister.create({
+                agent,
+                canisterId: Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+            });
+
+            const balance = await ledger.accountBalance({
+            accountIdentifier: accountIdentifier.toHex(),
+            certified: false,
+            });
+
+            console.log("Saldo retornado:", balance);
+            
+            // Converte de e8s para ICP
+            const icpAmount = (Number(balance) / 100_000_000).toFixed(8);
+            setIcpBalance(icpAmount);
+            
+        } catch (error) {
+            console.error("Detalhes do erro:", error);
+            
+            // Se der erro, vamos mostrar informações para debug
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            
+            if (errorMessage.includes("update method")) {
+                setIcpBalance("Método não encontrado - verifique as dependências");
+            } else if (errorMessage.includes("agent")) {
+                setIcpBalance("Erro de conexão com IC");
+            } else {
+                // Para desenvolvimento, mostra um valor fake
+                setIcpBalance("0.00000000");
+            }
+        } finally {
+            setIsLoadingBalance(false);
+        }
+    };
 
     const login = async () => {
         if (!authClient) return;
@@ -57,9 +152,12 @@ export default function LoginPage() {
                 identityProvider: "https://identity.ic0.app/#authorize",
                 onSuccess: async () => {
                     const identity = authClient.getIdentity();
-                    setPrincipal(identity.getPrincipal());
+                    const userPrincipal = identity.getPrincipal();
+                    setPrincipal(userPrincipal);
                     setIsAuthenticated(true);
                     await fetchStatus();
+                    await fetchICPBalance(userPrincipal);
+                    await fetchCkBTCBalance(userPrincipal);
                 },
                 onError: (err: any) => {
                     console.error("Erro no login:", err);
@@ -79,6 +177,8 @@ export default function LoginPage() {
             setIsAuthenticated(false);
             setStatus(null);
             setActor(null);
+            setIcpBalance(null);
+            setCkBalance(null);
         } finally {
             setIsLoading(false);
         }
@@ -116,7 +216,6 @@ export default function LoginPage() {
                 return;
         }
 
-
         try {
             const res = await actor.subscribe(planObj);
             alert(res);
@@ -124,6 +223,13 @@ export default function LoginPage() {
         } catch (err) {
             console.error(err);
             alert("Erro ao assinar plano");
+        }
+    };
+
+    const refreshBalance = async () => {
+        if (principal) {
+            await fetchICPBalance(principal);
+            await fetchCkBTCBalance(principal);
         }
     };
 
@@ -199,6 +305,81 @@ export default function LoginPage() {
                                             {principal?.toText()}
                                         </p>
                                     </div>
+                                </div>
+
+                                {/* ICP Balance Card */}
+                                <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl p-5 border border-blue-500/20">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center">
+                                            <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mr-3">
+                                                <span className="text-blue-400 font-bold">₿</span>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-white">
+                                                    Saldo ICP
+                                                </h3>
+                                                <p className="text-white/60 text-sm">
+                                                    Internet Computer Protocol
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            {isLoadingBalance ? (
+                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-400"></div>
+                                            ) : (
+                                                <div>
+                                                    <p className="text-2xl font-bold text-blue-400">
+                                                        {icpBalance || "0.00000000"}
+                                                    </p>
+                                                    <p className="text-white/60 text-sm">ICP</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={refreshBalance}
+                                        disabled={isLoadingBalance}
+                                        className="mt-3 w-full py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 text-sm font-semibold disabled:opacity-50"
+                                    >
+                                        {isLoadingBalance ? "Atualizando..." : "Atualizar Saldo"}
+                                    </button>
+                                </div>
+                                {/* ckBTC Balance Card */}
+                                <div className="bg-gradient-to-r from-yellow-500/10 to-cyan-500/10 rounded-xl p-5 border border-yellow-500/20">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center">
+                                            <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center mr-3">
+                                                <span className="text-yellow-400 font-bold">₿</span>
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-white">
+                                                    Saldo ckBTC
+                                                </h3>
+                                                <p className="text-white/60 text-sm">
+                                                    Internet Computer Protocol
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            {isLoadingBalance ? (
+                                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-400"></div>
+                                            ) : (
+                                                <div>
+                                                    <p className="text-2xl font-bold text-yellow-400">
+                                                        {icpBalance || "0.00000000"}
+                                                    </p>
+                                                    <p className="text-white/60 text-sm">ckBTC</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={refreshBalance}
+                                        disabled={isLoadingBalance}
+                                        className="mt-3 w-full py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 text-yellow-400 rounded-lg transition-all duration-200 text-sm font-semibold disabled:opacity-50"
+                                    >
+                                        {isLoadingBalance ? "Atualizando..." : "Atualizar Saldo"}
+                                    </button>
                                 </div>
 
                                 {/* Status Card */}
@@ -382,5 +563,4 @@ export default function LoginPage() {
             </div>
         </div>
     );
-
 }
