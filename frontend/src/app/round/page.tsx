@@ -19,12 +19,10 @@ import {
     GitPullRequest,
     Award,
     Search,
-    Filter,
     Eye,
     ArrowRight,
     Zap,
     Target,
-    Activity
 } from "lucide-react";
 
 // Mock data para demonstração
@@ -102,7 +100,6 @@ export default function RoundtablePage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [whitelist, setWhitelist] = useState<string[]>(mockWhitelist);
-    const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
@@ -134,7 +131,6 @@ export default function RoundtablePage() {
 
         setIsSubmitting(true);
         try {
-            // Simular envio
             const newProposal: Proposal = {
                 id: proposals.length + 1,
                 name,
@@ -189,69 +185,20 @@ export default function RoundtablePage() {
     const formatDate = (timestamp: bigint) => {
         const date = new Date(Number(timestamp) / 1000000);
         return date.toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
+            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
         });
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            {/* Header aprimorado */}
-            <header className="bg-black/40 backdrop-blur-2xl border-b border-white/10 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
-                        <div className="flex items-center space-x-6">
-                            <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                                    <Globe className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                                        TaaS
-                                    </span>
-                                    <div className="flex items-center space-x-2 mt-1">
-                                        <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full border border-green-500/30">
-                                            On-Chain
-                                        </span>
-                                        <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 text-xs rounded-full border border-blue-500/30">
-                                            Decentralized
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-4">
-                            <div className="hidden lg:flex items-center space-x-6 text-sm text-white/60">
-                                <div className="flex items-center space-x-1">
-                                    <Activity className="w-4 h-4" />
-                                    <span>{stats.total} propostas</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                    <TrendingUp className="w-4 h-4" />
-                                    <span>{stats.totalVotes} votos</span>
-                                </div>
-                            </div>
-                            <button className="px-6 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg font-medium">
-                                <Search className="w-4 h-4 inline mr-2" />
-                                Verificar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
+        <div className="min-h-screen bg-[#0B0E13] text-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Hero Section */}
                 <div className="text-center mb-12">
-                    <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-4 py-2 rounded-full border border-purple-500/30 mb-6">
-                        <Zap className="w-4 h-4 text-purple-400" />
-                        <span className="text-purple-300 text-sm font-medium">Governança Descentralizada</span>
+                    <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 px-4 py-2 rounded-full border border-orange-500/30 mb-6">
+                        <Zap className="w-4 h-4 text-orange-400" />
+                        <span className="text-orange-300 text-sm font-medium">Governança Descentralizada</span>
                     </div>
-                    <h1 className="text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
+                    <h1 className="text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] bg-clip-text text-transparent">
                         Mesa Redonda
                     </h1>
                     <p className="text-xl text-white/70 max-w-3xl mx-auto leading-relaxed">
@@ -285,7 +232,7 @@ export default function RoundtablePage() {
                     </div>
                     <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                         <div className="flex items-center justify-between mb-2">
-                            <TrendingUp className="w-8 h-8 text-purple-400" />
+                            <TrendingUp className="w-8 h-8 text-orange-400" />
                             <span className="text-2xl font-bold text-white">{stats.totalVotes}</span>
                         </div>
                         <p className="text-white/60">Total de Votos</p>
@@ -293,9 +240,8 @@ export default function RoundtablePage() {
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                    {/* Sidebar aprimorada */}
+                    {/* Sidebar */}
                     <div className="xl:col-span-1 space-y-6">
-                        {/* Whitelist */}
                         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center space-x-2">
@@ -306,7 +252,6 @@ export default function RoundtablePage() {
                                     {whitelist.length}
                                 </span>
                             </div>
-                            
                             <div className="space-y-3 mb-4">
                                 {whitelist.slice(0, 5).map((domain, index) => (
                                     <div key={index} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
@@ -316,20 +261,17 @@ export default function RoundtablePage() {
                                     </div>
                                 ))}
                             </div>
-                            
                             <button className="w-full px-4 py-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2">
                                 <Eye className="w-4 h-4" />
                                 <span>Ver todas</span>
                             </button>
                         </div>
-
-                        {/* Quick Actions */}
                         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                             <h3 className="text-lg font-semibold text-white mb-4">Ações Rápidas</h3>
                             <div className="space-y-3">
                                 <button
                                     onClick={() => setShowForm(!showForm)}
-                                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition-all duration-200 font-medium flex items-center justify-center space-x-2"
+                                    className="w-full px-4 py-3 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 font-medium flex items-center justify-center space-x-2"
                                 >
                                     <Plus className="w-4 h-4" />
                                     <span>Nova Proposta</span>
@@ -344,7 +286,6 @@ export default function RoundtablePage() {
 
                     {/* Main Content */}
                     <div className="xl:col-span-3">
-                        {/* Search and Filter */}
                         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 mb-8">
                             <div className="flex flex-col lg:flex-row gap-4">
                                 <div className="flex-1 relative">
@@ -354,13 +295,13 @@ export default function RoundtablePage() {
                                         placeholder="Pesquisar propostas..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                    className="px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                                 >
                                     <option value="all">Todos os Status</option>
                                     <option value="pending">Pendentes</option>
@@ -370,14 +311,13 @@ export default function RoundtablePage() {
                             </div>
                         </div>
 
-                        {/* Formulário aprimorado */}
                         {showForm && (
                             <div className="mb-8">
                                 <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-2xl">
                                     <div className="text-center mb-8">
-                                        <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-4 py-2 rounded-full border border-purple-500/30 mb-4">
-                                            <Plus className="w-4 h-4 text-purple-400" />
-                                            <span className="text-purple-300 text-sm font-medium">Nova Proposta</span>
+                                        <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 px-4 py-2 rounded-full border border-orange-500/30 mb-4">
+                                            <Plus className="w-4 h-4 text-orange-400" />
+                                            <span className="text-orange-300 text-sm font-medium">Nova Proposta</span>
                                         </div>
                                         <h2 className="text-3xl font-bold text-white mb-2">Propor Nova Fonte</h2>
                                         <p className="text-white/60">Adicione uma nova fonte de dados confiável para a comunidade</p>
@@ -385,50 +325,34 @@ export default function RoundtablePage() {
 
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-sm font-medium text-white/70 mb-2">
-                                                Nome da Fonte
-                                            </label>
+                                            <label className="block text-sm font-medium text-white/70 mb-2">Nome da Fonte</label>
                                             <input
-                                                type="text"
-                                                value={name}
-                                                onChange={(e) => setName(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                type="text" value={name} onChange={(e) => setName(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                                 placeholder="Ex: OpenAI GPT-4 API"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-white/70 mb-2">
-                                                URL Oficial
-                                            </label>
+                                            <label className="block text-sm font-medium text-white/70 mb-2">URL Oficial</label>
                                             <input
-                                                type="url"
-                                                value={url}
-                                                onChange={(e) => setUrl(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                type="url" value={url} onChange={(e) => setUrl(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                                 placeholder="https://exemplo.com"
                                             />
                                         </div>
                                         <div className="lg:col-span-2">
-                                            <label className="block text-sm font-medium text-white/70 mb-2">
-                                                Link do Pull Request
-                                            </label>
+                                            <label className="block text-sm font-medium text-white/70 mb-2">Link do Pull Request</label>
                                             <input
-                                                type="url"
-                                                value={prLink}
-                                                onChange={(e) => setPrLink(e.target.value)}
-                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                                type="url" value={prLink} onChange={(e) => setPrLink(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                                 placeholder="https://github.com/org/repo/pull/123"
                                             />
                                         </div>
                                         <div className="lg:col-span-2">
-                                            <label className="block text-sm font-medium text-white/70 mb-2">
-                                                Descrição Detalhada
-                                            </label>
+                                            <label className="block text-sm font-medium text-white/70 mb-2">Descrição Detalhada</label>
                                             <textarea
-                                                value={desc}
-                                                onChange={(e) => setDesc(e.target.value)}
-                                                rows={4}
-                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                                                value={desc} onChange={(e) => setDesc(e.target.value)} rows={4}
+                                                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
                                                 placeholder="Descreva detalhadamente a fonte, sua utilidade e por que ela deve ser aprovada..."
                                             />
                                         </div>
@@ -436,21 +360,16 @@ export default function RoundtablePage() {
 
                                     <div className="flex flex-col sm:flex-row gap-4 mt-8">
                                         <button
-                                            onClick={submitProposal}
-                                            disabled={isSubmitting}
+                                            onClick={submitProposal} disabled={isSubmitting}
                                             className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg disabled:opacity-50 font-semibold flex items-center justify-center space-x-2"
                                         >
                                             {isSubmitting ? (
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                                             ) : (
-                                                <>
-                                                    <ArrowRight className="w-4 h-4" />
-                                                    <span>Enviar Proposta</span>
-                                                </>
+                                                <><ArrowRight className="w-4 h-4" /><span>Enviar Proposta</span></>
                                             )}
                                         </button>
-                                        <button
-                                            onClick={() => setShowForm(false)}
+                                        <button onClick={() => setShowForm(false)}
                                             className="px-6 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20"
                                         >
                                             Cancelar
@@ -460,29 +379,23 @@ export default function RoundtablePage() {
                             </div>
                         )}
 
-                        {/* Mensagem aprimorada */}
                         {message && (
                             <div className="mb-8">
-                                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl p-4 text-center backdrop-blur-xl">
-                                    <p className="text-blue-300 font-medium">{message}</p>
+                                <div className="bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 border border-orange-500/30 rounded-xl p-4 text-center backdrop-blur-xl">
+                                    <p className="text-orange-300 font-medium">{message}</p>
                                 </div>
                             </div>
                         )}
 
-                        {/* Propostas Grid aprimorado */}
                         <div className="mb-8">
                             <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-3xl font-bold text-white">
-                                    Propostas ({filteredProposals.length})
-                                </h2>
-                                <div className="text-sm text-white/60">
-                                    {filteredProposals.length} de {proposals.length} propostas
-                                </div>
+                                <h2 className="text-3xl font-bold text-white">Propostas ({filteredProposals.length})</h2>
+                                <div className="text-sm text-white/60">{filteredProposals.length} de {proposals.length} propostas</div>
                             </div>
 
                             {filteredProposals.length === 0 ? (
                                 <div className="text-center py-16">
-                                    <div className="w-20 h-20 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <div className="w-20 h-20 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 rounded-full flex items-center justify-center mx-auto mb-6">
                                         <Globe className="w-10 h-10 text-white/40" />
                                     </div>
                                     <p className="text-white/60 text-xl mb-2">
@@ -516,58 +429,33 @@ export default function RoundtablePage() {
                                                             </span>
                                                             <span className="text-white/40 text-xs">#{proposal.id}</span>
                                                         </div>
-                                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                                                        <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
                                                             {proposal.name}
                                                         </h3>
                                                         <div className="flex items-center space-x-2 text-sm text-white/50 mb-3">
-                                                            <User className="w-4 h-4" />
-                                                            <span>{proposal.proposer}</span>
-                                                            <span>•</span>
-                                                            <Calendar className="w-4 h-4" />
-                                                            <span>{formatDate(proposal.created_at)}</span>
+                                                            <User className="w-4 h-4" /><span>{proposal.proposer}</span><span>•</span>
+                                                            <Calendar className="w-4 h-4" /><span>{formatDate(proposal.created_at)}</span>
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <p className="text-white/70 mb-6 line-clamp-3 leading-relaxed">
-                                                    {proposal.description}
-                                                </p>
-
+                                                <p className="text-white/70 mb-6 line-clamp-3 leading-relaxed">{proposal.description}</p>
                                                 <div className="flex items-center justify-between mb-4">
                                                     <div className="flex items-center space-x-4">
-                                                        <a
-                                                            href={proposal.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-                                                        >
-                                                            <ExternalLink className="w-4 h-4 mr-1" />
-                                                            <span className="text-sm">Fonte</span>
+                                                        <a href={proposal.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-400 hover:text-blue-300 transition-colors">
+                                                            <ExternalLink className="w-4 h-4 mr-1" /><span className="text-sm">Fonte</span>
                                                         </a>
-                                                        <a
-                                                            href={proposal.pr_link}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center text-purple-400 hover:text-purple-300 transition-colors"
-                                                        >
-                                                            <GitPullRequest className="w-4 h-4 mr-1" />
-                                                            <span className="text-sm">PR</span>
+                                                        <a href={proposal.pr_link} target="_blank" rel="noopener noreferrer" className="flex items-center text-orange-400 hover:text-orange-300 transition-colors">
+                                                            <GitPullRequest className="w-4 h-4 mr-1" /><span className="text-sm">PR</span>
                                                         </a>
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className="text-sm text-white/60 mb-1">
-                                                            {approvalRate.toFixed(0)}% aprovação
-                                                        </div>
-                                                        <div className="text-xs text-white/40">
-                                                            {totalVotes} votos
-                                                        </div>
+                                                        <div className="text-sm text-white/60 mb-1">{approvalRate.toFixed(0)}% aprovação</div>
+                                                        <div className="text-xs text-white/40">{totalVotes} votos</div>
                                                     </div>
                                                 </div>
-
                                                 <div className="mb-6">
                                                     <div className="flex justify-between text-sm text-white/50 mb-2">
-                                                        <span>Progresso da Votação</span>
-                                                        <span>{votesFor}/{totalVotes}</span>
+                                                        <span>Progresso da Votação</span><span>{votesFor}/{totalVotes}</span>
                                                     </div>
                                                     <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
                                                         <div
@@ -576,40 +464,26 @@ export default function RoundtablePage() {
                                                         />
                                                     </div>
                                                 </div>
-
                                                 <div className="flex items-center justify-between mb-6">
                                                     <div className="flex items-center space-x-6">
                                                         <div className="flex items-center space-x-2">
                                                             <div className="w-3 h-3 bg-emerald-400 rounded-full"></div>
-                                                            <span className="text-emerald-400 font-semibold text-lg">
-                                                                {votesFor}
-                                                            </span>
+                                                            <span className="text-emerald-400 font-semibold text-lg">{votesFor}</span>
                                                             <span className="text-white/50 text-sm">favoráveis</span>
                                                         </div>
                                                         <div className="flex items-center space-x-2">
                                                             <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                                                            <span className="text-red-400 font-semibold text-lg">
-                                                                {votesAgainst}
-                                                            </span>
+                                                            <span className="text-red-400 font-semibold text-lg">{votesAgainst}</span>
                                                             <span className="text-white/50 text-sm">contrários</span>
                                                         </div>
                                                     </div>
                                                 </div>
-
                                                 <div className="grid grid-cols-2 gap-3">
-                                                    <button
-                                                        onClick={() => vote(proposal.id, true)}
-                                                        className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group"
-                                                    >
-                                                        <ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                                        <span className="font-medium">Aprovar</span>
+                                                    <button onClick={() => vote(proposal.id, true)} className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group">
+                                                        <ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Aprovar</span>
                                                     </button>
-                                                    <button
-                                                        onClick={() => vote(proposal.id, false)}
-                                                        className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-pink-500/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group"
-                                                    >
-                                                        <ThumbsDown className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                                                        <span className="font-medium">Rejeitar</span>
+                                                    <button onClick={() => vote(proposal.id, false)} className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-red-600/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group">
+                                                        <ThumbsDown className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Rejeitar</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -621,27 +495,6 @@ export default function RoundtablePage() {
                     </div>
                 </div>
             </div>
-
-            {/* Footer */}
-            <footer className="bg-black/20 backdrop-blur-xl border-t border-white/10 mt-16">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    <div className="flex flex-col lg:flex-row items-center justify-between">
-                        <div className="flex items-center space-x-4 mb-4 lg:mb-0">
-                            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-                                <Globe className="w-5 h-5 text-white" />
-                            </div>
-                            <span className="text-lg font-semibold text-white">TaaS Mesa Redonda</span>
-                        </div>
-                        <div className="flex items-center space-x-6 text-sm text-white/60">
-                            <span>Construído na Internet Computer</span>
-                            <span>•</span>
-                            <span>Código Aberto</span>
-                            <span>•</span>
-                            <span>Descentralizado</span>
-                        </div>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 }
