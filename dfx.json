@@ -1,5 +1,12 @@
+
 {
   "canisters": {
+    "verdict": {
+      "main": "backend/verdict/verdict.mo",
+      "type": "motoko",
+      "candid": "backend/verdict/verdict.did",
+      "args": "--enhanced-orthogonal-persistence"
+    },
     "bot-plan": {
         "dependencies": ["llm"],
         "type": "motoko",
@@ -23,7 +30,7 @@
             }
         },
         "wasm": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.wasm"
-      }
+      } 
     },
     "output_env_file": ".env",
     "defaults": {
