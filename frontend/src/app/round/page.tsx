@@ -1,76 +1,74 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useAuth } from "../auth/useAuth";
 import {
-    Plus,
-    ExternalLink,
-    ThumbsUp,
-    ThumbsDown,
-    Users,
-    Globe,
-    Clock,
-    CheckCircle,
-    XCircle,
-    Shield,
-    Link,
-    TrendingUp,
-    Calendar,
-    User,
-    GitPullRequest,
-    Award,
-    Search,
-    Eye,
-    ArrowRight,
-    Zap,
-    Target,
+    Plus, ExternalLink, ThumbsUp, ThumbsDown, Users, Globe, Clock, CheckCircle, XCircle, Shield, Link,
+    TrendingUp, Calendar, User, GitPullRequest, Award, Search, Eye, ArrowRight, Zap, Target,
 } from "lucide-react";
 
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
-// Mock data para demonstração
-const mockProposals = [
-    {
-        id: 1,
-        name: "OpenAI GPT-4 API",
-        url: "https://openai.com/gpt-4",
-        pr_link: "https://github.com/org/repo/pull/123",
-        description: "API oficial do GPT-4 para análise de texto e geração de conteúdo com alta precisão e confiabilidade.",
-        proposer: "alice.icp",
-        created_at: BigInt(Date.now() * 1000000),
-        votes_for: 45,
-        votes_against: 8,
-        status: { Pending: null },
-        voters: ["alice.icp", "bob.icp", "charlie.icp"]
-    },
-    {
-        id: 2,
-        name: "CoinGecko API",
-        url: "https://coingecko.com/api",
-        pr_link: "https://github.com/org/repo/pull/124",
-        description: "API confiável para dados de criptomoedas em tempo real, incluindo preços, volumes e estatísticas de mercado.",
-        proposer: "bob.icp",
-        created_at: BigInt((Date.now() - 86400000) * 1000000),
-        votes_for: 67,
-        votes_against: 12,
-        status: { Approved: null },
-        voters: ["alice.icp", "bob.icp", "charlie.icp", "diana.icp"]
-    },
-    {
-        id: 3,
-        name: "Weather API",
-        url: "https://weatherapi.com",
-        pr_link: "https://github.com/org/repo/pull/125",
-        description: "Dados meteorológicos precisos e atualizados para análises climáticas e previsões.",
-        proposer: "charlie.icp",
-        created_at: BigInt((Date.now() - 172800000) * 1000000),
-        votes_for: 23,
-        votes_against: 34,
-        status: { Rejected: null },
-        voters: ["alice.icp", "bob.icp"]
-    }
-];
+// IC Interaction Imports
+import { HttpAgent, Actor } from "@dfinity/agent";
+import { IDL } from "@dfinity/candid";
+import { Principal } from "@dfinity/principal";
 
+// --- Tipos para a Integração com o RoundtableCanister ---
+type ProposalStatus = {
+  Pending?: null;
+  Approved?: null;
+  Rejected?: null;
+};
+
+type Proposal = {
+  id: bigint;
+  name: string;
+  url: string;
+  pr_link: string;
+  description: string;
+  proposer: Principal;
+  created_at: bigint;
+  votes_for: bigint;
+  votes_against: bigint;
+  status: ProposalStatus;
+  voters: Array<Principal>;
+};
+
+// --- Definição da Interface Candid para o Canister ---
+const roundtableIdlFactory = ({ IDL }: { IDL: any }) => {
+  const ProposalStatus = IDL.Variant({
+    Pending: IDL.Null,
+    Approved: IDL.Null,
+    Rejected: IDL.Null,
+  });
+  const Proposal = IDL.Record({
+    id: IDL.Nat,
+    name: IDL.Text,
+    url: IDL.Text,
+    pr_link: IDL.Text,
+    description: IDL.Text,
+    proposer: IDL.Principal,
+    created_at: IDL.Int,
+    votes_for: IDL.Nat,
+    votes_against: IDL.Nat,
+    status: ProposalStatus,
+    voters: IDL.Vec(IDL.Principal),
+  });
+  return IDL.Service({
+    // CORREÇÃO: Removido ["query"] para tratar list_proposals como uma chamada de atualização.
+    // O ideal é adicionar a palavra-chave `query` à sua função no Motoko:
+    // public query func list_proposals(): async [Proposal] { ... }
+    // e depois adicionar ["query"] de volta aqui para melhor performance.
+    list_proposals: IDL.Func([], [IDL.Vec(Proposal)], []),
+    propose_source: IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [IDL.Nat], []),
+    vote_source: IDL.Func([IDL.Nat, IDL.Bool], [IDL.Text], []),
+  });
+};
+
+
+// Whitelist - por enquanto, isto permanece estático pois não está no canister.
 const mockWhitelist = [
     "openai.com",
     "coingecko.com",
@@ -79,22 +77,14 @@ const mockWhitelist = [
     "reddit.com/r/icp"
 ];
 
-type Proposal = {
-    id: number;
-    name: string;
-    url: string;
-    pr_link: string;
-    description: string;
-    proposer: string;
-    created_at: bigint;
-    votes_for: number;
-    votes_against: number;
-    status: { Pending?: null; Approved?: null; Rejected?: null };
-    voters: string[];
-};
 
 export default function RoundtablePage() {
-    const [proposals, setProposals] = useState<Proposal[]>(mockProposals);
+    const { principal, identity, isAuthenticated } = useAuth();
+    
+    const [proposals, setProposals] = useState<Proposal[]>([]);
+    const [isLoadingProposals, setIsLoadingProposals] = useState(true);
+    
+    // Estado do formulário
     const [name, setName] = useState("");
     const [url, setUrl] = useState("");
     const [prLink, setPrLink] = useState("");
@@ -102,102 +92,171 @@ export default function RoundtablePage() {
     const [message, setMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
+    
+    // Estado da UI
     const [whitelist, setWhitelist] = useState<string[]>(mockWhitelist);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
-    // Estatísticas
-    const stats = {
-        total: proposals.length,
-        approved: proposals.filter(p => p.status.Approved !== undefined).length,
-        pending: proposals.filter(p => p.status.Pending !== undefined).length,
-        rejected: proposals.filter(p => p.status.Rejected !== undefined).length,
-        totalVotes: proposals.reduce((sum, p) => sum + p.votes_for + p.votes_against, 0)
-    };
+    // --- Criação do Ator do Canister ---
+    const roundtableCanisterId = Principal.fromText("u6s2n-gx777-77774-qaaba-cai");
 
-    // Filtros
-    const filteredProposals = proposals.filter(proposal => {
-        const matchesSearch = proposal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            proposal.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === "all" || 
-                            (statusFilter === "pending" && proposal.status.Pending !== undefined) ||
-                            (statusFilter === "approved" && proposal.status.Approved !== undefined) ||
-                            (statusFilter === "rejected" && proposal.status.Rejected !== undefined);
-        return matchesSearch && matchesStatus;
-    });
+    const createRoundtableActor = useCallback(() => {
+        if (!identity) {
+             console.warn("createRoundtableActor: Identity not available. Creating anonymous agent.");
+        }
+        
+        const host = process.env.NODE_ENV === "production" 
+            ? "https://ic0.app" 
+            : "http://127.0.0.1:4943";
+
+        const agent = new HttpAgent({
+            host,
+            identity: identity, 
+        });
+
+        if (process.env.NODE_ENV !== "production") {
+            agent.fetchRootKey().catch(err => {
+                console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
+                console.error(err);
+            });
+        }
+
+        return Actor.createActor(roundtableIdlFactory, {
+          agent,
+          canisterId: roundtableCanisterId,
+        });
+    }, [identity]);
+
+    const fetchProposals = useCallback(async () => {
+        setIsLoadingProposals(true);
+        const actor = createRoundtableActor();
+            
+        try {
+            const proposalsResult = (await actor.list_proposals()) as Proposal[];
+
+            if (!Array.isArray(proposalsResult)) {
+                throw new Error("Formato de dados inesperado recebido do canister.");
+            }
+            
+            proposalsResult.sort((a, b) => Number(b.created_at - a.created_at));
+            setProposals(proposalsResult);
+        } catch (err) {
+            console.error("Falha ao carregar as propostas:", err);
+            setMessage("❌ Falha ao carregar as propostas. Verifique o console para detalhes.");
+        } finally {
+            setIsLoadingProposals(false);
+        }
+    }, [createRoundtableActor]);
+
+    useEffect(() => {
+        fetchProposals();
+    }, [fetchProposals]);
+
 
     const submitProposal = async () => {
+        if (!isAuthenticated || !principal) {
+            setMessage("❌ Por favor, faça login para submeter uma proposta.");
+            return;
+        }
         if (!name.trim() || !url.trim() || !prLink.trim() || !desc.trim()) {
-            setMessage("❌ Preencha todos os campos");
+            setMessage("❌ Por favor, preencha todos os campos.");
             return;
         }
 
         setIsSubmitting(true);
+        setMessage("");
+        const actor = createRoundtableActor();
+
         try {
-            const newProposal: Proposal = {
-                id: proposals.length + 1,
-                name,
-                url,
-                pr_link: prLink,
-                description: desc,
-                proposer: "user.icp",
-                created_at: BigInt(Date.now() * 1000000),
-                votes_for: 0,
-                votes_against: 0,
-                status: { Pending: null },
-                voters: []
-            };
-            
-            setProposals([newProposal, ...proposals]);
-            setMessage(`✅ Proposta enviada com sucesso! ID: ${newProposal.id}`);
+            const newProposalId = await actor.propose_source(name, url, prLink, desc);
+            setMessage(`✅ Proposta enviada com sucesso! ID: ${newProposalId}`);
             setName("");
             setUrl("");
             setPrLink("");
             setDesc("");
             setShowForm(false);
+            await fetchProposals(); // Atualiza a lista
         } catch (err) {
             console.error(err);
-            setMessage("❌ Erro ao enviar proposta");
+            setMessage("❌ Erro ao submeter a proposta.");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const vote = async (id: number, isFor: boolean) => {
+    const vote = async (id: bigint, isFor: boolean) => {
+        if (!isAuthenticated) {
+            setMessage("❌ Por favor, faça login para votar.");
+            return;
+        }
+        
+        const actor = createRoundtableActor();
+        
+        const originalProposals = [...proposals];
+        setProposals(proposals.map(p => {
+            if (p.id === id && !p.voters.find(v => v.toText() === principal?.toText())) {
+                return {
+                    ...p,
+                    votes_for: isFor ? p.votes_for + 1n : p.votes_for,
+                    votes_against: !isFor ? p.votes_against + 1n : p.votes_against,
+                    voters: [...p.voters, principal!]
+                };
+            }
+            return p;
+        }));
+
+
         try {
-            setProposals(proposals.map(p => 
-                p.id === id 
-                    ? { ...p, votes_for: isFor ? p.votes_for + 1 : p.votes_for, votes_against: !isFor ? p.votes_against + 1 : p.votes_against }
-                    : p
-            ));
-            setMessage(`✅ Voto ${isFor ? 'favorável' : 'contrário'} registrado!`);
+            const result = (await actor.vote_source(id, isFor)) as string;
+            setMessage(`✅ ${result}`);
+            await fetchProposals(); 
         } catch (err) {
             console.error(err);
-            setMessage("❌ Erro ao votar");
+            setMessage("❌ Erro ao registar o voto. Pode já ter votado.");
+            setProposals(originalProposals); 
         }
     };
 
+    const stats = {
+        total: proposals.length,
+        approved: proposals.filter(p => 'Approved' in p.status).length,
+        pending: proposals.filter(p => 'Pending' in p.status).length,
+        rejected: proposals.filter(p => 'Rejected' in p.status).length,
+        totalVotes: proposals.reduce((sum, p) => sum + Number(p.votes_for) + Number(p.votes_against), 0)
+    };
+
+    const filteredProposals = proposals.filter(proposal => {
+        const matchesSearch = proposal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            proposal.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === "all" || 
+                            (statusFilter === "pending" && 'Pending' in proposal.status) ||
+                            (statusFilter === "approved" && 'Approved' in proposal.status) ||
+                            (statusFilter === "rejected" && 'Rejected' in proposal.status);
+        return matchesSearch && matchesStatus;
+    });
+
     const formatStatus = (status: Proposal["status"]) => {
-        if (status.Approved !== undefined)
+        if ('Approved' in status)
             return { text: "Aprovada", color: "text-emerald-400 bg-emerald-500/20 border-emerald-500/30", icon: CheckCircle };
-        if (status.Rejected !== undefined)
+        if ('Rejected' in status)
             return { text: "Rejeitada", color: "text-red-400 bg-red-500/20 border-red-500/30", icon: XCircle };
         return { text: "Pendente", color: "text-amber-400 bg-amber-500/20 border-amber-500/30", icon: Clock };
     };
 
     const formatDate = (timestamp: bigint) => {
-        const date = new Date(Number(timestamp) / 1000000);
+        const date = new Date(Number(timestamp / 1000000n)); 
         return date.toLocaleDateString("pt-BR", {
             day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
         });
     };
-
+    
     return (
         <div className="min-h-screen bg-[#0B0E13] text-white">
             <Navbar />
             <main className="flex flex-col flex-grow px-4 pt-32 pb-20 max-w mx-auto">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Hero Section */}
+                    {/* Secção Hero */}
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 px-4 py-2 rounded-full border border-orange-500/30 mb-6">
                             <Zap className="w-4 h-4 text-orange-400" />
@@ -212,7 +271,7 @@ export default function RoundtablePage() {
                         </p>
                     </div>
 
-                    {/* Stats Dashboard */}
+                    {/* Painel de Estatísticas */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                             <div className="flex items-center justify-between mb-2">
@@ -245,7 +304,7 @@ export default function RoundtablePage() {
                     </div>
 
                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                        {/* Sidebar */}
+                        {/* Barra Lateral */}
                         <div className="xl:col-span-1 space-y-6">
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl">
                                 <div className="flex items-center justify-between mb-4">
@@ -276,7 +335,8 @@ export default function RoundtablePage() {
                                 <div className="space-y-3">
                                     <button
                                         onClick={() => setShowForm(!showForm)}
-                                        className="w-full px-4 py-3 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 font-medium flex items-center justify-center space-x-2"
+                                        disabled={!isAuthenticated}
+                                        className="w-full px-4 py-3 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 font-medium flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Plus className="w-4 h-4" />
                                         <span>Nova Proposta</span>
@@ -289,7 +349,7 @@ export default function RoundtablePage() {
                             </div>
                         </div>
 
-                        {/* Main Content */}
+                        {/* Conteúdo Principal */}
                         <div className="xl:col-span-3">
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 mb-8">
                                 <div className="flex flex-col lg:flex-row gap-4">
@@ -398,7 +458,12 @@ export default function RoundtablePage() {
                                     <div className="text-sm text-white/60">{filteredProposals.length} de {proposals.length} propostas</div>
                                 </div>
 
-                                {filteredProposals.length === 0 ? (
+                                {isLoadingProposals ? (
+                                    <div className="text-center py-16">
+                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-400 mx-auto"></div>
+                                        <p className="mt-4 text-white/60">A carregar propostas...</p>
+                                    </div>
+                                ) : filteredProposals.length === 0 ? (
                                     <div className="text-center py-16">
                                         <div className="w-20 h-20 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 rounded-full flex items-center justify-center mx-auto mb-6">
                                             <Globe className="w-10 h-10 text-white/40" />
@@ -419,10 +484,11 @@ export default function RoundtablePage() {
                                             const StatusIcon = status.icon;
                                             const totalVotes = votesFor + votesAgainst;
                                             const approvalRate = totalVotes > 0 ? (votesFor / totalVotes) * 100 : 0;
+                                            const hasVoted = principal && proposal.voters.some(v => v.toText() === principal.toText());
 
                                             return (
                                                 <div
-                                                    key={proposal.id}
+                                                    key={String(proposal.id)}
                                                     className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl hover:shadow-2xl transition-all duration-300 group hover:bg-white/10"
                                                 >
                                                     <div className="flex items-start justify-between mb-4">
@@ -432,13 +498,15 @@ export default function RoundtablePage() {
                                                                     <StatusIcon className="w-3 h-3 inline mr-1" />
                                                                     {status.text}
                                                                 </span>
-                                                                <span className="text-white/40 text-xs">#{proposal.id}</span>
+                                                                <span className="text-white/40 text-xs">#{String(proposal.id)}</span>
                                                             </div>
                                                             <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
                                                                 {proposal.name}
                                                             </h3>
-                                                            <div className="flex items-center space-x-2 text-sm text-white/50 mb-3">
-                                                                <User className="w-4 h-4" /><span>{proposal.proposer}</span><span>•</span>
+                                                            <div className="flex items-center space-x-2 text-sm text-white/50 mb-3 truncate">
+                                                                <User className="w-4 h-4" />
+                                                                <span className="truncate" title={proposal.proposer.toText()}>{proposal.proposer.toText()}</span>
+                                                                <span>•</span>
                                                                 <Calendar className="w-4 h-4" /><span>{formatDate(proposal.created_at)}</span>
                                                             </div>
                                                         </div>
@@ -469,28 +537,23 @@ export default function RoundtablePage() {
                                                             />
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center justify-between mb-6">
-                                                        <div className="flex items-center space-x-6">
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="w-3 h-3 bg-emerald-400 rounded-full"></div>
-                                                                <span className="text-emerald-400 font-semibold text-lg">{votesFor}</span>
-                                                                <span className="text-white/50 text-sm">favoráveis</span>
-                                                            </div>
-                                                            <div className="flex items-center space-x-2">
-                                                                <div className="w-3 h-3 bg-red-400 rounded-full"></div>
-                                                                <span className="text-red-400 font-semibold text-lg">{votesAgainst}</span>
-                                                                <span className="text-white/50 text-sm">contrários</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
                                                     <div className="grid grid-cols-2 gap-3">
-                                                        <button onClick={() => vote(proposal.id, true)} className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group">
+                                                        <button 
+                                                            onClick={() => vote(proposal.id, true)} 
+                                                            disabled={!isAuthenticated || hasVoted}
+                                                            className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        >
                                                             <ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Aprovar</span>
                                                         </button>
-                                                        <button onClick={() => vote(proposal.id, false)} className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-red-600/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group">
+                                                        <button 
+                                                            onClick={() => vote(proposal.id, false)} 
+                                                            disabled={!isAuthenticated || hasVoted}
+                                                            className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-red-600/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
+                                                        >
                                                             <ThumbsDown className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Rejeitar</span>
                                                         </button>
                                                     </div>
+                                                    {hasVoted && <p className="text-center text-xs text-white/50 mt-3">Já votou nesta proposta.</p>}
                                                 </div>
                                             );
                                         })}
