@@ -7,6 +7,7 @@ import IC "ic:aaaaa-aa";
 import JSON "mo:serde/JSON";
 import LLM "mo:llm";
 import Iter "mo:base/Iter";
+import Error "mo:base/Error";
 
 actor SearchNews {
 
@@ -30,7 +31,7 @@ actor SearchNews {
   };
 
   // TODO: Replace with your actual BotPlanCanister ID
-  let botPlanCanister = actor("uxrrr-q7777-77774-qaaaq-cai") : actor {
+  let botPlanCanister = actor("dkwk6-4aaaa-aaaaf-qbbxa-cai") : actor {
     use_request_for : (Principal) -> async Bool;
   };
 
@@ -120,6 +121,7 @@ actor SearchNews {
       headers = headers;
       body = null;
       max_response_bytes = null;
+      is_replicated = ?false;
       transform = ?{
         function = transform;
         context = Blob.fromArray([]);
@@ -159,9 +161,10 @@ actor SearchNews {
           };
         };
       };
-    } catch (_e) {
+    } catch (e) {
       Debug.print("❌ HTTP request error occurred");
-      return "❌ Error fetching news from external source";
+      Debug.print("❌ HTTP request error occurred: " # Error.message(e));
+      return "❌ Error fetching news. Please try again later. Exception: " # Error.message(e);
     };
   };
 };
