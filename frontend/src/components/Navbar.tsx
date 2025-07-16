@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 const navigationItems = [
-    { name: "Home", href: "#hero" },
-    { name: "Pillars", href: "#pillars" },
-    { name: "Features", href: "#features" },
-    { name: "How it Works", href: "#how-it-works" },
+    { name: "Chat", href: "/chat" },
+    { name: "Profile Area", href: "/profile-area" },
+    { name: "Rounded Table", href: "/round" },
+    { name: "Trading", href: "/trade" },
     {
         name: "GitHub",
         href: "https://github.com/Txrmarcos/TaaS",
@@ -18,6 +19,7 @@ const navigationItems = [
 export const Navbar = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -25,12 +27,14 @@ export const Navbar = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const scrollToSection = (href: string) => {
+    const scrollToSection = (href: string, external?: boolean) => {
         if (href.startsWith("#")) {
             const element = document.querySelector(href);
             if (element) element.scrollIntoView({ behavior: "smooth" });
-        } else {
+        } else if (external) {
             window.open(href, "_blank");
+        } else {
+            router.push(href);
         }
         setIsMobileMenuOpen(false);
     };
@@ -62,7 +66,7 @@ export const Navbar = () => {
                     {navigationItems.map((item) => (
                         <button
                             key={item.name}
-                            onClick={() => scrollToSection(item.href)}
+                            onClick={() => scrollToSection(item.href, item.external)}
                             className="text-sm text-white/80 hover:text-white font-medium relative group transition-colors"
                         >
                             {item.name}
@@ -89,8 +93,8 @@ export const Navbar = () => {
                         {navigationItems.map((item) => (
                             <button
                                 key={item.name}
-                                onClick={() => scrollToSection(item.href)}
-                                className="block w-full text-left text-white/80 hover:text-white text-sm font-medium cursor-pointer "
+                                onClick={() => scrollToSection(item.href, item.external)}
+                                className="block w-full text-left text-white/80 hover:text-white text-sm font-medium cursor-pointer"
                             >
                                 {item.name}
                             </button>
