@@ -50,23 +50,26 @@ export default function RoundtablePage() {
         }
     };
   
+     useEffect(() => {
+        fetchProposals();
+    }, []);
+
     useEffect(() => {
-      fetchProposals();
-      fetchWhitelist();
+        fetchWhitelist();
     }, []);
 
 
     const fetchWhitelist = async () => {
-    try {
-      setIsLoadingWhitelist(true);
-      const domains = await searchNewsActor.getWhitelist();
-      setWhitelist(domains as string[]);
-    } catch (err) {
-      console.error("Erro ao buscar whitelist:", err);
-      setWhitelist([]);
-    } finally {
-      setIsLoadingWhitelist(false);
-    }
+        try {
+            setIsLoadingWhitelist(true);
+            const domains = await searchNewsActor.getWhitelist();
+            setWhitelist(domains as string[]);
+        } catch (err) {
+            console.error("Error fetching whitelist:", err);
+            setWhitelist([]);
+        } finally {
+            setIsLoadingWhitelist(false);
+        }
     };
 
 
@@ -147,6 +150,16 @@ export default function RoundtablePage() {
         return { text: "Pendente", color: "text-amber-400 bg-amber-500/20 border-amber-500/30", icon: Clock };
     };
 
+       // Clear message after 5 seconds
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => {
+                setMessage("");
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
+
     
     return (
         <div className="min-h-screen bg-[#0B0E13] text-white">
@@ -213,20 +226,32 @@ export default function RoundtablePage() {
                                         {whitelist.length}
                                     </span>
                                 </div>
-                                <div className="space-y-3 mb-4">
-                                    {whitelist.slice(0, 5).map((domain, index) => (
-                                        <div key={index} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
-                                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                                            <Link className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                                            <span className="text-white/80 text-sm truncate">{domain}</span>
+                                
+                                {/* Show loading state for whitelist */}
+                                {isLoadingWhitelist ? (
+                                    <div className="text-center py-8">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mx-auto"></div>
+                                        <p className="mt-2 text-white/60 text-sm">Carregando...</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="space-y-3 mb-4">
+                                            {whitelist.slice(0, 5).map((domain, index) => (
+                                                <div key={index} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
+                                                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                                                    <Link className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                                                    <span className="text-white/80 text-sm truncate">{domain}</span>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
-                                </div>
-                                <button className="w-full px-4 py-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2">
-                                    <Eye className="w-4 h-4" />
-                                    <span>Ver todas</span>
-                                </button>
+                                        <button className="w-full px-4 py-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2">
+                                            <Eye className="w-4 h-4" />
+                                            <span>Ver todas</span>
+                                        </button>
+                                    </>
+                                )}
                             </div>
+                            
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                                 <h3 className="text-lg font-semibold text-white mb-4">Ações Rápidas</h3>
                                 <div className="space-y-3">
@@ -245,6 +270,7 @@ export default function RoundtablePage() {
                                 </div>
                             </div>
                         </div>
+
 
                         {/* Conteúdo Principal */}
                         <div className="xl:col-span-3">
