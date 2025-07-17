@@ -1,90 +1,33 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
+import { roundtableActor, searchNewsActor } from "../utils/canister";
 import {
-    Plus, ExternalLink, ThumbsUp, ThumbsDown, Users, Globe, Clock, CheckCircle, XCircle, Shield, Link,
+    Plus, ExternalLink, ThumbsUp, ThumbsDown, Globe, Clock, CheckCircle, XCircle, Shield, Link,
     TrendingUp, Calendar, User, GitPullRequest, Award, Search, Eye, ArrowRight, Zap, Target,
 } from "lucide-react";
-
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
-// IC Interaction Imports
-import { HttpAgent, Actor } from "@dfinity/agent";
-import { IDL } from "@dfinity/candid";
-import { Principal } from "@dfinity/principal";
-
-// --- Tipos para a Integração com o RoundtableCanister ---
-type ProposalStatus = {
-  Pending?: null;
-  Approved?: null;
-  Rejected?: null;
-};
-
 type Proposal = {
-  id: bigint;
-  name: string;
-  url: string;
-  pr_link: string;
-  description: string;
-  proposer: Principal;
-  created_at: bigint;
-  votes_for: bigint;
-  votes_against: bigint;
-  status: ProposalStatus;
-  voters: Array<Principal>;
+    id: number;
+    name: string;
+    url: string;
+    pr_link: string;
+    description: string;
+    proposer: string;
+    created_at: bigint;
+    votes_for: number;
+    votes_against: number;
+    status: { Pending?: null; Approved?: null; Rejected?: null };
+    voters: string[];
 };
-
-// --- Definição da Interface Candid para o Canister ---
-const roundtableIdlFactory = ({ IDL }: { IDL: any }) => {
-  const ProposalStatus = IDL.Variant({
-    Pending: IDL.Null,
-    Approved: IDL.Null,
-    Rejected: IDL.Null,
-  });
-  const Proposal = IDL.Record({
-    id: IDL.Nat,
-    name: IDL.Text,
-    url: IDL.Text,
-    pr_link: IDL.Text,
-    description: IDL.Text,
-    proposer: IDL.Principal,
-    created_at: IDL.Int,
-    votes_for: IDL.Nat,
-    votes_against: IDL.Nat,
-    status: ProposalStatus,
-    voters: IDL.Vec(IDL.Principal),
-  });
-  return IDL.Service({
-    // CORREÇÃO: Removido ["query"] para tratar list_proposals como uma chamada de atualização.
-    // O ideal é adicionar a palavra-chave `query` à sua função no Motoko:
-    // public query func list_proposals(): async [Proposal] { ... }
-    // e depois adicionar ["query"] de volta aqui para melhor performance.
-    list_proposals: IDL.Func([], [IDL.Vec(Proposal)], []),
-    propose_source: IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [IDL.Nat], []),
-    vote_source: IDL.Func([IDL.Nat, IDL.Bool], [IDL.Text], []),
-  });
-};
-
-
-// Whitelist - por enquanto, isto permanece estático pois não está no canister.
-const mockWhitelist = [
-    "openai.com",
-    "coingecko.com",
-    "api.github.com",
-    "news.ycombinator.com",
-    "reddit.com/r/icp"
-];
-
 
 export default function RoundtablePage() {
-    const { principal, identity, isAuthenticated } = useAuth();
-    
+    const { principal, isAuthenticated } = useAuth();
     const [proposals, setProposals] = useState<Proposal[]>([]);
     const [isLoadingProposals, setIsLoadingProposals] = useState(true);
-    
-    // Estado do formulário
     const [name, setName] = useState("");
     const [url, setUrl] = useState("");
     const [prLink, setPrLink] = useState("");
@@ -92,130 +35,90 @@ export default function RoundtablePage() {
     const [message, setMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    
-    // Estado da UI
-    const [whitelist, setWhitelist] = useState<string[]>(mockWhitelist);
+    const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(false);
+    const [whitelist, setWhitelist] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
-    // --- Criação do Ator do Canister ---
-    const roundtableCanisterId = Principal.fromText("u6s2n-gx777-77774-qaaba-cai");
-
-    const createRoundtableActor = useCallback(() => {
-        if (!identity) {
-             console.warn("createRoundtableActor: Identity not available. Creating anonymous agent.");
-        }
-        
-        const host = process.env.NODE_ENV === "production" 
-            ? "https://ic0.app" 
-            : "http://127.0.0.1:4943";
-
-        const agent = new HttpAgent({
-            host,
-            identity: identity, 
-        });
-
-        if (process.env.NODE_ENV !== "production") {
-            agent.fetchRootKey().catch(err => {
-                console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
-                console.error(err);
-            });
-        }
-
-        return Actor.createActor(roundtableIdlFactory, {
-          agent,
-          canisterId: roundtableCanisterId,
-        });
-    }, [identity]);
-
-    const fetchProposals = useCallback(async () => {
-        setIsLoadingProposals(true);
-        const actor = createRoundtableActor();
-            
+    
+    const fetchProposals = async () => {
         try {
-            const proposalsResult = (await actor.list_proposals()) as Proposal[];
-
-            if (!Array.isArray(proposalsResult)) {
-                throw new Error("Formato de dados inesperado recebido do canister.");
-            }
-            
-            proposalsResult.sort((a, b) => Number(b.created_at - a.created_at));
-            setProposals(proposalsResult);
+            const list = await roundtableActor.list_proposals();
+            setProposals(list as Proposal[]);
         } catch (err) {
-            console.error("Falha ao carregar as propostas:", err);
-            setMessage("❌ Falha ao carregar as propostas. Verifique o console para detalhes.");
-        } finally {
-            setIsLoadingProposals(false);
+            console.error(err);
         }
-    }, [createRoundtableActor]);
-
+    };
+  
     useEffect(() => {
-        fetchProposals();
-    }, [fetchProposals]);
+      fetchProposals();
+      fetchWhitelist();
+    }, []);
+
+
+    const fetchWhitelist = async () => {
+    try {
+      setIsLoadingWhitelist(true);
+      const domains = await searchNewsActor.getWhitelist();
+      setWhitelist(domains as string[]);
+    } catch (err) {
+      console.error("Erro ao buscar whitelist:", err);
+      setWhitelist([]);
+    } finally {
+      setIsLoadingWhitelist(false);
+    }
+    };
+
 
 
     const submitProposal = async () => {
-        if (!isAuthenticated || !principal) {
-            setMessage("❌ Por favor, faça login para submeter uma proposta.");
-            return;
-        }
         if (!name.trim() || !url.trim() || !prLink.trim() || !desc.trim()) {
-            setMessage("❌ Por favor, preencha todos os campos.");
+            setMessage("❌ Preencha todos os campos");
             return;
         }
 
         setIsSubmitting(true);
-        setMessage("");
-        const actor = createRoundtableActor();
-
         try {
-            const newProposalId = await actor.propose_source(name, url, prLink, desc);
-            setMessage(`✅ Proposta enviada com sucesso! ID: ${newProposalId}`);
+            const id = await roundtableActor.propose_source(
+                name,
+                url,
+                prLink,
+                desc
+            ); // 🟢 Adiciona prLink
+            setMessage(`✅ Proposta enviada com sucesso! ID: ${id}`);
             setName("");
             setUrl("");
             setPrLink("");
             setDesc("");
             setShowForm(false);
-            await fetchProposals(); // Atualiza a lista
+            fetchProposals();
         } catch (err) {
             console.error(err);
-            setMessage("❌ Erro ao submeter a proposta.");
+            setMessage("❌ Erro ao enviar proposta");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const vote = async (id: bigint, isFor: boolean) => {
-        if (!isAuthenticated) {
-            setMessage("❌ Por favor, faça login para votar.");
-            return;
-        }
-        
-        const actor = createRoundtableActor();
-        
-        const originalProposals = [...proposals];
-        setProposals(proposals.map(p => {
-            if (p.id === id && !p.voters.find(v => v.toText() === principal?.toText())) {
-                return {
-                    ...p,
-                    votes_for: isFor ? p.votes_for + 1n : p.votes_for,
-                    votes_against: !isFor ? p.votes_against + 1n : p.votes_against,
-                    voters: [...p.voters, principal!]
-                };
-            }
-            return p;
-        }));
-
-
+    const vote = async (id: number, isFor: boolean) => {
         try {
-            const result = (await actor.vote_source(id, isFor)) as string;
-            setMessage(`✅ ${result}`);
-            await fetchProposals(); 
+            const res = await roundtableActor.vote_source(id, isFor);
+            setMessage(res as string);
+            fetchProposals();
         } catch (err) {
             console.error(err);
-            setMessage("❌ Erro ao registar o voto. Pode já ter votado.");
-            setProposals(originalProposals); 
+            setMessage("❌ Erro ao votar");
         }
+    };
+
+
+    const formatDate = (timestamp: bigint) => {
+        const date = new Date(Number(timestamp) / 1000000);
+        return date.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+        });
     };
 
     const stats = {
@@ -244,12 +147,6 @@ export default function RoundtablePage() {
         return { text: "Pendente", color: "text-amber-400 bg-amber-500/20 border-amber-500/30", icon: Clock };
     };
 
-    const formatDate = (timestamp: bigint) => {
-        const date = new Date(Number(timestamp / 1000000n)); 
-        return date.toLocaleDateString("pt-BR", {
-            day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit"
-        });
-    };
     
     return (
         <div className="min-h-screen bg-[#0B0E13] text-white">
@@ -484,7 +381,7 @@ export default function RoundtablePage() {
                                             const StatusIcon = status.icon;
                                             const totalVotes = votesFor + votesAgainst;
                                             const approvalRate = totalVotes > 0 ? (votesFor / totalVotes) * 100 : 0;
-                                            const hasVoted = principal && proposal.voters.some(v => v.toText() === principal.toText());
+                                            const hasVoted = principal && proposal.voters.some(v => v === principal.toText());
 
                                             return (
                                                 <div
@@ -505,7 +402,7 @@ export default function RoundtablePage() {
                                                             </h3>
                                                             <div className="flex items-center space-x-2 text-sm text-white/50 mb-3 truncate">
                                                                 <User className="w-4 h-4" />
-                                                                <span className="truncate" title={proposal.proposer.toText()}>{proposal.proposer.toText()}</span>
+                                                                <span className="truncate" title={proposal.proposer}>{proposal.proposer}</span>
                                                                 <span>•</span>
                                                                 <Calendar className="w-4 h-4" /><span>{formatDate(proposal.created_at)}</span>
                                                             </div>
@@ -539,15 +436,15 @@ export default function RoundtablePage() {
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <button 
-                                                            onClick={() => vote(proposal.id, true)} 
-                                                            disabled={!isAuthenticated || hasVoted}
+                                                            onClick={() => vote(Number(proposal.id), true)} 
+                                                            disabled={!isAuthenticated || !!hasVoted}
                                                             className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
                                                         >
                                                             <ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Aprovar</span>
                                                         </button>
                                                         <button 
-                                                            onClick={() => vote(proposal.id, false)} 
-                                                            disabled={!isAuthenticated || hasVoted}
+                                                            onClick={() => vote(Number(proposal.id), false)} 
+                                                            disabled={!isAuthenticated || !!hasVoted}
                                                             className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-red-600/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
                                                         >
                                                             <ThumbsDown className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Rejeitar</span>
