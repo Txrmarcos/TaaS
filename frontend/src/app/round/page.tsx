@@ -42,11 +42,15 @@ export default function RoundtablePage() {
 
     
     const fetchProposals = async () => {
+        setIsLoadingProposals(true); // Adicione isso aqui
         try {
             const list = await roundtableActor.list_proposals();
+            console.log(list);
             setProposals(list as Proposal[]);
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsLoadingProposals(false); // Adicione isso aqui
         }
     };
   
