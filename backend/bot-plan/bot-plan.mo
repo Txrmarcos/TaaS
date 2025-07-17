@@ -37,7 +37,7 @@ actor BotPlanCanister {
 
   stable var users: Trie.Trie<Text, UserStatus> = Trie.empty();
   
-  private let MY_WALLET_PRINCIPAL = "YOUR_ACTUAL_PRINCIPAL_HERE";
+  private let MY_WALLET_PRINCIPAL = "7bikl-yrjtx-w6ib3-loqyc-buozt-ubb2o-vhkdb-vlmnz-jhyoo-5qiuc-5qe";
   private let TRANSFER_FEE = 10;
 
   func getQuota(p: Plan): Nat {
@@ -114,58 +114,66 @@ actor BotPlanCanister {
   };
 
   public shared({caller}) func subscribe(plan: Plan) : async Text {
-    let callerText = Principal.toText(caller);
-    let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
+  let callerText = Principal.toText(caller);
+  let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
 
-    switch (Trie.find(users, key, Text.equal)) {
-      case (?existingStatus) {
-        let now = Time.now();
-        if (now < existingStatus.resetAt) {
-          return "⚠️ Você já possui um plano ativo: " # debug_show(existingStatus.plan);
+  switch (Trie.find(users, key, Text.equal)) {
+    case (?existingStatus) {
+      let now = Time.now();
+      if (now < existingStatus.resetAt) {
+        switch (existingStatus.plan, plan) {
+          case (#Standard, #Standard) { return "⚠️ Plano Standard já ativo!" };
+          case (#Pro, #Pro) { return "⚠️ Plano Pro já ativo!" };
+          case (#Premium, #Premium) { return "⚠️ Plano Premium já ativo!" };
+          case (_, _) { 
+            // Planos diferentes - permite a mudança
+            Debug.print("Mudança de plano: " # debug_show(existingStatus.plan) # " -> " # debug_show(plan));
+          };
         };
       };
-      case (null) {};
     };
-
-    let price_e8s = switch (plan) {
-      case (#Standard) { 0 };
-      case (#Pro) { 2_000_000 };
-      case (#Premium) { 10_000_000 };
-    };
-
-    if (price_e8s == 0) {
-      activatePlan(plan, caller);
-      return "✅ Plano gratuito ativado!";
-    };
-
-    let balance = await checkUserBalance(caller);
-    let totalRequired = price_e8s + TRANSFER_FEE;
-    
-    if (balance >= totalRequired) {
-      let transferResult = await transferPayment(caller, price_e8s);
-      
-      switch (transferResult) {
-        case (#ok(blockIndex)) {
-          activatePlan(plan, caller);
-          return "💎 Pagamento processado! Plano ativado. Transação: " # Nat.toText(blockIndex);
-        };
-        case (#err(errorMsg)) {
-          return "❌ Erro ao transferir: " # errorMsg;
-        };
-      };
-    } else {
-      let subaccount = principalToSubaccount(caller);
-      let sub_hex = Blob.toArray(subaccount);
-      let sub_hex_text = Array.foldLeft<Nat8, Text>(
-        sub_hex,
-        "",
-        func (acc, b) {
-          acc # (if (b < 16) { "0" } else { "" }) # Nat8.toText(b)
-        }
-      );
-      return "⚠️ Saldo insuficiente.\nEnvie " # Nat.toText(totalRequired) # " e8s para dkwk6-4aaaa-aaaaf-qbbxa-cai\nSubaccount: " # sub_hex_text;
-    };
+    case (null) {};
   };
+
+  let price_e8s = switch (plan) {
+    case (#Standard) { 0 };
+    case (#Pro) { 2_000_000 };
+    case (#Premium) { 10_000_000 };
+  };
+
+  if (price_e8s == 0) {
+    activatePlan(plan, caller);
+    return "✅ Plano Standard ativado!";
+  };
+
+  let balance = await checkUserBalance(caller);
+  let totalRequired = price_e8s + TRANSFER_FEE;
+  
+  if (balance >= totalRequired) {
+    let transferResult = await transferPayment(caller, price_e8s);
+    
+    switch (transferResult) {
+      case (#ok(blockIndex)) {
+        activatePlan(plan, caller);
+        return "💎 Plano " # debug_show(plan) # " ativado! Transação: " # Nat.toText(blockIndex);
+      };
+      case (#err(errorMsg)) {
+        return "❌ Erro ao transferir: " # errorMsg;
+      };
+    };
+  } else {
+    let subaccount = principalToSubaccount(caller);
+    let sub_hex = Blob.toArray(subaccount);
+    let sub_hex_text = Array.foldLeft<Nat8, Text>(
+      sub_hex,
+      "",
+      func (acc, b) {
+        acc # (if (b < 16) { "0" } else { "" }) # Nat8.toText(b)
+      }
+    );
+    return "⚠️ Saldo insuficiente.\nEnvie " # Nat.toText(totalRequired) # " e8s para dkwk6-4aaaa-aaaaf-qbbxa-cai\nSubaccount: " # sub_hex_text;
+  };
+};
 
   func activatePlan(plan: Plan, caller: Principal) {
     let quota = getQuota(plan);
