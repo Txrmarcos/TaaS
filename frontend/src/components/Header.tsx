@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 const navigationItems = [
@@ -18,6 +20,8 @@ const navigationItems = [
 export const Header = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { isAuthenticated, principal, login, logout, isLoading } = useAuth();
+    const router = useRouter();
 
     useEffect(() => {
         const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -69,6 +73,30 @@ export const Header = () => {
                             <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] group-hover:w-full transition-all duration-300"></span>
                         </button>
                     ))}
+                    {/* Botão de Login/Logout */}
+                    {isAuthenticated && principal ? (
+                        <div className="flex items-center gap-2 ml-4">
+                            <span className="text-xs text-white/70 font-mono truncate max-w-[120px]">{principal.toText()}</span>
+                            <button
+                                onClick={logout}
+                                disabled={isLoading}
+                                className="px-3 py-2 rounded-lg bg-gradient-to-br from-red-500 to-pink-500 text-white text-xs font-semibold shadow-md hover:opacity-90 transition-all duration-300"
+                            >
+                                {isLoading ? "Saindo..." : "Logout"}
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            onClick={async () => {
+                                await login();
+                                router.push("/plans");
+                            }}
+                            disabled={isLoading}
+                            className="ml-4 px-4 py-2 rounded-lg bg-gradient-to-br from-[#FF4D00] to-[#FF007A] text-white text-sm font-semibold shadow-md hover:opacity-90 transition-all duration-300 disabled:opacity-60"
+                        >
+                            {isLoading ? "Entrando..." : "Login"}
+                        </button>
+                    )}
                 </nav>
 
                 <button
@@ -95,6 +123,30 @@ export const Header = () => {
                                 {item.name}
                             </button>
                         ))}
+                        {/* Botão de Login/Logout no menu mobile */}
+                        {isAuthenticated && principal ? (
+                            <div className="block w-full mt-2 text-center">
+                                <span className="block text-xs text-white/70 font-mono truncate max-w-full mb-2">{principal.toText()}</span>
+                                <button
+                                    onClick={logout}
+                                    disabled={isLoading}
+                                    className="w-full px-4 py-2 rounded-lg bg-gradient-to-br from-red-500 to-pink-500 text-white text-sm font-semibold shadow-md hover:opacity-90 transition-all duration-300 disabled:opacity-60"
+                                >
+                                    {isLoading ? "Saindo..." : "Logout"}
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={async () => {
+                                    await login();
+                                    router.push("/plans");
+                                }}
+                                disabled={isLoading}
+                                className="block w-full mt-2 text-center px-4 py-2 rounded-lg bg-gradient-to-br from-[#FF4D00] to-[#FF007A] text-white text-sm font-semibold shadow-md hover:opacity-90 transition-all duration-300 disabled:opacity-60"
+                            >
+                                {isLoading ? "Entrando..." : "Login"}
+                            </button>
+                        )}
                     </nav>
                 </div>
             )}
