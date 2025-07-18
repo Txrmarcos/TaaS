@@ -4,26 +4,31 @@ import { useAuth } from "../auth/useAuth";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ArrowRight, RefreshCw, Copy, Bitcoin, Wallet } from "lucide-react";
-
-import { botActor } from "../utils/canister";
-
-// IC Interaction Imports
 import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
+import { botActor } from "../utils/canister";
 
+export interface UserStatus {
+    plan: {
+        Standard?: null;
+        Pro?: null;
+        Premium?: null;
+    };
+    resetAt: bigint;
+    requestsLeft: bigint;
+}
 
 export default function ProfilePage() {
-  const { principal, logout, isLoading, status } = useAuth();
+  const { principal, logout, isLoading } = useAuth();
   const [actor, setActor] = useState<any>(botActor);
-
   const [icpBalance, setIcpBalance] = useState<string | null>(null);
   const [ckBalance, setCkBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [showDeposit, setShowDeposit] = useState<"icp" | "btc" | null>(null);
   const [depositAddress, setDepositAddress] = useState<string | null>(null);
   const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
-  // const [setStatus] = useState<UserStatus | null>(null);
+  const [status, setStatus] = useState<UserStatus | null>(null);
 
   const fetchICPBalance = async (userPrincipal: Principal) => {
     try {
@@ -38,60 +43,47 @@ export default function ProfilePage() {
     }
   };
 
-  const formatDate = (timestamp: bigint) => {
-        return new Date(Number(timestamp / BigInt(1_000_000))).toLocaleString(
-            "pt-BR",
-            {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-            }
-        );
-    };
+    const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
+      if (!actor) return alert("Faça login primeiro!");
 
-  const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
-        if (!actor) return alert("Faça login primeiro!");
+      let planObj;
+      switch (plan) {
+          case "Standard":
+              planObj = { Standard: null };
+              break;
+          case "Pro":
+              planObj = { Pro: null };
+              break;
+          case "Premium":
+              planObj = { Premium: null };
+              break;
+          default:
+              return;
+      }
+      try {
+          const res = await actor.subscribe(planObj);
+          alert(res);
+          await fetchStatus();
+      } catch (err) {
+          console.error(err);
+          alert("Erro ao assinar plano");
+      }
+  };
 
-        let planObj;
-        switch (plan) {
-            case "Standard":
-                planObj = { Standard: null };
-                break;
-            case "Pro":
-                planObj = { Pro: null };
-                break;
-            case "Premium":
-                planObj = { Premium: null };
-                break;
-            default:
-                return;
-        }
+  const fetchStatus = async () => {
+      try {
+          const res = (await botActor.get_user_status()) as any;
+          console.log("Status do usuário:", res);
+          if (res) {
+              setStatus(res[0] as UserStatus);
+          } else {
+              setStatus(null);
+          }
+      } catch (err) {
+          console.error(err);
+      }
+  };
 
-        try {
-            const res = await actor.subscribe(planObj);
-            alert(res);
-            await fetchStatus();
-        } catch (err) {
-            console.error(err);
-            alert("Erro ao assinar plano");
-        }
-    };
-
-    const fetchStatus = async () => {
-        try {
-            const res = (await botActor.get_user_status()) as any;
-            console.log("Status do usuário:", res);
-            if (res) {
-                setStatus(res[0] as UserStatus);
-            } else {
-                setStatus(null);
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    };
 
   const fetchCkBTCBalance = async (userPrincipal: Principal) => {
     try {
@@ -222,52 +214,6 @@ export default function ProfilePage() {
                     {isLoadingBalance ? "Refreshing..." : "Refresh"}
                 </button>
             </div>
-            <div className="bg-white/5 rounded-xl p-5 border border-white/10 space-y-3">
-                                        <h3 className="text-lg font-semibold text-white flex items-center">
-                                            <span className="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
-                                            Status da Conta
-                                        </h3>
-                                        <div className="grid grid-cols-1 gap-3">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-white/70">
-                                                    Plano Atual:
-                                                </span>
-                                                <span
-                                                    className={`font-semibold ${getPlanColor(
-                                                        Object.keys(
-                                                            status!!.plan
-                                                        )[0] ?? "Indefinido"
-                                                    )}`}
-                                                >
-                                                    {Object.keys(
-                                                        status!!.plan
-                                                    )[0] ?? "Indefinido"}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-white/70">
-                                                    Requests Restantes:
-                                                </span>
-                                                <span className="text-white font-semibold">
-                                                    {status!!.requestsLeft
-                                                        ? status!!.requestsLeft.toString()
-                                                        : "N/A"}
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-white/70">
-                                                    Reset em:
-                                                </span>
-                                                <span className="text-white font-semibold text-sm">
-                                                    {status!!.resetAt
-                                                        ? formatDate(
-                                                              status!!.resetAt
-                                                          )
-                                                        : "N/A"}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* ICP Card */}
@@ -317,6 +263,65 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+          {/* Subscription Plans */}
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-white">
+                            Escolha seu Plano
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                            <button
+                                onClick={() =>
+                                    subscribePlan("Standard")
+                                }
+                                disabled={isLoading}
+                                className="flex items-center justify-between p-4 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                    <span className="text-green-400 font-semibold">
+                                        Standard
+                                    </span>
+                                </div>
+                                <span className="text-green-400 group-hover:translate-x-1 transition-transform">
+                                    →
+                                </span>
+                            </button>
+
+                            <button
+                                onClick={() => subscribePlan("Pro")}
+                                disabled={isLoading}
+                                className="flex items-center justify-between p-4 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
+                                    <span className="text-yellow-400 font-semibold">
+                                        Pro
+                                    </span>
+                                </div>
+                                <span className="text-yellow-400 group-hover:translate-x-1 transition-transform">
+                                    →
+                                </span>
+                            </button>
+
+                            <button
+                                onClick={() =>
+                                    subscribePlan("Premium")
+                                }
+                                disabled={isLoading}
+                                className="flex items-center justify-between p-4 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-3 h-3 bg-pink-400 rounded-full mr-3"></div>
+                                    <span className="text-pink-400 font-semibold">
+                                        Premium
+                                    </span>
+                                </div>
+                                <span className="text-pink-400 group-hover:translate-x-1 transition-transform">
+                                    →
+                                </span>
+                            </button>
+                        </div>
+                    </div>
 
           <div className="grid md:grid-cols-2 gap-6 mt-12">
             <a href="/round" className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all duration-300 p-6 rounded-xl border border-white/10 shadow-lg">

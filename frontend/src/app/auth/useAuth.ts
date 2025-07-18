@@ -75,14 +75,17 @@ export function useAuth() {
   };
 
   const fetchStatus = async () => {
-    try {
-      const res = await botActor.get_user_status();
-      if (res && res.length > 0) {
-        setStatus(res[0] as UserStatus);
+      try {
+          const res = (await botActor.get_user_status()) as any;
+          console.log("Status do usuário:", res);
+          if (res) {
+              setStatus(res[0] as UserStatus);
+          } else {
+              setStatus(null);
+          }
+      } catch (err) {
+          console.error(err);
       }
-    } catch (err) {
-      console.error(err);
-    }
   };
 
   return {
