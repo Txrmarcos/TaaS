@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import router from "next/dist/shared/lib/router/router";
 
 const navigationItems = [
     { name: "Home", href: "#hero" },
@@ -20,6 +22,7 @@ const navigationItems = [
 export const Header = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     const { isAuthenticated, principal, login, logout, isLoading } = useAuth();
     const router = useRouter();
 
