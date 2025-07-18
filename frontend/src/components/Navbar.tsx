@@ -8,7 +8,7 @@ const navigationItems = [
     { name: "Chat", href: "/chat" },
     { name: "Rounded Table", href: "/round" },
     { name: "Profile", href: "/profile-area" },
-    { name: "Trading", href: "/trade" },
+    { name: "Finance", href: "/finance" },
     {
         name: "GitHub",
         href: "https://github.com/Txrmarcos/TaaS",
