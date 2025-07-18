@@ -130,7 +130,6 @@ actor SearchNews {
       url = url;
       method = #get;
       headers = headers;
-      is_replicated = null;
       body = null;
       max_response_bytes = ?1000000; // Limitar resposta para economizar instruções
       is_replicated = ?false;

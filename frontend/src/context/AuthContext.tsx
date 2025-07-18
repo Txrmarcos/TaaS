@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const identity = authClient.getIdentity();
           setPrincipal(identity.getPrincipal());
           setIsAuthenticated(true);
-          router.push("/plans");
+          router.push("/chat");
         },
         onError: (err: any) => {
           console.error("Erro no login:", err);

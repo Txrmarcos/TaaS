@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import router from "next/dist/shared/lib/router/router";
 
 const navigationItems = [
     { name: "Home", href: "#hero" },
