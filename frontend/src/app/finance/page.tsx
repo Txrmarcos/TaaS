@@ -99,7 +99,7 @@ export default function FinancePage() {
       const icpAmount = (Number(balance) / 100_000_000).toFixed(8);
       setIcpBalance(icpAmount);
     } catch (error) {
-      console.error("Erro ao buscar saldo ICP:", error);
+      console.error("Error fetching ICP balance:", error);
       setIcpBalance("0.00000000");
     }
   };
@@ -125,7 +125,7 @@ export default function FinancePage() {
       const ckBTCAmount = (Number(balance) / 100_000_000).toFixed(8);
       setCkBalance(ckBTCAmount);
     } catch (error) {
-      console.error("Erro ao buscar saldo ckBTC:", error);
+      console.error("Error fetching ckBTC balance:", error);
       setCkBalance("0.00000000");
     }
   };
@@ -152,7 +152,7 @@ export default function FinancePage() {
       });
       setIcpDepositAddress(accountIdentifier.toHex());
     } catch (error) {
-      console.error("Erro ao gerar endereço ICP:", error);
+      console.error("Error generating ICP address:", error);
     }
   };
 
@@ -179,8 +179,8 @@ export default function FinancePage() {
 
       setBitcoinAddress(btcAddress);
     } catch (error) {
-      console.error("Erro ao gerar endereço Bitcoin:", error);
-      alert("Erro ao gerar endereço Bitcoin. Tente novamente.");
+      console.error("Error generating Bitcoin address:", error);
+      alert("Error generating Bitcoin address. Please try again.");
     } finally {
       setIsGeneratingAddress(false);
     }
@@ -232,7 +232,7 @@ export default function FinancePage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copiado para a área de transferência!");
+    alert("Copied to clipboard!");
   };
 
   const handleSwapTokens = () => {
@@ -251,7 +251,7 @@ export default function FinancePage() {
 
   const handleSwap = async () => {
     if (!principal || !amount || Number(amount) <= 0) {
-      setErrorMessage("Por favor, conecte sua carteira e insira um valor válido.");
+      setErrorMessage("Please connect your wallet and enter a valid amount.");
       return;
     }
 
@@ -273,8 +273,8 @@ export default function FinancePage() {
       }, 3000);
 
     } catch (error) {
-      console.error("Erro no swap:", error);
-      setErrorMessage(error instanceof Error ? error.message : "Ocorreu um erro desconhecido.");
+      console.error("Swap error:", error);
+      setErrorMessage(error instanceof Error ? error.message : "An unknown error occurred.");
       setSwapStatus("error");
     } finally {
       setIsSwapping(false);
@@ -302,8 +302,8 @@ export default function FinancePage() {
         <Navbar />
         <main className="flex flex-col flex-grow items-center justify-center px-4">
           <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4">Área Financeira</h1>
-            <p className="text-white/70 mb-8">Por favor, faça login para acessar suas finanças.</p>
+            <h1 className="text-4xl font-bold mb-4">Financial Area</h1>
+            <p className="text-white/70 mb-8">Please log in to access your finances.</p>
           </div>
         </main>
         <Footer />
@@ -321,10 +321,10 @@ export default function FinancePage() {
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
               <PiggyBank className="w-10 h-10 text-purple-400" />
-              Centro Financeiro
+              Financial Center
             </h1>
             <p className="text-white/70 text-lg">
-              Gerencie seus ativos, faça depósitos e realize trocas de tokens
+              Manage your assets, make deposits and trade tokens
             </p>
           </div>
 
@@ -340,7 +340,7 @@ export default function FinancePage() {
                 }`}
               >
                 <Wallet className="w-5 h-5" />
-                Carteira
+                Wallet
               </button>
               <button
                 onClick={() => setActiveTab("deposit")}
@@ -351,7 +351,7 @@ export default function FinancePage() {
                 }`}
               >
                 <CreditCard className="w-5 h-5" />
-                Depósito
+                Deposit
               </button>
               <button
                 onClick={() => setActiveTab("trade")}
@@ -375,7 +375,7 @@ export default function FinancePage() {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold flex items-center gap-3">
                     <DollarSign className="w-6 h-6 text-green-400" />
-                    Visão Geral dos Saldos
+                    Balance Overview
                   </h2>
                   <div className="flex items-center gap-4">
                     <button
@@ -390,7 +390,7 @@ export default function FinancePage() {
                       className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50"
                     >
                       <RefreshCw className={`w-4 h-4 ${isLoadingBalance ? 'animate-spin' : ''}`} />
-                      {isLoadingBalance ? "Atualizando..." : "Atualizar"}
+                      {isLoadingBalance ? "Updating..." : "Refresh"}
                     </button>
                   </div>
                 </div>
@@ -464,7 +464,7 @@ export default function FinancePage() {
               <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-6">
                 <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
                   <CreditCard className="w-6 h-6 text-green-400" />
-                  Centro de Depósitos
+                  Deposit Center
                 </h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -476,7 +476,7 @@ export default function FinancePage() {
                           <span className="text-blue-400 font-bold">∞</span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">Depositar ICP</h3>
+                          <h3 className="text-lg font-semibold text-white">Deposit ICP</h3>
                           <p className="text-white/60 text-sm">Internet Computer Protocol</p>
                         </div>
                       </div>
@@ -486,12 +486,12 @@ export default function FinancePage() {
                       onClick={() => handleDepositClick('icp')}
                       className="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 font-semibold mb-4"
                     >
-                      {showDeposit === 'icp' ? 'Ocultar Endereço' : 'Mostrar Endereço de Depósito'}
+                      {showDeposit === 'icp' ? 'Hide Address' : 'Show Deposit Address'}
                     </button>
 
                     {showDeposit === 'icp' && icpDepositAddress && (
                       <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                        <p className="text-xs text-white/70 mb-2">Seu endereço ICP (Account Identifier):</p>
+                        <p className="text-xs text-white/70 mb-2">Your ICP address (Account Identifier):</p>
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-white font-mono break-all mr-2">{icpDepositAddress}</p>
                           <button
@@ -503,11 +503,11 @@ export default function FinancePage() {
                         </div>
                         
                         <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                          <p className="text-blue-400 text-sm font-semibold mb-2">ℹ️ Instruções:</p>
+                          <p className="text-blue-400 text-sm font-semibold mb-2">ℹ️ Instructions:</p>
                           <div className="text-white/80 text-xs space-y-1">
-                            <p>• Envie ICP para o Account Identifier acima</p>
-                            <p>• Valor mínimo: 0.0001 ICP</p>
-                            <p>• Transações são processadas quase instantaneamente</p>
+                            <p>• Send ICP to the Account Identifier above</p>
+                            <p>• Minimum amount: 0.0001 ICP</p>
+                            <p>• Transactions are processed almost instantly</p>
                           </div>
                         </div>
                       </div>
@@ -522,8 +522,8 @@ export default function FinancePage() {
                           <Bitcoin className="w-6 h-6 text-orange-400" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">Depositar Bitcoin</h3>
-                          <p className="text-white/60 text-sm">Convertido para ckBTC</p>
+                          <h3 className="text-lg font-semibold text-white">Deposit Bitcoin</h3>
+                          <p className="text-white/60 text-sm">Converted to ckBTC</p>
                         </div>
                       </div>
                     </div>
@@ -533,12 +533,12 @@ export default function FinancePage() {
                       disabled={isGeneratingAddress}
                       className="w-full py-3 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded-lg transition-all duration-200 font-semibold mb-4 disabled:opacity-50"
                     >
-                      {isGeneratingAddress ? 'Gerando...' : (showDeposit === 'btc' ? 'Ocultar Endereço' : 'Gerar Endereço Bitcoin')}
+                      {isGeneratingAddress ? 'Generating...' : (showDeposit === 'btc' ? 'Hide Address' : 'Generate Bitcoin Address')}
                     </button>
 
                     {showDeposit === 'btc' && bitcoinAddress && (
                       <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                        <p className="text-xs text-white/70 mb-2">Seu endereço Bitcoin:</p>
+                        <p className="text-xs text-white/70 mb-2">Your Bitcoin address:</p>
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-white font-mono break-all mr-2">{bitcoinAddress}</p>
                           <button
@@ -550,12 +550,12 @@ export default function FinancePage() {
                         </div>
                         
                         <div className="mt-4 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-                          <p className="text-orange-400 text-sm font-semibold mb-2">ℹ️ Instruções:</p>
+                          <p className="text-orange-400 text-sm font-semibold mb-2">ℹ️ Instructions:</p>
                           <div className="text-white/80 text-xs space-y-1">
-                            <p>• Envie Bitcoin para o endereço acima</p>
-                            <p>• Valor mínimo: 0.001 BTC</p>
-                            <p>• Após confirmação, você receberá ckBTC</p>
-                            <p>• Processo pode levar algumas horas</p>
+                            <p>• Send Bitcoin to the address above</p>
+                            <p>• Minimum amount: 0.001 BTC</p>
+                            <p>• After confirmation, you will receive ckBTC</p>
+                            <p>• Process may take a few hours</p>
                           </div>
                         </div>
                       </div>
@@ -574,13 +574,13 @@ export default function FinancePage() {
                   <TrendingUp className="w-6 h-6 text-purple-400" />
                   Trading Center
                 </h2>
-                <p className="text-white/70 text-center mb-6">Troque ICP e ckBTC de forma segura na blockchain.</p>
+                <p className="text-white/70 text-center mb-6">Trade ICP and ckBTC securely on the blockchain.</p>
                 
                 {/* From Token */}
                 <div className="space-y-2">
                   <div className="bg-black/20 rounded-xl p-4 border border-white/10">
                     <div className="flex items-center justify-between text-xs mb-2">
-                      <span className="text-white/70">De</span>
+                      <span className="text-white/70">From</span>
                       <button onClick={handleMaxAmount} className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded-md transition-colors text-xs">
                         MAX
                       </button>
@@ -603,7 +603,7 @@ export default function FinancePage() {
 
                   {/* To Token */}
                   <div className="bg-black/20 rounded-xl p-4 border border-white/10">
-                    <span className="text-white/70 text-xs mb-2 block">Para (Estimado)</span>
+                    <span className="text-white/70 text-xs mb-2 block">To (Estimated)</span>
                     <div className="flex items-center gap-4">
                       <input type="text" value={estimatedReceive} readOnly placeholder="0.0" className="w-full bg-transparent text-2xl font-bold text-white/80 placeholder-white/40 outline-none"/>
                       <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
@@ -620,13 +620,13 @@ export default function FinancePage() {
                     {swapStatus === "pending" && (
                       <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
                         <Clock className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
-                        <span className="text-blue-400 text-sm">{errorMessage || "Processando transação..."}</span>
+                        <span className="text-blue-400 text-sm">{errorMessage || "Processing transaction..."}</span>
                       </div>
                     )}
                     {swapStatus === "success" && (
                       <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
                         <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                        <span className="text-green-400 text-sm">Transação realizada com sucesso!</span>
+                        <span className="text-green-400 text-sm">Transaction completed successfully!</span>
                       </div>
                     )}
                     {swapStatus === "error" && errorMessage && (
@@ -651,10 +651,10 @@ export default function FinancePage() {
                   {isSwapping ? (
                     <div className="flex items-center justify-center gap-2">
                       <RefreshCw className="w-5 h-5 animate-spin" />
-                      Processando...
+                      Processing...
                     </div>
                   ) : (
-                    `Trocar`
+                    `Trade`
                   )}
                 </button>
               </div>
