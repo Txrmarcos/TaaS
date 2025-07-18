@@ -59,25 +59,6 @@ export const Header = () => {
                             TaaS
                         </span>
                     </div>
-                    <nav className="hidden md:flex items-center space-x-8">
-                        <button
-                            className="text-sm text-white/80 hover:text-white font-medium relative group transition-colors"
-                            onClick={() => router.push("/login")}
-                        >
-                            Login
-                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] group-hover:w-full transition-all duration-300"></span>
-                        </button>
-                    </nav>
-                    <nav className="hidden md:flex items-center space-x-8">
-                        <button
-                            className="text-sm text-white/80 hover:text-white font-medium relative group transition-colors"
-                            onClick={() => router.push("/login")}
-                        >
-                            Sign up
-                            <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] group-hover:w-full transition-all duration-300"></span>
-                        </button>
-                    </nav>
-
                 </div>
 
                 <nav className="hidden md:flex items-center space-x-8">

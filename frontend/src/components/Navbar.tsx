@@ -6,8 +6,8 @@ import { Menu, X } from "lucide-react";
 
 const navigationItems = [
     { name: "Chat", href: "/chat" },
-    { name: "Profile Area", href: "/profile-area" },
     { name: "Rounded Table", href: "/round" },
+    { name: "Profile", href: "/profile-area" },
     { name: "Trading", href: "/trade" },
     {
         name: "GitHub",
