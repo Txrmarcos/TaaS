@@ -1,10 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { AuthClient } from "@dfinity/auth-client";
 import { Principal } from "@dfinity/principal";
 import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, SubAccount, LedgerCanister } from "@dfinity/ledger-icp";
 import { botActor } from "../utils/canister";
+import { useAuth } from "../../context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export interface UserStatus {
     plan: {
@@ -23,49 +24,36 @@ export function principalToAccountIdentifier(principal: Principal, subaccount?: 
   }).toHex();
 }
 
-export default function LoginPage() {
-    const [authClient, setAuthClient] = useState<any>(null);
-    const [principal, setPrincipal] = useState<any>(null);
+export default function PlansPage() {
+    const { isAuthenticated, principal, isLoading } = useAuth();
     const [actor, setActor] = useState<any>(botActor);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [status, setStatus] = useState<UserStatus | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [isInitializing, setIsInitializing] = useState(true);
+    const [isLoadingBalance, setIsLoadingBalance] = useState(false);
     const [icpBalance, setIcpBalance] = useState<string | null>(null);
     const [ckBalance, setCkBalance] = useState<string | null>(null);
-    const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-    
-    // Novos estados para depósito Bitcoin
     const [bitcoinAddress, setBitcoinAddress] = useState<string | null>(null);
     const [showBitcoinDeposit, setShowBitcoinDeposit] = useState(false);
     const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
-
-
-    // Novos estados para depósito ICP
     const [showIcpDeposit, setShowIcpDeposit] = useState(false);
     const [icpDepositAddress, setIcpDepositAddress] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
-        const initializeAuth = async () =>
-            AuthClient.create().then(async (client) => {
-                setAuthClient(client);
-                if (await client.isAuthenticated()) {
-                    const identity = client.getIdentity();
-                    setPrincipal(identity.getPrincipal());
-                    setIsAuthenticated(true);
-                    await fetchStatus();
-                    console.log("Identidade autenticada:", identity.getPrincipal().toText());
-                    await fetchICPBalance(identity.getPrincipal());
-                    await fetchCkBTCBalance(identity.getPrincipal());
-                    await generateIcpDepositAddress(identity.getPrincipal());
-                }
-            });
+        if (!isLoading && !isAuthenticated) {
+            router.push("/"); // Redirect to home or login page
+        }
+    }, [isAuthenticated, isLoading, router]);
 
-        setIsInitializing(false);
-        initializeAuth();
-    }, []);
+    useEffect(() => {
+        if (isAuthenticated && principal) {
+            fetchStatus();
+            fetchICPBalance(principal);
+            fetchCkBTCBalance(principal);
+            generateIcpDepositAddress(principal);
+        }
+    }, [isAuthenticated, principal]);
 
-        // Função para gerar endereço ICP
+    // Função para gerar endereço ICP
     const generateIcpDepositAddress = (userPrincipal: Principal) => {
         try {
             const accountIdentifier = AccountIdentifier.fromPrincipal({
@@ -193,50 +181,6 @@ export default function LoginPage() {
         }
     };
 
-    const login = async () => {
-        if (!authClient) return;
-        setIsLoading(true);
-        try {
-            await authClient.login({
-                identityProvider: "https://identity.ic0.app/#authorize",
-                onSuccess: async () => {
-                    const identity = authClient.getIdentity();
-                    const userPrincipal = identity.getPrincipal();
-                    setPrincipal(userPrincipal);
-                    setIsAuthenticated(true);
-                    await fetchStatus();
-                    await fetchICPBalance(userPrincipal);
-                    await fetchCkBTCBalance(userPrincipal);
-                    await generateIcpDepositAddress(userPrincipal);
-                },
-                onError: (err: any) => {
-                    console.error("Erro no login:", err);
-                },
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const logout = async () => {
-        if (!authClient) return;
-        setIsLoading(true);
-        try {
-            await authClient.logout();
-            setPrincipal(null);
-            setIsAuthenticated(false);
-            setStatus(null);
-            setActor(null);
-            setIcpBalance(null);
-            setCkBalance(null);
-            setBitcoinAddress(null);
-            setShowBitcoinDeposit(false);
-            setShowIcpDeposit(false);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const fetchStatus = async () => {
         try {
             const res = (await botActor.get_user_status()) as any;
@@ -317,7 +261,7 @@ export default function LoginPage() {
         );
     };
 
-    if (isInitializing) {
+    if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400"></div>
@@ -698,57 +642,8 @@ export default function LoginPage() {
                                         </button>
                                     </div>
                                 </div>
-
-                                {/* Logout Button */}
-                                <button
-                                    onClick={logout}
-                                    disabled={isLoading}
-                                    className="w-full py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 rounded-xl transition-all duration-200 font-semibold disabled:opacity-50"
-                                >
-                                    {isLoading
-                                        ? "Desconectando..."
-                                        : "Desconectar"}
-                                </button>
                             </div>
-                        ) : (
-                            <div className="text-center space-y-6">
-                                <div className="space-y-2">
-                                    <h2 className="text-2xl font-bold text-white">
-                                        Bem-vindo!
-                                    </h2>
-                                    <p className="text-white/80">
-                                        Autentique-se usando seu Internet
-                                        Identity para acessar a plataforma
-                                    </p>
-                                </div>
-
-                                <button
-                                    onClick={login}
-                                    disabled={isLoading}
-                                    className="w-full py-4 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] hover:opacity-90 text-white rounded-xl transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                                >
-                                    {isLoading ? (
-                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                                    ) : (
-                                        <span className="mr-2">🔐</span>
-                                    )}
-                                    {isLoading
-                                        ? "Conectando..."
-                                        : "Entrar com Internet Identity"}
-                                </button>
-
-                                <div className="text-xs text-white/50 space-y-1">
-                                    <p>
-                                        Sua identidade é protegida pela
-                                        blockchain da Internet Computer
-                                    </p>
-                                    <p>
-                                        Sem senhas, sem dados pessoais
-                                        armazenados
-                                    </p>
-                                </div>
-                            </div>
-                        )}
+                        ) : null}
                     </div>
 
                     {/* Footer */}
