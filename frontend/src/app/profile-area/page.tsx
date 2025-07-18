@@ -263,65 +263,65 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-        {/* Subscription Plans */}
-          <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-white">
-                  Escolha seu Plano
-              </h3>
-              <div className="grid grid-cols-1 gap-3">
-                  <button
-                      onClick={() =>
-                          subscribePlan("Standard")
-                      }
-                      disabled={isLoading}
-                      className="flex items-center justify-between p-4 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                  >
-                      <div className="flex items-center">
-                          <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
-                          <span className="text-green-400 font-semibold">
-                              Standard
-                          </span>
-                      </div>
-                      <span className="text-green-400 group-hover:translate-x-1 transition-transform">
-                          →
-                      </span>
-                  </button>
+          {/* Subscription Plans */}
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-white">
+                            Escolha seu Plano
+                        </h3>
+                        <div className="grid grid-cols-1 gap-3">
+                            <button
+                                onClick={() =>
+                                    subscribePlan("Standard")
+                                }
+                                disabled={isLoading}
+                                className="flex items-center justify-between p-4 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                                    <span className="text-green-400 font-semibold">
+                                        Standard
+                                    </span>
+                                </div>
+                                <span className="text-green-400 group-hover:translate-x-1 transition-transform">
+                                    →
+                                </span>
+                            </button>
 
-                  <button
-                      onClick={() => subscribePlan("Pro")}
-                      disabled={isLoading}
-                      className="flex items-center justify-between p-4 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                  >
-                      <div className="flex items-center">
-                          <div className="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
-                          <span className="text-yellow-400 font-semibold">
-                              Pro
-                          </span>
-                      </div>
-                      <span className="text-yellow-400 group-hover:translate-x-1 transition-transform">
-                          →
-                      </span>
-                  </button>
+                            <button
+                                onClick={() => subscribePlan("Pro")}
+                                disabled={isLoading}
+                                className="flex items-center justify-between p-4 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
+                                    <span className="text-yellow-400 font-semibold">
+                                        Pro
+                                    </span>
+                                </div>
+                                <span className="text-yellow-400 group-hover:translate-x-1 transition-transform">
+                                    →
+                                </span>
+                            </button>
 
-                  <button
-                      onClick={() =>
-                          subscribePlan("Premium")
-                      }
-                      disabled={isLoading}
-                      className="flex items-center justify-between p-4 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                  >
-                      <div className="flex items-center">
-                          <div className="w-3 h-3 bg-pink-400 rounded-full mr-3"></div>
-                          <span className="text-pink-400 font-semibold">
-                              Premium
-                          </span>
-                      </div>
-                      <span className="text-pink-400 group-hover:translate-x-1 transition-transform">
-                          →
-                      </span>
-                  </button>
-              </div>
-          </div>
+                            <button
+                                onClick={() =>
+                                    subscribePlan("Premium")
+                                }
+                                disabled={isLoading}
+                                className="flex items-center justify-between p-4 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
+                            >
+                                <div className="flex items-center">
+                                    <div className="w-3 h-3 bg-pink-400 rounded-full mr-3"></div>
+                                    <span className="text-pink-400 font-semibold">
+                                        Premium
+                                    </span>
+                                </div>
+                                <span className="text-pink-400 group-hover:translate-x-1 transition-transform">
+                                    →
+                                </span>
+                            </button>
+                        </div>
+                    </div>
 
           <div className="grid md:grid-cols-2 gap-6 mt-12">
             <a href="/round" className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all duration-300 p-6 rounded-xl border border-white/10 shadow-lg">

@@ -33,3 +33,4 @@ export const searchNewsActor = Actor.createActor(searchNewsId, {
   agent,
   canisterId: news,
 });
+

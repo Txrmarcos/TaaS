@@ -3,8 +3,11 @@
 import { ExternalLink, ArrowRight } from "lucide-react";
 import { NetworkGraph } from "./NetworkGraph";
 import { Button } from "./ui/Button";
+import { useAuth } from "@/app/auth/useAuth";
 
 export const Hero = () => {
+    const { login } = useAuth();
+
     return (
         <section
             id="hero"
@@ -32,12 +35,10 @@ export const Hero = () => {
 
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                         <button
-                            onClick={() =>
-                                window.open("https://google.com", "_blank")
-                            }
+                            onClick={   login}
                             className="inline-flex items-center justify-center rounded-lg px-6 py-3 text-sm font-medium bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white hover:opacity-90 transition-all duration-200"
                         >
-                            Integrate now
+                            Start now
                             <ExternalLink className="ml-2 h-5 w-5" />
                         </button>
 

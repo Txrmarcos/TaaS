@@ -9,24 +9,41 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { Principal } from "@dfinity/principal"; // 👈 IMPORTANTE: Importar o Principal
 
-type Proposal = {
+// Tipo de dados como vem do Canister
+type RawProposal = {
+    id: bigint;
+    name: string;
+    url: string;
+    pr_link: string;
+    description: string;
+    proposer: Principal; // 👈 Tipo correto é Principal
+    created_at: bigint;
+    votes_for: bigint;
+    votes_against: bigint;
+    status: { Pending?: null; Approved?: null; Rejected?: null };
+    voters: Principal[]; // 👈 Tipo correto é um array de Principal
+};
+
+// Tipo de dados formatado para usar no estado do React
+type FormattedProposal = {
     id: number;
     name: string;
     url: string;
     pr_link: string;
     description: string;
-    proposer: string;
+    proposer: string; // Convertido para string
     created_at: bigint;
     votes_for: number;
     votes_against: number;
     status: { Pending?: null; Approved?: null; Rejected?: null };
-    voters: string[];
+    voters: string[]; // Convertido para array de string
 };
 
 export default function RoundtablePage() {
     const { principal, isAuthenticated } = useAuth();
-    const [proposals, setProposals] = useState<Proposal[]>([]);
+    const [proposals, setProposals] = useState<FormattedProposal[]>([]); // 👈 Usar o tipo formatado
     const [isLoadingProposals, setIsLoadingProposals] = useState(true);
     const [name, setName] = useState("");
     const [url, setUrl] = useState("");
@@ -35,37 +52,45 @@ export default function RoundtablePage() {
     const [message, setMessage] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(false);
+    const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(true);
     const [whitelist, setWhitelist] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
     
     const fetchProposals = async () => {
-        setIsLoadingProposals(true); // Adicione isso aqui
+        setIsLoadingProposals(true);
         try {
-            const list = await roundtableActor.list_proposals();
-            console.log(list);
-            setProposals(list as Proposal[]);
+            const rawList = await roundtableActor.list_proposals() as RawProposal[];
+            
+            // ✅ CORREÇÃO: Mapear os dados brutos para um formato que o React possa renderizar
+            const formattedList = rawList.map(p => ({
+                ...p,
+                id: Number(p.id),
+                proposer: p.proposer.toText(), // Converte Principal para string
+                voters: p.voters.map(voter => voter.toText()), // Converte cada Principal do array para string
+                votes_for: Number(p.votes_for),
+                votes_against: Number(p.votes_against),
+            }));
+
+            setProposals(formattedList);
         } catch (err) {
-            console.error(err);
+            console.error("Erro ao buscar propostas:", err);
+            setProposals([]);
         } finally {
-            setIsLoadingProposals(false); // Adicione isso aqui
+            setIsLoadingProposals(false);
         }
     };
   
      useEffect(() => {
         fetchProposals();
-    }, []);
-
-    useEffect(() => {
         fetchWhitelist();
     }, []);
 
 
     const fetchWhitelist = async () => {
+        setIsLoadingWhitelist(true);
         try {
-            setIsLoadingWhitelist(true);
             const domains = await searchNewsActor.getWhitelist();
             setWhitelist(domains as string[]);
         } catch (err) {
@@ -86,13 +111,13 @@ export default function RoundtablePage() {
 
         setIsSubmitting(true);
         try {
-            const id = await roundtableActor.propose_source(
+            await roundtableActor.propose_source(
                 name,
                 url,
                 prLink,
                 desc
-            ); // 🟢 Adiciona prLink
-            setMessage(`✅ Proposta enviada com sucesso! ID: ${id}`);
+            );
+            setMessage(`✅ Proposta enviada com sucesso!`);
             setName("");
             setUrl("");
             setPrLink("");
@@ -109,7 +134,7 @@ export default function RoundtablePage() {
 
     const vote = async (id: number, isFor: boolean) => {
         try {
-            const res = await roundtableActor.vote_source(id, isFor);
+            const res = await roundtableActor.vote_source(BigInt(id), isFor);
             setMessage(res as string);
             fetchProposals();
         } catch (err) {
@@ -133,7 +158,7 @@ export default function RoundtablePage() {
         approved: proposals.filter(p => 'Approved' in p.status).length,
         pending: proposals.filter(p => 'Pending' in p.status).length,
         rejected: proposals.filter(p => 'Rejected' in p.status).length,
-        totalVotes: proposals.reduce((sum, p) => sum + Number(p.votes_for) + Number(p.votes_against), 0)
+        totalVotes: proposals.reduce((sum, p) => sum + p.votes_for + p.votes_against, 0)
     };
 
     const filteredProposals = proposals.filter(proposal => {
@@ -146,7 +171,7 @@ export default function RoundtablePage() {
         return matchesSearch && matchesStatus;
     });
 
-    const formatStatus = (status: Proposal["status"]) => {
+    const formatStatus = (status: FormattedProposal["status"]) => {
         if ('Approved' in status)
             return { text: "Aprovada", color: "text-emerald-400 bg-emerald-500/20 border-emerald-500/30", icon: CheckCircle };
         if ('Rejected' in status)
@@ -154,7 +179,6 @@ export default function RoundtablePage() {
         return { text: "Pendente", color: "text-amber-400 bg-amber-500/20 border-amber-500/30", icon: Clock };
     };
 
-       // Clear message after 5 seconds
     useEffect(() => {
         if (message) {
             const timer = setTimeout(() => {
@@ -170,7 +194,7 @@ export default function RoundtablePage() {
             <Navbar />
             <main className="flex flex-col flex-grow px-4 pt-32 pb-20 max-w mx-auto">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Secção Hero */}
+                    {/* Hero Section */}
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 px-4 py-2 rounded-full border border-orange-500/30 mb-6">
                             <Zap className="w-4 h-4 text-orange-400" />
@@ -185,7 +209,7 @@ export default function RoundtablePage() {
                         </p>
                     </div>
 
-                    {/* Painel de Estatísticas */}
+                    {/* Stats Panel */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                             <div className="flex items-center justify-between mb-2">
@@ -218,7 +242,7 @@ export default function RoundtablePage() {
                     </div>
 
                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
-                        {/* Barra Lateral */}
+                        {/* Sidebar */}
                         <div className="xl:col-span-1 space-y-6">
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl">
                                 <div className="flex items-center justify-between mb-4">
@@ -231,7 +255,6 @@ export default function RoundtablePage() {
                                     </span>
                                 </div>
                                 
-                                {/* Show loading state for whitelist */}
                                 {isLoadingWhitelist ? (
                                     <div className="text-center py-8">
                                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mx-auto"></div>
@@ -276,7 +299,7 @@ export default function RoundtablePage() {
                         </div>
 
 
-                        {/* Conteúdo Principal */}
+                        {/* Main Content */}
                         <div className="xl:col-span-3">
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 mb-8">
                                 <div className="flex flex-col lg:flex-row gap-4">
@@ -406,12 +429,14 @@ export default function RoundtablePage() {
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                         {filteredProposals.map((proposal) => {
                                             const status = formatStatus(proposal.status);
-                                            const votesFor = Number(proposal.votes_for);
-                                            const votesAgainst = Number(proposal.votes_against);
+                                            const votesFor = proposal.votes_for;
+                                            const votesAgainst = proposal.votes_against;
                                             const StatusIcon = status.icon;
                                             const totalVotes = votesFor + votesAgainst;
                                             const approvalRate = totalVotes > 0 ? (votesFor / totalVotes) * 100 : 0;
-                                            const hasVoted = principal && proposal.voters.some(v => v === principal.toText());
+                                            
+                                            // ✅ CORREÇÃO: Comparar a string do principal atual com as strings dos votantes
+                                            const hasVoted = principal && proposal.voters.includes(principal.toText());
 
                                             return (
                                                 <div
@@ -432,6 +457,7 @@ export default function RoundtablePage() {
                                                             </h3>
                                                             <div className="flex items-center space-x-2 text-sm text-white/50 mb-3 truncate">
                                                                 <User className="w-4 h-4" />
+                                                                {/* ✅ CORREÇÃO: Agora proposal.proposer é uma string e pode ser renderizada */}
                                                                 <span className="truncate" title={proposal.proposer}>{proposal.proposer}</span>
                                                                 <span>•</span>
                                                                 <Calendar className="w-4 h-4" /><span>{formatDate(proposal.created_at)}</span>
@@ -466,14 +492,14 @@ export default function RoundtablePage() {
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-3">
                                                         <button 
-                                                            onClick={() => vote(Number(proposal.id), true)} 
+                                                            onClick={() => vote(proposal.id, true)} 
                                                             disabled={!isAuthenticated || !!hasVoted}
                                                             className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
                                                         >
                                                             <ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Aprovar</span>
                                                         </button>
                                                         <button 
-                                                            onClick={() => vote(Number(proposal.id), false)} 
+                                                            onClick={() => vote(proposal.id, false)} 
                                                             disabled={!isAuthenticated || !!hasVoted}
                                                             className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-red-600/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
                                                         >

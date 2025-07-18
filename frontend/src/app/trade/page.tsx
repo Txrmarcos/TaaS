@@ -17,7 +17,7 @@ import {
 // Imports para interagir com a IC
 import { HttpAgent, Actor } from "@dfinity/agent";
 import { LedgerCanister } from "@dfinity/ledger-icp";
-import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
+// import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
 
