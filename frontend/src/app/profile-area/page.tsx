@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../auth/useAuth";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ArrowRight, RefreshCw, Copy, Bitcoin, Wallet } from "lucide-react";
+import { ArrowRight, RefreshCw, CheckCircle, XCircle } from "lucide-react";
 import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
@@ -19,16 +19,25 @@ export interface UserStatus {
     requestsLeft: bigint;
 }
 
+interface Toast {
+  type: 'success' | 'error';
+  message: string;
+}
+
 export default function ProfilePage() {
   const { principal, logout, isLoading } = useAuth();
   const [actor, setActor] = useState<any>(botActor);
   const [icpBalance, setIcpBalance] = useState<string | null>(null);
   const [ckBalance, setCkBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-  const [showDeposit, setShowDeposit] = useState<"icp" | "btc" | null>(null);
-  const [depositAddress, setDepositAddress] = useState<string | null>(null);
-  const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
   const [status, setStatus] = useState<UserStatus | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [isSubscribing, setIsSubscribing] = useState<string | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const fetchICPBalance = async (userPrincipal: Principal) => {
     try {
@@ -43,47 +52,92 @@ export default function ProfilePage() {
     }
   };
 
-    const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
-      if (!actor) return alert("Faça login primeiro!");
+  const formatResetTime = (resetAt: bigint) => {
+    const date = new Date(Number(resetAt / BigInt(1_000_000)));
+    const now = new Date();
+    const diff = date.getTime() - now.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  };
 
-      let planObj;
-      switch (plan) {
-          case "Standard":
-              planObj = { Standard: null };
-              break;
-          case "Pro":
-              planObj = { Pro: null };
-              break;
-          case "Premium":
-              planObj = { Premium: null };
-              break;
-          default:
-              return;
+  const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
+    if (!actor) {
+      showToast('error', 'Please login first!');
+      return;
+    }
+
+    setIsSubscribing(plan);
+
+    let planObj;
+    switch (plan) {
+      case "Standard":
+        planObj = { Standard: null };
+        break;
+      case "Pro":
+        planObj = { Pro: null };
+        break;
+      case "Premium":
+        planObj = { Premium: null };
+        break;
+      default:
+        setIsSubscribing(null);
+        return;
+    }
+
+    try {
+      const res = await actor.subscribe(planObj);
+
+      // Check if the canister returned a structured result (Ok/Err)
+      if (res && 'Ok' in res) {
+        showToast('success', `${plan} plan activated successfully!`);
+        await fetchStatus();
+      } else if (res && 'Err' in res) {
+        const errType = Object.keys(res.Err)[0];
+        let message = "Subscription failed. Please try again.";
+        
+        if (errType === 'InsufficientFunds' || errType === 'InsufficientBalance') {
+            message = "Insufficient balance to upgrade.";
+        } else if (errType === 'TransferFailure') {
+            message = "Payment transfer failed. Please check your balance and try again.";
+        }
+        showToast('error', message);
+      } else {
+        showToast('success', `${plan} plan activated successfully!`);
+        await fetchStatus();
       }
-      try {
-          const res = await actor.subscribe(planObj);
-          alert(res);
-          await fetchStatus();
-      } catch (err) {
-          console.error(err);
-          alert("Erro ao assinar plano");
+    } catch (err: any) {
+      console.error("Error subscribing to plan:", err);
+      let message = "An error occurred while subscribing to the plan.";
+
+      // Parse the error message string for known canister reject messages
+      const errorMessageString = String(err).toLowerCase();
+      
+      if (errorMessageString.includes('Saldo insuficiente') || errorMessageString.includes('⚠️  ')) {
+        message = 'Insufficient balance to upgrade the plan.';
+      } else if (errorMessageString.includes('transfer failed')) {
+        message = 'Payment transfer failed. Please check your balance and try again.';
       }
+      
+      showToast('error', message);
+    } finally {
+      setIsSubscribing(null);
+    }
   };
 
   const fetchStatus = async () => {
-      try {
-          const res = (await botActor.get_user_status()) as any;
-          console.log("Status do usuário:", res);
-          if (res) {
-              setStatus(res[0] as UserStatus);
-          } else {
-              setStatus(null);
-          }
-      } catch (err) {
-          console.error(err);
+    try {
+      const res = (await botActor.get_user_status()) as any;
+      console.log("User status:", res);
+      if (res && res.length > 0) {
+        setStatus(res[0] as UserStatus);
+      } else {
+        setStatus(null);
       }
+    } catch (err) {
+      console.error(err);
+    }
   };
-
 
   const fetchCkBTCBalance = async (userPrincipal: Principal) => {
     try {
@@ -100,53 +154,20 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (principal) {
-      const fetchAllBalances = async () => {
+      const fetchAllData = async () => {
         setIsLoadingBalance(true);
-        await Promise.all([fetchICPBalance(principal), fetchCkBTCBalance(principal)]);
+        await Promise.all([fetchICPBalance(principal), fetchCkBTCBalance(principal), fetchStatus()]);
         setIsLoadingBalance(false);
       };
-      fetchAllBalances();
+      fetchAllData();
     }
   }, [principal]);
 
   const handleRefresh = async () => {
     if (!principal) return;
     setIsLoadingBalance(true);
-    await Promise.all([fetchICPBalance(principal), fetchCkBTCBalance(principal)]);
+    await Promise.all([fetchICPBalance(principal), fetchCkBTCBalance(principal), fetchStatus()]);
     setIsLoadingBalance(false);
-  };
-
-  const handleDepositClick = async (type: "icp" | "btc") => {
-    if (showDeposit === type) {
-      setShowDeposit(null);
-      return;
-    }
-
-    setShowDeposit(type);
-    setDepositAddress(null);
-    setIsGeneratingAddress(true);
-
-    if (type === 'icp' && principal) {
-        const accountIdentifier = AccountIdentifier.fromPrincipal({ principal });
-        setDepositAddress(accountIdentifier.toHex());
-    } else if (type === 'btc' && principal) {
-        try {
-            const agent = new HttpAgent({ host: "https://ic0.app" });
-            const ckBTCMinter = await import("@dfinity/ckbtc");
-            const minter = ckBTCMinter.CkBTCMinterCanister.create({ agent, canisterId: Principal.fromText("mqygn-kiaaa-aaaar-qaadq-cai") });
-            const btcAddress = await minter.getBtcAddress({ owner: principal });
-            setDepositAddress(btcAddress);
-        } catch (error) {
-            console.error("Error generating Bitcoin address:", error);
-            setDepositAddress("Error generating address.");
-        }
-    }
-    setIsGeneratingAddress(false);
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    alert("Address copied!");
   };
 
   const getPlanColor = (plan: string) => {
@@ -158,9 +179,50 @@ export default function ProfilePage() {
     }
   };
 
+  const getPlanFeatures = (plan: string) => {
+    switch (plan) {
+      case "Standard":
+        return {
+          requests: "5 requests/day",
+          features: ["Basic fact-checking", "Access to verified news", "Email support"]
+        };
+      case "Pro":
+        return {
+          requests: "50 requests/day",
+          features: ["Advanced fact-checking", "Trend analysis", "Priority support", "Detailed reports"]
+        };
+      case "Premium":
+        return {
+          requests: "500 requests/day",
+          features: ["Full access", "Custom API", "24/7 support", "Custom analysis", "Premium reports"]
+        };
+      default:
+        return { requests: "0", features: [] };
+    }
+  };
+
+  const currentPlan = status ? Object.keys(status.plan)[0] : null;
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
       <Navbar />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg backdrop-blur-sm border transition-all duration-300">
+          {toast.type === 'success' ? (
+            <div className="flex items-center gap-2 text-green-400 bg-green-500/10 border-green-500/30 px-4 py-3 rounded-lg">
+              <CheckCircle className="w-5 h-5" />
+              <span>{toast.message}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-red-400 bg-red-500/10 border-red-500/30 px-4 py-3 rounded-lg">
+              <XCircle className="w-5 h-5" />
+              <span>{toast.message}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <main className="flex flex-col flex-grow items-center justify-center px-4 pt-32 pb-20">
         <div className="w-full max-w-4xl">
@@ -180,148 +242,162 @@ export default function ProfilePage() {
             </button>
           </div>
 
-          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-8 space-y-6">
-            <div>
-              <p className="text-sm text-white/70 mb-1">Principal ID:</p>
-              <p className="text-sm font-mono text-white break-all">
-                {principal ? principal.toText() : "Loading..."}
-              </p>
-            </div>
-            {status && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <span className="text-white/70 text-sm">Current Plan:</span>
-                  <span className={`font-semibold text-lg ${getPlanColor(Object.keys(status.plan)[0] || "")}`}>
-                    {Object.keys(status.plan)[0]}
-                  </span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-white/70 text-sm">Requests Left:</span>
-                  <span className="text-white font-semibold text-lg">
-                    {status.requestsLeft.toString()}
-                  </span>
-                </div>
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-8 space-y-6 ">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <p className="text-sm text-white/70 mb-1">Principal ID:</p>
+                <p className="text-sm font-mono text-white break-all">
+                  {principal ? principal.toText() : "Loading..."}
+                </p>
               </div>
-            )}
+              
+              {status && (
+                <>
+                  <div>
+                    <p className="text-sm text-white/70 mb-1">Current Plan:</p>
+                    <p className={`text-lg font-semibold ${getPlanColor(currentPlan || "")}`}>
+                      {currentPlan || "No active plan"}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-white/70 mb-1">Requests Available:</p>
+                    <p className="text-lg font-semibold text-white">
+                      {status.requestsLeft.toString()}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-white/70 mb-1">Reset Date:</p>
+                    <p className="text-sm text-white">
+                      {formatResetTime(status.resetAt)}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Wallet Section */}
           <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Your Wallet</h2>
-                <button onClick={handleRefresh} disabled={isLoadingBalance} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition disabled:opacity-50">
-                    <RefreshCw className={`w-4 h-4 ${isLoadingBalance ? 'animate-spin' : ''}`} />
-                    {isLoadingBalance ? "Refreshing..." : "Refresh"}
-                </button>
+              <h2 className="text-2xl font-bold">Your Wallet</h2>
+              <button 
+                onClick={handleRefresh} 
+                disabled={isLoadingBalance} 
+                className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${isLoadingBalance ? 'animate-spin' : ''}`} />
+                {isLoadingBalance ? "Refreshing..." : "Refresh"}
+              </button>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* ICP Card */}
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-semibold text-blue-400">ICP Balance</h3>
-                    <p className="font-bold text-2xl text-white">{icpBalance ?? "..."}</p>
-                  </div>
-                  <button onClick={() => handleDepositClick('icp')} className="w-full flex justify-center items-center gap-2 py-2 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-blue-300 font-semibold transition">
-                    <Wallet className="w-4 h-4"/>
-                    Deposit
-                  </button>
-                  {showDeposit === 'icp' && (
-                    <div className="bg-black/20 p-4 rounded-lg space-y-2">
-                        <p className="text-xs text-white/70">Your ICP address (Account ID):</p>
-                        {isGeneratingAddress ? <p>Generating...</p> : (
-                            <div className="flex items-center gap-2">
-                                <p className="text-xs font-mono break-all text-white/90">{depositAddress}</p>
-                                <button onClick={() => copyToClipboard(depositAddress!)}><Copy className="w-4 h-4 text-white/70 hover:text-white"/></button>
-                            </div>
-                        )}
-                    </div>
-                  )}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-blue-400">ICP Balance</h3>
+                  <p className="font-bold text-2xl text-white">{icpBalance ?? "..."}</p>
+                </div>
               </div>
 
               {/* ckBTC Card */}
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-semibold text-orange-400">ckBTC Balance</h3>
-                    <p className="font-bold text-2xl text-white">{ckBalance ?? "..."}</p>
-                  </div>
-                  <button onClick={() => handleDepositClick('btc')} className="w-full flex justify-center items-center gap-2 py-2 bg-orange-500/20 hover:bg-orange-500/30 rounded-lg text-orange-300 font-semibold transition">
-                    <Bitcoin className="w-4 h-4"/>
-                    Deposit
-                  </button>
-                  {showDeposit === 'btc' && (
-                     <div className="bg-black/20 p-4 rounded-lg space-y-2">
-                        <p className="text-xs text-white/70">Your Bitcoin address:</p>
-                        {isGeneratingAddress ? <p>Generating...</p> : (
-                            <div className="flex items-center gap-2">
-                                <p className="text-xs font-mono break-all text-white/90">{depositAddress}</p>
-                                <button onClick={() => copyToClipboard(depositAddress!)}><Copy className="w-4 h-4 text-white/70 hover:text-white"/></button>
-                            </div>
-                        )}
-                    </div>
-                  )}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xl font-semibold text-orange-400">ckBTC Balance</h3>
+                  <p className="font-bold text-2xl text-white">{ckBalance ?? "..."}</p>
+                </div>
               </div>
             </div>
           </div>
+
           {/* Subscription Plans */}
-                    <div className="space-y-3">
-                        <h3 className="text-lg font-semibold text-white">
-                            Escolha seu Plano
-                        </h3>
-                        <div className="grid grid-cols-1 gap-3">
-                            <button
-                                onClick={() =>
-                                    subscribePlan("Standard")
-                                }
-                                disabled={isLoading}
-                                className="flex items-center justify-between p-4 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                            >
-                                <div className="flex items-center">
-                                    <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
-                                    <span className="text-green-400 font-semibold">
-                                        Standard
-                                    </span>
-                                </div>
-                                <span className="text-green-400 group-hover:translate-x-1 transition-transform">
-                                    →
-                                </span>
-                            </button>
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-6">Subscription Plans</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Standard Plan */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-green-500/30 p-6 flex flex-col">
+                <div className="text-center flex-shrink-0">
+                  <div className="w-4 h-4 bg-green-400 rounded-full mx-auto mb-2"></div>
+                  <h3 className="text-xl font-semibold text-green-400 mb-2">Standard</h3>
+                  <p className="text-2xl font-bold text-white mb-1">Free</p>
+                  <p className="text-sm text-white/70">{getPlanFeatures("Standard").requests}</p>
+                </div>
+                
+                <ul className="space-y-2 text-sm mt-4 flex-grow">
+                  {getPlanFeatures("Standard").features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                      <span className="text-white/80">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <button
+                  onClick={() => subscribePlan("Standard")}
+                  disabled={isSubscribing === "Standard" || currentPlan === "Standard"}
+                  className="w-full py-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 text-green-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 mt-6"
+                >
+                  {isSubscribing === "Standard" ? "Activating..." : currentPlan === "Standard" ? "Current Plan" : "Select"}
+                </button>
+              </div>
 
-                            <button
-                                onClick={() => subscribePlan("Pro")}
-                                disabled={isLoading}
-                                className="flex items-center justify-between p-4 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                            >
-                                <div className="flex items-center">
-                                    <div className="w-3 h-3 bg-yellow-400 rounded-full mr-3"></div>
-                                    <span className="text-yellow-400 font-semibold">
-                                        Pro
-                                    </span>
-                                </div>
-                                <span className="text-yellow-400 group-hover:translate-x-1 transition-transform">
-                                    →
-                                </span>
-                            </button>
+              {/* Pro Plan */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-yellow-500/30 p-6 flex flex-col">
+                <div className="text-center flex-shrink-0">
+                  <div className="w-4 h-4 bg-yellow-400 rounded-full mx-auto mb-2"></div>
+                  <h3 className="text-xl font-semibold text-yellow-400 mb-2">Pro</h3>
+                  <p className="text-2xl font-bold text-white mb-1">$19.99/month</p>
+                  <p className="text-sm text-white/70">{getPlanFeatures("Pro").requests}</p>
+                </div>
+                
+                <ul className="space-y-2 text-sm mt-4 flex-grow">
+                  {getPlanFeatures("Pro").features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-yellow-400" />
+                      <span className="text-white/80">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <button
+                  onClick={() => subscribePlan("Pro")}
+                  disabled={isSubscribing === "Pro" || currentPlan === "Pro"}
+                  className="w-full py-3 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 text-yellow-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 mt-6"
+                >
+                  {isSubscribing === "Pro" ? "Activating..." : currentPlan === "Pro" ? "Current Plan" : "Select"}
+                </button>
+              </div>
 
-                            <button
-                                onClick={() =>
-                                    subscribePlan("Premium")
-                                }
-                                disabled={isLoading}
-                                className="flex items-center justify-between p-4 bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 rounded-xl transition-all duration-200 group disabled:opacity-50"
-                            >
-                                <div className="flex items-center">
-                                    <div className="w-3 h-3 bg-pink-400 rounded-full mr-3"></div>
-                                    <span className="text-pink-400 font-semibold">
-                                        Premium
-                                    </span>
-                                </div>
-                                <span className="text-pink-400 group-hover:translate-x-1 transition-transform">
-                                    →
-                                </span>
-                            </button>
-                        </div>
-                    </div>
+              {/* Premium Plan */}
+              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-pink-500/30 p-6 flex flex-col">
+                <div className="text-center flex-shrink-0">
+                  <div className="w-4 h-4 bg-pink-400 rounded-full mx-auto mb-2"></div>
+                  <h3 className="text-xl font-semibold text-pink-400 mb-2">Premium</h3>
+                  <p className="text-2xl font-bold text-white mb-1">$99.99/month</p>
+                  <p className="text-sm text-white/70">{getPlanFeatures("Premium").requests}</p>
+                </div>
+                
+                <ul className="space-y-2 text-sm mt-4 flex-grow">
+                  {getPlanFeatures("Premium").features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-pink-400" />
+                      <span className="text-white/80">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <button
+                  onClick={() => subscribePlan("Premium")}
+                  disabled={isSubscribing === "Premium" || currentPlan === "Premium"}
+                  className="w-full py-3 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 text-pink-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 mt-6"
+                >
+                  {isSubscribing === "Premium" ? "Activating..." : currentPlan === "Premium" ? "Current Plan" : "Select"}
+                </button>
+              </div>
+            </div>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-6 mt-12">
             <a href="/round" className="flex items-center justify-between bg-white/5 hover:bg-white/10 transition-all duration-300 p-6 rounded-xl border border-white/10 shadow-lg">
@@ -346,4 +422,4 @@ export default function ProfilePage() {
       <Footer />
     </div>
   );
-}
+} 
