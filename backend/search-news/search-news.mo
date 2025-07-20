@@ -112,18 +112,17 @@ actor SearchNews {
     server;
   };
 
-  // Função otimizada para fazer requisição HTTP (sem retry para economizar instruções)
+  // Função otimizada para fazer requisição HTTP - RETORNA APENAS O RESPONSE BODY
   func makeHttpRequest(userQuery: Text) : async Text {
-    let host = getNextServer();
     let encodedQuery = encodeQuery(userQuery);
-    let url = "https://" # host # "/search?q=" # encodedQuery # "&categories=news&format=json";
+    let url = "https://mnznnwrg2mgtemmtqmfvsptxni0ahiir.lambda-url.us-east-1.on.aws/?q=bitcoin+hits+120k";
 
-    Debug.print("🔍 Server: " # host);
+    Debug.print("🔍 Query: " # userQuery);
     Debug.print("🌐 URL: " # url);
 
     let headers : [IC.http_header] = [
-      { name = "Host"; value = host },
-      { name = "User-Agent"; value = "motoko-agent" }
+      { name = "User-Agent"; value = "IC-Agent/1.0" },
+      { name = "Accept"; value = "application/json" }
     ];
 
     let request : IC.http_request_args = {
@@ -131,7 +130,7 @@ actor SearchNews {
       method = #get;
       headers = headers;
       body = null;
-      max_response_bytes = ?1000000; // Limitar resposta para economizar instruções
+      max_response_bytes = ?2000000; 
       is_replicated = ?false;
       transform = ?{
         function = transform;
@@ -140,54 +139,18 @@ actor SearchNews {
     };
 
     try {
-      Cycles.add(25_000_000_000);
+      Cycles.add(25_000_000_000); 
       let response = await IC.http_request(request);
 
-
-      if (response.status == 429) {
-        return "⚠️ Servidor ocupado. Tente novamente em alguns minutos.";
-      };
-
-      if (response.status != 200) {
-        return "❌ Erro na requisição: status " # debug_show(response);
-      };
+      Debug.print("📊 Status: " # debug_show(response.status));
+      Debug.print("📋 Headers: " # debug_show(response.headers));
 
       switch (Text.decodeUtf8(response.body)) {
         case null {
-          return "❌ Não foi possível decodificar a resposta UTF-8.";
+          return "❌ Não foi possível decodificar a resposta UTF-8. Status: " # debug_show(response.status) # "\nBody size: " # debug_show(response.body.size());
         };
-        case (?jsonText) {
-          let news = parseJson(jsonText);
-
-          let filtered = Array.filter(news, func(r: NewsResult) : Bool {
-            isWhitelistedDomain(r.url, whitelist)
-          });
-
-          if (filtered.size() == 0) {
-            return "❌ Nenhuma notícia relevante encontrada para sua consulta: " # userQuery;
-          };
-
-          // Limitar o número de notícias para economizar instruções
-          let limitedNews = if (filtered.size() > 5) {
-            Array.subArray(filtered, 0, 5);
-          } else {
-            filtered;
-          };
-
-          let combined = Text.join("\n\n", Iter.fromArray(Array.map(limitedNews, func(r: NewsResult) : Text {
-            "- " # r.title # ": " # r.content
-          })));
-
-          // Simplificar prompt para economizar instruções
-          let prompt = "Resuma em português:\n\n" # combined;
-
-          try {
-            let summary = await LLM.prompt(#Llama3_1_8B, prompt);
-            return "📰 Resumo das notícias:\n\n" # summary;
-          } catch (e) {
-            Debug.print("❌ LLM error: " # Error.message(e));
-            return "❌ Erro ao gerar resumo. Notícias brutas:\n\n" # combined;
-          };
+        case (?responseText) {
+          return "📋 Response (Status " # debug_show(response.status) # "):\n\n" # responseText;
         };
       };
 
