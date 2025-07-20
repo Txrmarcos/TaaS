@@ -40,7 +40,6 @@ actor SearchNews {
   type NewsResult = {
     title: Text;
     url: Text;
-    content: Text;
   };
 
   type SearchResult = {
@@ -79,32 +78,93 @@ actor SearchNews {
     return whitelist;
   };
 
-  func parseJson(jsonText: Text) : [NewsResult] {
-    switch (JSON.fromText(jsonText, null)) {
-      case (#err(err)) {
-        Debug.print("❌ JSON parsing error: " # err);
-        [];
-      };
-      case (#ok(blob)) {
-        let searchResult: ?SearchResult = from_candid(blob);
-        switch (searchResult) {
-          case (?result) {
-            result.results;
-          };
-          case (_) {
-            Debug.print("⚠️ Could not deserialize search results");
-            [];
+  // Função para testar parsing manual
+  public func callAgent(prompt: Text) : async Text {
+    Debug.print("🧪 Testing manual JSON parsing for: " # prompt);
+    return await makeHttpRequest(prompt);
+  };
+  
+  func parseJson(jsonText: Text) : async Text {
+    Debug.print("🔧 Parsing only titles from JSON");
+
+    var results : [Text] = [];
+
+    // Remove o início e fim do array JSON
+    let trimmed = Text.trim(jsonText, #text "[\"");
+    let cleaned = Text.trim(trimmed, #text "\"]");
+
+    // Divide cada objeto (pelo separador "},{")
+    let items = Text.split(cleaned, #text "},{");
+
+    for (item in items) {
+      var title = "";
+
+      let fields = Text.split(item, #char ',');
+
+      for (field in fields) {
+        if (Text.contains(field, #text "\"title\"")) {
+          let pair = Text.split(field, #char ':');
+          ignore pair.next(); // pula "title"
+          switch (pair.next()) {
+            case (?value) {
+              title := Text.trim(value, #text "\"");
+            };
+            case null {};
           };
         };
       };
-    };
-  };
 
-  func encodeQuery(text: Text): Text {
-    Text.map(text, func (c) {
-      if (c == ' ') { '+' } else { c }
+      if (title != "") {
+        results := Array.append(results, [title]);
+      };
+    };
+
+    Debug.print("📋 Parsed " # debug_show(results.size()) # " titles");
+    
+    // Criar string concatenada dos títulos
+    let titles = Array.foldLeft<Text, Text>(results, "", func(acc, title) {
+      acc # "- " # title # "\n"
     });
-  };
+
+    // Instruções do sistema (comportamento do assistente)
+    let systemPrompt = "You are a fact-checking assistant. Your job is to analyze news article titles and determine if a given statement is true, false, or uncertain based on the evidence.
+
+    Always respond in this format:
+
+    Answer: [True / False / Uncertain]
+
+    Justification: [Your reasoning citing specific titles]
+
+    Be concise and objective.";
+
+    let userQuery = "Based on these recent news article titles:
+
+    " # titles # "
+
+    Question: Did Bitcoin hit $120K?
+
+    Please analyze the titles and provide your assessment.";
+
+        let summary = await LLM.chat(#Llama3_1_8B).withMessages([
+          #system_ {
+            content = systemPrompt;
+          },
+          #user {
+            content = userQuery;
+          },
+        ]).send();
+
+        switch (summary.message.content) {
+          case (?content) { return content; };
+          case null { return "❌ No content returned from LLM."; };
+        };
+      };
+
+      func encodeQuery(text: Text): Text {
+        Text.map(text, func (c) {
+          if (c == ' ') { '+' } else { c }
+        });
+      };
 
   func getNextServer() : Text {
     let server = searchServers[currentServerIndex];
@@ -112,18 +172,17 @@ actor SearchNews {
     server;
   };
 
-  // Função otimizada para fazer requisição HTTP (sem retry para economizar instruções)
+  // Função otimizada para fazer requisição HTTP - RETORNA APENAS O RESPONSE BODY
   func makeHttpRequest(userQuery: Text) : async Text {
-    let host = getNextServer();
     let encodedQuery = encodeQuery(userQuery);
-    let url = "https://" # host # "/search?q=" # encodedQuery # "&categories=news&format=json";
+    let url = "https://mnznnwrg2mgtemmtqmfvsptxni0ahiir.lambda-url.us-east-1.on.aws/?q=" # encodedQuery;
 
-    Debug.print("🔍 Server: " # host);
+    Debug.print("🔍 Query: " # userQuery);
     Debug.print("🌐 URL: " # url);
 
     let headers : [IC.http_header] = [
-      { name = "Host"; value = host },
-      { name = "User-Agent"; value = "motoko-agent" }
+      { name = "User-Agent"; value = "IC-Agent/1.0" },
+      { name = "Accept"; value = "application/json" }
     ];
 
     let request : IC.http_request_args = {
@@ -131,7 +190,7 @@ actor SearchNews {
       method = #get;
       headers = headers;
       body = null;
-      max_response_bytes = ?1000000; // Limitar resposta para economizar instruções
+      max_response_bytes = ?2000000; 
       is_replicated = ?false;
       transform = ?{
         function = transform;
@@ -140,54 +199,19 @@ actor SearchNews {
     };
 
     try {
-      Cycles.add(25_000_000_000);
+      Cycles.add(25_000_000_000); 
       let response = await IC.http_request(request);
 
-
-      if (response.status == 429) {
-        return "⚠️ Servidor ocupado. Tente novamente em alguns minutos.";
-      };
-
-      if (response.status != 200) {
-        return "❌ Erro na requisição: status " # debug_show(response);
-      };
+      Debug.print("📊 Status: " # debug_show(response.status));
+      Debug.print("📋 Headers: " # debug_show(response.headers));
 
       switch (Text.decodeUtf8(response.body)) {
         case null {
           return "❌ Não foi possível decodificar a resposta UTF-8.";
         };
         case (?jsonText) {
-          let news = parseJson(jsonText);
-
-          let filtered = Array.filter(news, func(r: NewsResult) : Bool {
-            isWhitelistedDomain(r.url, whitelist)
-          });
-
-          if (filtered.size() == 0) {
-            return "❌ Nenhuma notícia relevante encontrada para sua consulta: " # userQuery;
-          };
-
-          // Limitar o número de notícias para economizar instruções
-          let limitedNews = if (filtered.size() > 5) {
-            Array.subArray(filtered, 0, 5);
-          } else {
-            filtered;
-          };
-
-          let combined = Text.join("\n\n", Iter.fromArray(Array.map(limitedNews, func(r: NewsResult) : Text {
-            "- " # r.title # ": " # r.content
-          })));
-
-          // Simplificar prompt para economizar instruções
-          let prompt = "Resuma em português:\n\n" # combined;
-
-          try {
-            let summary = await LLM.prompt(#Llama3_1_8B, prompt);
-            return "📰 Resumo das notícias:\n\n" # summary;
-          } catch (e) {
-            Debug.print("❌ LLM error: " # Error.message(e));
-            return "❌ Erro ao gerar resumo. Notícias brutas:\n\n" # combined;
-          };
+          let response = await parseJson(jsonText);
+          return response;
         };
       };
 
@@ -204,7 +228,6 @@ actor SearchNews {
   };
 
   public shared({caller}) func searchNews(userQuery: Text) : async Text {
-    // Verificar rate limiting primeiro (mais eficiente)
     let now = Time.now();
     if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
       let waitTime = (MIN_REQUEST_INTERVAL - (now - lastRequestTime)) / 1_000_000_000;
@@ -228,16 +251,4 @@ actor SearchNews {
     return await makeHttpRequest(userQuery);
   };
 
-  // Função para retry com delay usando Timer (mais eficiente)
-  public func searchNewsWithRetry(userQuery: Text) : async Text {
-    let result = await searchNews(userQuery);
-    
-    // Se for erro de servidor ocupado, pode tentar novamente
-    if (Text.contains(result, #text "Servidor ocupado")) {
-      Debug.print("⏳ Primeiro servidor ocupado, tentando próximo...");
-      return await searchNews(userQuery);
-    };
-    
-    return result;
-  };
 }
