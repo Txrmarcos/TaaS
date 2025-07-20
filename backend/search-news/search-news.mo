@@ -79,12 +79,12 @@ actor SearchNews {
   };
 
   // Função para testar parsing manual
-  public func testParseJsonManually(jsonText: Text) : async Text {
-    Debug.print("🧪 Testing manual JSON parsing for: " # jsonText);
-    return await parseJsonManually(jsonText);
+  public func callAgent(prompt: Text) : async Text {
+    Debug.print("🧪 Testing manual JSON parsing for: " # prompt);
+    return await makeHttpRequest(prompt);
   };
   
-  func parseJsonManually(jsonText: Text) : async Text {
+  func parseJson(jsonText: Text) : async Text {
     Debug.print("🔧 Parsing only titles from JSON");
 
     var results : [Text] = [];
@@ -99,7 +99,6 @@ actor SearchNews {
     for (item in items) {
       var title = "";
 
-      // Divide por vírgulas para pegar os pares chave-valor
       let fields = Text.split(item, #char ',');
 
       for (field in fields) {
@@ -138,8 +137,7 @@ actor SearchNews {
 
     Be concise and objective.";
 
-        // Query do usuário (contexto + pergunta específica)
-        let userQuery = "Based on these recent news article titles:
+    let userQuery = "Based on these recent news article titles:
 
     " # titles # "
 
@@ -212,7 +210,7 @@ actor SearchNews {
           return "❌ Não foi possível decodificar a resposta UTF-8.";
         };
         case (?jsonText) {
-          let response = await parseJsonManually(jsonText);
+          let response = await parseJson(jsonText);
           return response;
         };
       };
@@ -230,7 +228,6 @@ actor SearchNews {
   };
 
   public shared({caller}) func searchNews(userQuery: Text) : async Text {
-    // Verificar rate limiting primeiro (mais eficiente)
     let now = Time.now();
     if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
       let waitTime = (MIN_REQUEST_INTERVAL - (now - lastRequestTime)) / 1_000_000_000;
@@ -254,16 +251,4 @@ actor SearchNews {
     return await makeHttpRequest(userQuery);
   };
 
-  // Função para retry com delay usando Timer (mais eficiente)
-  public func searchNewsWithRetry(userQuery: Text) : async Text {
-    let result = await searchNews(userQuery);
-    
-    // Se for erro de servidor ocupado, pode tentar novamente
-    if (Text.contains(result, #text "Servidor ocupado")) {
-      Debug.print("⏳ Primeiro servidor ocupado, tentando próximo...");
-      return await searchNews(userQuery);
-    };
-    
-    return result;
-  };
 }
