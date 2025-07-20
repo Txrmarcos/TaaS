@@ -40,7 +40,6 @@ actor SearchNews {
   type NewsResult = {
     title: Text;
     url: Text;
-    content: Text;
   };
 
   type SearchResult = {
@@ -79,32 +78,95 @@ actor SearchNews {
     return whitelist;
   };
 
-  func parseJson(jsonText: Text) : [NewsResult] {
-    switch (JSON.fromText(jsonText, null)) {
-      case (#err(err)) {
-        Debug.print("❌ JSON parsing error: " # err);
-        [];
-      };
-      case (#ok(blob)) {
-        let searchResult: ?SearchResult = from_candid(blob);
-        switch (searchResult) {
-          case (?result) {
-            result.results;
-          };
-          case (_) {
-            Debug.print("⚠️ Could not deserialize search results");
-            [];
+  // Função para testar parsing manual
+  public func testParseJsonManually(jsonText: Text) : async Text {
+    Debug.print("🧪 Testing manual JSON parsing for: " # jsonText);
+    return await parseJsonManually(jsonText);
+  };
+  
+  func parseJsonManually(jsonText: Text) : async Text {
+    Debug.print("🔧 Parsing only titles from JSON");
+
+    var results : [Text] = [];
+
+    // Remove o início e fim do array JSON
+    let trimmed = Text.trim(jsonText, #text "[\"");
+    let cleaned = Text.trim(trimmed, #text "\"]");
+
+    // Divide cada objeto (pelo separador "},{")
+    let items = Text.split(cleaned, #text "},{");
+
+    for (item in items) {
+      var title = "";
+
+      // Divide por vírgulas para pegar os pares chave-valor
+      let fields = Text.split(item, #char ',');
+
+      for (field in fields) {
+        if (Text.contains(field, #text "\"title\"")) {
+          let pair = Text.split(field, #char ':');
+          ignore pair.next(); // pula "title"
+          switch (pair.next()) {
+            case (?value) {
+              title := Text.trim(value, #text "\"");
+            };
+            case null {};
           };
         };
       };
-    };
-  };
 
-  func encodeQuery(text: Text): Text {
-    Text.map(text, func (c) {
-      if (c == ' ') { '+' } else { c }
+      if (title != "") {
+        results := Array.append(results, [title]);
+      };
+    };
+
+    Debug.print("📋 Parsed " # debug_show(results.size()) # " titles");
+    
+    // Criar string concatenada dos títulos
+    let titles = Array.foldLeft<Text, Text>(results, "", func(acc, title) {
+      acc # "- " # title # "\n"
     });
-  };
+
+    // Instruções do sistema (comportamento do assistente)
+    let systemPrompt = "You are a fact-checking assistant. Your job is to analyze news article titles and determine if a given statement is true, false, or uncertain based on the evidence.
+
+    Always respond in this format:
+
+    Answer: [True / False / Uncertain]
+
+    Justification: [Your reasoning citing specific titles]
+
+    Be concise and objective.";
+
+        // Query do usuário (contexto + pergunta específica)
+        let userQuery = "Based on these recent news article titles:
+
+    " # titles # "
+
+    Question: Did Bitcoin hit $120K?
+
+    Please analyze the titles and provide your assessment.";
+
+        let summary = await LLM.chat(#Llama3_1_8B).withMessages([
+          #system_ {
+            content = systemPrompt;
+          },
+          #user {
+            content = userQuery;
+          },
+        ]).send();
+
+        switch (summary.message.content) {
+          case (?content) { return content; };
+          case null { return "❌ No content returned from LLM."; };
+        };
+      };
+
+      func encodeQuery(text: Text): Text {
+        Text.map(text, func (c) {
+          if (c == ' ') { '+' } else { c }
+        });
+      };
 
   func getNextServer() : Text {
     let server = searchServers[currentServerIndex];
@@ -115,7 +177,7 @@ actor SearchNews {
   // Função otimizada para fazer requisição HTTP - RETORNA APENAS O RESPONSE BODY
   func makeHttpRequest(userQuery: Text) : async Text {
     let encodedQuery = encodeQuery(userQuery);
-    let url = "https://mnznnwrg2mgtemmtqmfvsptxni0ahiir.lambda-url.us-east-1.on.aws/?q=bitcoin+hits+120k";
+    let url = "https://mnznnwrg2mgtemmtqmfvsptxni0ahiir.lambda-url.us-east-1.on.aws/?q=" # encodedQuery;
 
     Debug.print("🔍 Query: " # userQuery);
     Debug.print("🌐 URL: " # url);
@@ -147,10 +209,11 @@ actor SearchNews {
 
       switch (Text.decodeUtf8(response.body)) {
         case null {
-          return "❌ Não foi possível decodificar a resposta UTF-8. Status: " # debug_show(response.status) # "\nBody size: " # debug_show(response.body.size());
+          return "❌ Não foi possível decodificar a resposta UTF-8.";
         };
-        case (?responseText) {
-          return "📋 Response (Status " # debug_show(response.status) # "):\n\n" # responseText;
+        case (?jsonText) {
+          let response = await parseJsonManually(jsonText);
+          return response;
         };
       };
 
