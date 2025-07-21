@@ -164,7 +164,7 @@ export default function BotTestPage() {
                                             value={prompt}
                                             onChange={(e) => setPrompt(e.target.value)}
                                             placeholder='Example: "Is it true that the government recently banned cryptocurrency trading?"'
-                                            className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#FF4D00] focus:border-transparent transition-all duration-300 resize-none min-h-[120px] sm:min-h-[140px] hover:bg-white/15 text-sm sm:text-base group-hover:border-white/30"
+                                            className="w-full px-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#ffffff]/80 focus:border-transparent transition-all duration-300 resize-none min-h-[120px] sm:min-h-[140px] hover:bg-white/15 text-sm sm:text-base group-hover:border-white/30"
                                             rows={4}
                                         />
                                         <div className="absolute bottom-3 right-3 flex items-center space-x-2">
