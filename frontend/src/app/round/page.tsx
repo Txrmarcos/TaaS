@@ -200,7 +200,7 @@ export default function RoundtablePage() {
                             <Zap className="w-4 h-4 text-orange-400" />
                             <span className="text-orange-300 text-sm font-medium">Governança Descentralizada</span>
                         </div>
-                        <h1 className="text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] bg-clip-text text-transparent">
+                        <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
                             Mesa Redonda
                         </h1>
                         <p className="text-xl text-white/70 max-w-3xl mx-auto leading-relaxed">

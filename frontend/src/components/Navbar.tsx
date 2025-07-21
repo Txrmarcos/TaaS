@@ -3,14 +3,14 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Menu, X, Wallet } from "lucide-react";
-import { useAuth } from "frontend/src/app/auth/useAuth.ts"; // Certifique-se que o caminho está correto
+import { useAuth } from "frontend/src/app/auth/useAuth";
 import { useWalletBalance } from "../hooks/useWalletBalance"; // Importa o novo hook
 
 const navigationItems = [
     { name: "Chat", href: "/chat" },
     { name: "Rounded Table", href: "/round" },              
-    { name: "Profile", href: "/profile-area" },
     { name: "Finance", href: "/finance" },
+    { name: "Profile", href: "/profile-area" },
     {
         name: "GitHub",
         href: "https://github.com/Txrmarcos/TaaS",

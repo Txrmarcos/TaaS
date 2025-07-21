@@ -228,7 +228,7 @@ export default function ProfilePage() {
         <div className="w-full max-w-4xl">
           <div className="flex justify-between items-start mb-10">
             <div>
-              <h1 className="text-4xl font-bold mb-2">User Area</h1>
+              <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">User Area</h1>
               <p className="text-white/70 text-lg">
                 View your information and manage your account.
               </p>

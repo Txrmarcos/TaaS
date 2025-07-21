@@ -21,7 +21,7 @@ export const Hero = () => {
                 <div className="animate-fade-in">
                     <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-tight">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF4D00] to-[#FF007A]">
-                            On-chain trust
+                         a   On-chain trust
                             <br />
                             starts here.
                         </span>
