@@ -119,7 +119,7 @@ export default function BotTestPage() {
                                     <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <h2 className="text-xl sm:text-2xl font-bold text-white">AI Chat</h2>
+                                    <h2 className="text-3xl font-bold text-white">AI Chat</h2>
                                 </div>
                             </div>
                         </div>
@@ -130,23 +130,23 @@ export default function BotTestPage() {
                             {!response && !loading && (
                                 <div className="flex flex-col items-center justify-center py-8 space-y-6">
                                     <div className="text-center space-y-2">
-                                        <h3 className="text-lg sm:text-xl font-semibold text-white/80">Ready to Help</h3>
-                                        <p className="text-xs sm:text-sm text-white/60 mt-1">Ask anything about markets, news, and financial insights to verify truthfulness.</p>
+                                        <h3 className="text-lg sm:text-xl font-semibold text-white">Ready to Help</h3>
+                                        <p className="text-xs sm:text-sm text-white/75 mt-1">Ask anything about markets, news, and financial insights to verify truthfulness.</p>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
                                         <button 
                                             onClick={() => setPrompt("Can you verify if the recent news about the stock market crash is true?")}
                                             className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all duration-200 text-left"
                                         >
-                                            <div className="text-sm text-white/80">🔎 Fact Check</div>
-                                            <div className="text-xs text-white/50 mt-1">Verify news accuracy</div>
+                                            <div className="text-sm text-white">🔎 Fact Check</div>
+                                            <div className="text-xs text-white/60 mt-1">Verify news accuracy</div>
                                         </button>
                                         <button 
                                             onClick={() => setPrompt("Is the claim about the new tax law affecting all small businesses true?")}
                                             className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all duration-200 text-left"
                                         >
-                                            <div className="text-sm text-white/80">🧐 Truth Check</div>
-                                            <div className="text-xs text-white/50 mt-1">Assess claim accuracy</div>
+                                            <div className="text-sm text-white">🧐 Truth Check</div>
+                                            <div className="text-xs text-white/60 mt-1">Assess claim accuracy</div>
                                         </button>
                                     </div>
                                 </div>
@@ -155,7 +155,7 @@ export default function BotTestPage() {
                             {/* Input Section */}
                             <div className="space-y-7">
                                 <div>
-                                    <label className="block text-sm font-medium text-white/80 mb-3 flex items-center space-x-2">
+                                    <label className="block text-sm font-medium text-white mb-3 flex items-center space-x-2">
                                         <span>Your Question</span>
                                         <div className="w-2 h-2 bg-[#FF007A] rounded-full animate-pulse"></div>
                                     </label>
@@ -208,7 +208,7 @@ export default function BotTestPage() {
                                 <div className="space-y-4 animate-fadeIn">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-8 h-8 bg-gradient-to-r from-[#FF007A] to-purple-500 rounded-lg flex items-center justify-center">
+                                            <div className="w-8 h-8 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] rounded-lg flex items-center justify-center">
                                                 <Sparkles className="w-4 h-4 text-white" />
                                             </div>
                                             <h3 className="text-lg sm:text-xl font-semibold text-white">AI Response</h3>
