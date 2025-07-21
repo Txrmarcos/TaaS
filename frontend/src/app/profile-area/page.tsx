@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../auth/useAuth";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { ArrowRight, RefreshCw, CheckCircle, XCircle } from "lucide-react";
+import { ArrowRight, RefreshCw, CheckCircle, XCircle, User } from "lucide-react";
 import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
@@ -226,56 +226,17 @@ export default function ProfilePage() {
 
       <main className="flex flex-col flex-grow items-center justify-center px-4 pt-32 pb-20">
         <div className="w-full max-w-4xl">
-          <div className="flex justify-between items-start mb-10">
-            <div>
-              <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">User Area</h1>
-              <p className="text-white/70 text-lg">
-                View your information and manage your account.
-              </p>
-            </div>
-            <button
-              onClick={logout}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50"
-            >
-              {isLoading ? "Logging out..." : "Logout"}
-            </button>
-          </div>
-
-          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-8 space-y-6 ">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm text-white/70 mb-1">Principal ID:</p>
-                <p className="text-sm font-mono text-white break-all">
-                  {principal ? principal.toText() : "Loading..."}
-                </p>
+          {/* Centered Title Section */}
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] rounded-lg flex items-center justify-center shadow-lg">
+                <User className="w-4 h-4 text-white" />
               </div>
-              
-              {status && (
-                <>
-                  <div>
-                    <p className="text-sm text-white/70 mb-1">Current Plan:</p>
-                    <p className={`text-lg font-semibold ${getPlanColor(currentPlan || "")}`}>
-                      {currentPlan || "No active plan"}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-white/70 mb-1">Requests Available:</p>
-                    <p className="text-lg font-semibold text-white">
-                      {status.requestsLeft.toString()}
-                    </p>
-                  </div>
-                  
-                  <div>
-                    <p className="text-sm text-white/70 mb-1">Reset Date:</p>
-                    <p className="text-sm text-white">
-                      {formatResetTime(status.resetAt)}
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
+              User Area
+            </h1>
+            <p className="text-white/70 text-lg">
+              View your information and manage your account.
+            </p>
           </div>
 
           {/* Wallet Section */}
@@ -416,6 +377,56 @@ export default function ProfilePage() {
               <ArrowRight className="w-5 h-5 text-white" />
             </a>
           </div>
+
+          {/* Account Information Section - Moved to bottom */}
+          <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-8 mt-12">
+            <h2 className="text-2xl font-bold mb-6">Account Information</h2>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="flex-1">
+                <p className="text-sm text-white/70 mb-1">Principal ID:</p>
+                <p className="text-sm font-mono text-white break-all">
+                  {principal ? principal.toText() : "Loading..."}
+                </p>
+              </div>
+              
+              <button
+                onClick={logout}
+                disabled={isLoading}
+                className="px-6 py-3 text-sm bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50"
+              >
+                {isLoading ? "Logging out..." : "Logout"}
+              </button>
+            </div>
+          </div>
+
+          {/* Status Section - Moved below Account Information */}
+          {status && (
+            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-8 mt-6">
+              <h2 className="text-2xl font-bold mb-6">Account Status</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <p className="text-sm text-white/70 mb-1">Current Plan:</p>
+                  <p className={`text-lg font-semibold ${getPlanColor(currentPlan || "")}`}>
+                    {currentPlan || "No active plan"}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-white/70 mb-1">Requests Available:</p>
+                  <p className="text-lg font-semibold text-white">
+                    {status.requestsLeft.toString()}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-white/70 mb-1">Reset Date:</p>
+                  <p className="text-sm text-white">
+                    {formatResetTime(status.resetAt)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
