@@ -17,8 +17,10 @@ import {
   CreditCard,
   PiggyBank,
   Eye,
-  EyeOff
+  EyeOff,
+  QrCode
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 // Imports para interagir com a IC
 import { HttpAgent, Actor } from "@dfinity/agent";
@@ -61,6 +63,7 @@ export default function FinancePage() {
   const [icpDepositAddress, setIcpDepositAddress] = useState<string | null>(null);
   const [bitcoinAddress, setBitcoinAddress] = useState<string | null>(null);
   const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
+  const [showQRCode, setShowQRCode] = useState<"icp" | "btc" | null>(null);
 
   // Estados para o trading
   const [activeTab, setActiveTab] = useState<"wallet" | "trade" | "deposit">("wallet");
@@ -235,6 +238,10 @@ export default function FinancePage() {
     alert("Copied to clipboard!");
   };
 
+  const toggleQRCode = (type: "icp" | "btc") => {
+    setShowQRCode(showQRCode === type ? null : type);
+  };
+
   const handleSwapTokens = () => {
     setFromToken(toToken);
     setToToken(fromToken);
@@ -320,7 +327,9 @@ export default function FinancePage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
-              <PiggyBank className="w-10 h-10 text-purple-400" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] rounded-xl flex items-center justify-center shadow-lg">
+                  <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
               Financial Center
             </h1>
             <p className="text-white/70 text-lg">
@@ -335,7 +344,7 @@ export default function FinancePage() {
                 onClick={() => setActiveTab("wallet")}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
                   activeTab === "wallet"
-                    ? "bg-purple-500 text-white shadow-lg"
+                    ? "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -346,7 +355,7 @@ export default function FinancePage() {
                 onClick={() => setActiveTab("deposit")}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
                   activeTab === "deposit"
-                    ? "bg-purple-500 text-white shadow-lg"
+                    ? "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -357,7 +366,7 @@ export default function FinancePage() {
                 onClick={() => setActiveTab("trade")}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
                   activeTab === "trade"
-                    ? "bg-purple-500 text-white shadow-lg"
+                    ? "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
@@ -490,24 +499,54 @@ export default function FinancePage() {
                     </button>
 
                     {showDeposit === 'icp' && icpDepositAddress && (
-                      <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                        <p className="text-xs text-white/70 mb-2">Your ICP address (Account Identifier):</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-white font-mono break-all mr-2">{icpDepositAddress}</p>
-                          <button
-                            onClick={() => copyToClipboard(icpDepositAddress)}
-                            className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
+                      <div className="bg-white/5 rounded-lg p-4 border border-white/10 space-y-4">
+                        <div>
+                          <p className="text-xs text-white/70 mb-2">Your ICP address (Account Identifier):</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-white font-mono break-all mr-2">{icpDepositAddress}</p>
+                            <button
+                              onClick={() => copyToClipboard(icpDepositAddress)}
+                              className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* QR Code Section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs text-white/70">QR Code:</p>
+                            <button
+                              onClick={() => toggleQRCode('icp')}
+                              className="flex items-center gap-2 px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded transition-all duration-200 text-xs"
+                            >
+                              <QrCode className="w-4 h-4" />
+                              {showQRCode === 'icp' ? 'Hide QR' : 'Show QR'}
+                            </button>
+                          </div>
+                          
+                          {showQRCode === 'icp' && (
+                            <div className="flex justify-center p-4 bg-white rounded-lg">
+                              <QRCodeSVG 
+                                value={icpDepositAddress} 
+                                size={200}
+                                bgColor="#ffffff"
+                                fgColor="#000000"
+                                level="M"
+                                includeMargin={true}
+                              />
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                           <p className="text-blue-400 text-sm font-semibold mb-2">ℹ️ Instructions:</p>
                           <div className="text-white/80 text-xs space-y-1">
                             <p>• Send ICP to the Account Identifier above</p>
                             <p>• Minimum amount: 0.0001 ICP</p>
                             <p>• Transactions are processed almost instantly</p>
+                            <p>• Scan the QR code with your wallet app</p>
                           </div>
                         </div>
                       </div>
@@ -537,25 +576,55 @@ export default function FinancePage() {
                     </button>
 
                     {showDeposit === 'btc' && bitcoinAddress && (
-                      <div className="bg-white/5 rounded-lg p-4 border border-white/10">
-                        <p className="text-xs text-white/70 mb-2">Your Bitcoin address:</p>
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-white font-mono break-all mr-2">{bitcoinAddress}</p>
-                          <button
-                            onClick={() => copyToClipboard(bitcoinAddress)}
-                            className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </button>
+                      <div className="bg-white/5 rounded-lg p-4 border border-white/10 space-y-4">
+                        <div>
+                          <p className="text-xs text-white/70 mb-2">Your Bitcoin address:</p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-sm text-white font-mono break-all mr-2">{bitcoinAddress}</p>
+                            <button
+                              onClick={() => copyToClipboard(bitcoinAddress)}
+                              className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* QR Code Section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs text-white/70">QR Code:</p>
+                            <button
+                              onClick={() => toggleQRCode('btc')}
+                              className="flex items-center gap-2 px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs"
+                            >
+                              <QrCode className="w-4 h-4" />
+                              {showQRCode === 'btc' ? 'Hide QR' : 'Show QR'}
+                            </button>
+                          </div>
+                          
+                          {showQRCode === 'btc' && (
+                            <div className="flex justify-center p-4 bg-white rounded-lg">
+                              <QRCodeSVG 
+                                value={bitcoinAddress} 
+                                size={200}
+                                bgColor="#ffffff"
+                                fgColor="#000000"
+                                level="M"
+                                includeMargin={true}
+                              />
+                            </div>
+                          )}
                         </div>
                         
-                        <div className="mt-4 bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
+                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
                           <p className="text-orange-400 text-sm font-semibold mb-2">ℹ️ Instructions:</p>
                           <div className="text-white/80 text-xs space-y-1">
                             <p>• Send Bitcoin to the address above</p>
                             <p>• Minimum amount: 0.001 BTC</p>
                             <p>• After confirmation, you will receive ckBTC</p>
                             <p>• Process may take a few hours</p>
+                            <p>• Scan the QR code with your wallet app</p>
                           </div>
                         </div>
                       </div>
@@ -571,7 +640,7 @@ export default function FinancePage() {
             <div className="space-y-6">
               <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-6 max-w-md mx-auto">
                 <h2 className="text-2xl font-bold mb-2 text-center flex items-center justify-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-purple-400" />
+                  <TrendingUp className="w-6 h-6 text-green-400" />
                   Trading Center
                 </h2>
                 <p className="text-white/70 text-center mb-6">Trade ICP and ckBTC securely on the blockchain.</p>
@@ -645,7 +714,7 @@ export default function FinancePage() {
                   className={`w-full mt-6 py-3 rounded-xl font-semibold text-lg transition-all duration-200 ${
                     isSwapDisabled
                       ? "bg-white/10 text-white/40 cursor-not-allowed"
-                      : "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg hover:scale-[1.02] active:scale-[0.98]"
+                      : "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] hover:from-[#FF4D00] hover:to-[#FF007A] text-white shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                   }`}
                 >
                   {isSwapping ? (

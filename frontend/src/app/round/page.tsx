@@ -9,41 +9,41 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { Principal } from "@dfinity/principal"; // 👈 IMPORTANTE: Importar o Principal
+import { Principal } from "@dfinity/principal"; 
 
-// Tipo de dados como vem do Canister
+// Canister data
 type RawProposal = {
     id: bigint;
     name: string;
     url: string;
     pr_link: string;
     description: string;
-    proposer: Principal; // 👈 Tipo correto é Principal
+    proposer: Principal;
     created_at: bigint;
     votes_for: bigint;
     votes_against: bigint;
     status: { Pending?: null; Approved?: null; Rejected?: null };
-    voters: Principal[]; // 👈 Tipo correto é um array de Principal
+    voters: Principal[];
 };
 
-// Tipo de dados formatado para usar no estado do React
+// Data formatted for React state
 type FormattedProposal = {
     id: number;
     name: string;
     url: string;
     pr_link: string;
     description: string;
-    proposer: string; // Convertido para string
+    proposer: string;
     created_at: bigint;
     votes_for: number;
     votes_against: number;
     status: { Pending?: null; Approved?: null; Rejected?: null };
-    voters: string[]; // Convertido para array de string
+    voters: string[]; 
 };
 
 export default function RoundtablePage() {
     const { principal, isAuthenticated } = useAuth();
-    const [proposals, setProposals] = useState<FormattedProposal[]>([]); // 👈 Usar o tipo formatado
+    const [proposals, setProposals] = useState<FormattedProposal[]>([]); 
     const [isLoadingProposals, setIsLoadingProposals] = useState(true);
     const [name, setName] = useState("");
     const [url, setUrl] = useState("");
@@ -63,12 +63,11 @@ export default function RoundtablePage() {
         try {
             const rawList = await roundtableActor.list_proposals() as RawProposal[];
             
-            // ✅ CORREÇÃO: Mapear os dados brutos para um formato que o React possa renderizar
             const formattedList = rawList.map(p => ({
                 ...p,
                 id: Number(p.id),
-                proposer: p.proposer.toText(), // Converte Principal para string
-                voters: p.voters.map(voter => voter.toText()), // Converte cada Principal do array para string
+                proposer: p.proposer.toText(), 
+                voters: p.voters.map(voter => voter.toText()), 
                 votes_for: Number(p.votes_for),
                 votes_against: Number(p.votes_against),
             }));
@@ -197,7 +196,7 @@ export default function RoundtablePage() {
                     {/* Hero Section */}
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/80 to-[#FF007A]/80 px-4 py-2 rounded-full mb-6">
-                            <Zap className="w-4 h-4 text-white/80" />
+                            <Zap className="w-4 h-4 text-white" />
                             <span className="text-white/80 text-sm font-medium">Decentralized Governance</span>
                         </div>
                         <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">

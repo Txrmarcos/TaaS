@@ -65,17 +65,8 @@ export const Navbar = () => {
                     </div>
                 </div>
 
-                {/* Desktop Nav & Wallet */}
+                {/* Desktop Nav */}
                 <div className="hidden md:flex items-center gap-6">
-                    {/* Wallet Display */}
-                    {principal && (
-                        <div className="flex items-center gap-3 text-sm bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
-                            <Wallet className="w-4 h-4 text-white/50" />
-                            <span className="font-mono text-blue-400">ICP {isLoading ? '...' : icpBalance}</span>
-                            <div className="w-px h-4 bg-white/20" />
-                            <span className="font-mono text-orange-400">ckBTC {isLoading ? '...' : ckBalance}</span>
-                        </div>
-                    )}
                     
                     {/* Navigation */}
                     <nav className="flex items-center space-x-6">
