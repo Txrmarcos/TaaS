@@ -322,55 +322,55 @@ export default function FinancePage() {
     <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
       <Navbar />
 
-      <main className="flex flex-col flex-grow items-center justify-start px-4 pt-32 pb-20">
-        <div className="w-full max-w-6xl">
+      <main className="flex flex-col flex-grow items-center justify-start px-2 pt-32 pb-12">
+        <div className="w-full max-w-7xl">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold mb-2 flex items-center justify-center gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] rounded-xl flex items-center justify-center shadow-lg">
-                  <PiggyBank className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] rounded-lg flex items-center justify-center shadow-lg">
+                  <PiggyBank className="w-4 h-4 text-white" />
               </div>
               Financial Center
-            </h1>
-            <p className="text-white/70 text-lg">
+            </h1>heigh
+            <p className="text-white/70 text-base">
               Manage your assets, make deposits and trade tokens
             </p>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex justify-center mb-8">
-            <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 p-2 flex gap-2">
+          <div className="flex justify-center mb-6">
+            <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 p-1.5 flex gap-1">
               <button
                 onClick={() => setActiveTab("wallet")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 text-sm ${
                   activeTab === "wallet"
                     ? "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Wallet className="w-5 h-5" />
+                <Wallet className="w-4 h-4" />
                 Wallet
               </button>
               <button
                 onClick={() => setActiveTab("deposit")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 text-sm ${
                   activeTab === "deposit"
                     ? "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <CreditCard className="w-5 h-5" />
+                <CreditCard className="w-4 h-4" />
                 Deposit
               </button>
               <button
                 onClick={() => setActiveTab("trade")}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 flex items-center gap-2 ${
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center gap-1.5 text-sm ${
                   activeTab === "trade"
                     ? "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white shadow-lg"
                     : "text-white/70 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <TrendingUp className="w-5 h-5" />
+                <TrendingUp className="w-4 h-4" />
                 Trading
               </button>
             </div>
@@ -378,88 +378,88 @@ export default function FinancePage() {
 
           {/* Wallet Tab */}
           {activeTab === "wallet" && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Balance Overview */}
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-6">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold flex items-center gap-3">
-                    <DollarSign className="w-6 h-6 text-green-400" />
+              <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl p-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <DollarSign className="w-5 h-5 text-green-400" />
                     Balance Overview
                   </h2>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setShowBalances(!showBalances)}
-                      className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
+                      className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
                     >
-                      {showBalances ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showBalances ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={handleRefresh}
                       disabled={isLoadingBalance}
-                      className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 rounded-lg transition-all duration-200 font-medium disabled:opacity-50 text-sm"
                     >
-                      <RefreshCw className={`w-4 h-4 ${isLoadingBalance ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`w-3 h-3 ${isLoadingBalance ? 'animate-spin' : ''}`} />
                       {isLoadingBalance ? "Updating..." : "Refresh"}
                     </button>
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* ICP Balance Card */}
-                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl p-6 border border-blue-500/20">
+                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg p-4 border border-blue-500/20">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mr-4">
-                          <span className="text-blue-400 font-bold text-xl">∞</span>
+                        <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-blue-400 font-bold text-lg">∞</span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">ICP</h3>
-                          <p className="text-white/60 text-sm">Internet Computer</p>
+                          <h3 className="text-base font-semibold text-white">ICP</h3>
+                          <p className="text-white/60 text-xs">Internet Computer</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-blue-400">
+                        <p className="text-xl font-bold text-blue-400">
                           {showBalances ? (icpBalance || "0.00000000") : "••••••"}
                         </p>
-                        <p className="text-white/60 text-sm">ICP</p>
+                        <p className="text-white/60 text-xs">ICP</p>
                       </div>
                     </div>
                   </div>
 
                   {/* ckBTC Balance Card */}
-                  <div className="bg-gradient-to-r from-orange-500/10 to-yellow-500/10 rounded-xl p-6 border border-orange-500/20">
+                  <div className="bg-gradient-to-r from-orange-500/10 to-yellow-500/10 rounded-lg p-4 border border-orange-500/20">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <div className="w-12 h-12 bg-orange-500/20 rounded-full flex items-center justify-center mr-4">
-                          <Bitcoin className="w-6 h-6 text-orange-400" />
+                        <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center mr-3">
+                          <Bitcoin className="w-5 h-5 text-orange-400" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">ckBTC</h3>
-                          <p className="text-white/60 text-sm">Chain-key Bitcoin</p>
+                          <h3 className="text-base font-semibold text-white">ckBTC</h3>
+                          <p className="text-white/60 text-xs">Chain-key Bitcoin</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-orange-400">
+                        <p className="text-xl font-bold text-orange-400">
                           {showBalances ? (ckBalance || "0.00000000") : "••••••"}
                         </p>
-                        <p className="text-white/60 text-sm">ckBTC</p>
+                        <p className="text-white/60 text-xs">ckBTC</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Principal Info */}
-                <div className="mt-6 bg-white/5 rounded-lg p-4 border border-white/10">
-                  <p className="text-xs text-white/70 mb-2">Principal ID:</p>
+                <div className="mt-4 bg-white/5 rounded-lg p-3 border border-white/10">
+                  <p className="text-xs text-white/70 mb-1">Principal ID:</p>
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-white font-mono break-all mr-2">
+                    <p className="text-xs text-white font-mono break-all mr-2">
                       {principal?.toText()}
                     </p>
                     <button
                       onClick={() => copyToClipboard(principal?.toText() || "")}
-                      className="px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                      className="px-2 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3 h-3" />
                     </button>
                   </div>
                 </div>
@@ -469,68 +469,68 @@ export default function FinancePage() {
 
           {/* Deposit Tab */}
           {activeTab === "deposit" && (
-            <div className="space-y-6">
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-6">
-                <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
-                  <CreditCard className="w-6 h-6 text-green-400" />
+            <div className="space-y-4">
+              <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl p-4">
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-green-400" />
                   Deposit Center
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* ICP Deposit Card */}
-                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-xl p-6 border border-blue-500/20">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg p-4 border border-blue-500/20">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center mr-3">
-                          <span className="text-blue-400 font-bold">∞</span>
+                        <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center mr-2">
+                          <span className="text-blue-400 font-bold text-sm">∞</span>
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">Deposit ICP</h3>
-                          <p className="text-white/60 text-sm">Internet Computer Protocol</p>
+                          <h3 className="text-base font-semibold text-white">Deposit ICP</h3>
+                          <p className="text-white/60 text-xs">Internet Computer Protocol</p>
                         </div>
                       </div>
                     </div>
                     
                     <button
                       onClick={() => handleDepositClick('icp')}
-                      className="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 font-semibold mb-4"
+                      className="w-full py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded-lg transition-all duration-200 font-medium mb-3 text-sm"
                     >
                       {showDeposit === 'icp' ? 'Hide Address' : 'Show Deposit Address'}
                     </button>
 
                     {showDeposit === 'icp' && icpDepositAddress && (
-                      <div className="bg-white/5 rounded-lg p-4 border border-white/10 space-y-4">
+                      <div className="bg-white/5 rounded-lg p-3 border border-white/10 space-y-3">
                         <div>
-                          <p className="text-xs text-white/70 mb-2">Your ICP address (Account Identifier):</p>
+                          <p className="text-xs text-white/70 mb-1">Your ICP address (Account Identifier):</p>
                           <div className="flex items-center justify-between">
-                            <p className="text-sm text-white font-mono break-all mr-2">{icpDepositAddress}</p>
+                            <p className="text-xs text-white font-mono break-all mr-2">{icpDepositAddress}</p>
                             <button
                               onClick={() => copyToClipboard(icpDepositAddress)}
-                              className="px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                              className="px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
                             >
-                              <Copy className="w-4 h-4" />
+                              <Copy className="w-3 h-3" />
                             </button>
                           </div>
                         </div>
 
                         {/* QR Code Section */}
                         <div>
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center justify-between mb-2">
                             <p className="text-xs text-white/70">QR Code:</p>
                             <button
                               onClick={() => toggleQRCode('icp')}
-                              className="flex items-center gap-2 px-3 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded transition-all duration-200 text-xs"
+                              className="flex items-center gap-1 px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 rounded transition-all duration-200 text-xs"
                             >
-                              <QrCode className="w-4 h-4" />
+                              <QrCode className="w-3 h-3" />
                               {showQRCode === 'icp' ? 'Hide QR' : 'Show QR'}
                             </button>
                           </div>
                           
                           {showQRCode === 'icp' && (
-                            <div className="flex justify-center p-4 bg-white rounded-lg">
+                            <div className="flex justify-center p-3 bg-white rounded-lg">
                               <QRCodeSVG 
                                 value={icpDepositAddress} 
-                                size={200}
+                                size={150}
                                 bgColor="#ffffff"
                                 fgColor="#000000"
                                 level="M"
@@ -540,9 +540,9 @@ export default function FinancePage() {
                           )}
                         </div>
                         
-                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                          <p className="text-blue-400 text-sm font-semibold mb-2">ℹ️ Instructions:</p>
-                          <div className="text-white/80 text-xs space-y-1">
+                        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
+                          <p className="text-blue-400 text-xs font-medium mb-1">ℹ️ Instructions:</p>
+                          <div className="text-white/80 text-xs space-y-0.5">
                             <p>• Send ICP to the Account Identifier above</p>
                             <p>• Minimum amount: 0.0001 ICP</p>
                             <p>• Transactions are processed almost instantly</p>
@@ -554,15 +554,15 @@ export default function FinancePage() {
                   </div>
 
                   {/* Bitcoin Deposit Card */}
-                  <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl p-6 border border-orange-500/20">
-                    <div className="flex items-center justify-between mb-4">
+                  <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-lg p-4 border border-orange-500/20">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center">
-                        <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center mr-3">
-                          <Bitcoin className="w-6 h-6 text-orange-400" />
+                        <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center mr-2">
+                          <Bitcoin className="w-5 h-5 text-orange-400" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">Deposit Bitcoin</h3>
-                          <p className="text-white/60 text-sm">Converted to ckBTC</p>
+                          <h3 className="text-base font-semibold text-white">Deposit Bitcoin</h3>
+                          <p className="text-white/60 text-xs">Converted to ckBTC</p>
                         </div>
                       </div>
                     </div>
@@ -570,44 +570,44 @@ export default function FinancePage() {
                     <button
                       onClick={() => handleDepositClick('btc')}
                       disabled={isGeneratingAddress}
-                      className="w-full py-3 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded-lg transition-all duration-200 font-semibold mb-4 disabled:opacity-50"
+                      className="w-full py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded-lg transition-all duration-200 font-medium mb-3 disabled:opacity-50 text-sm"
                     >
                       {isGeneratingAddress ? 'Generating...' : (showDeposit === 'btc' ? 'Hide Address' : 'Generate Bitcoin Address')}
                     </button>
 
                     {showDeposit === 'btc' && bitcoinAddress && (
-                      <div className="bg-white/5 rounded-lg p-4 border border-white/10 space-y-4">
+                      <div className="bg-white/5 rounded-lg p-3 border border-white/10 space-y-3">
                         <div>
-                          <p className="text-xs text-white/70 mb-2">Your Bitcoin address:</p>
+                          <p className="text-xs text-white/70 mb-1">Your Bitcoin address:</p>
                           <div className="flex items-center justify-between">
-                            <p className="text-sm text-white font-mono break-all mr-2">{bitcoinAddress}</p>
+                            <p className="text-xs text-white font-mono break-all mr-2">{bitcoinAddress}</p>
                             <button
                               onClick={() => copyToClipboard(bitcoinAddress)}
-                              className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                              className="px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
                             >
-                              <Copy className="w-4 h-4" />
+                              <Copy className="w-3 h-3" />
                             </button>
                           </div>
                         </div>
 
                         {/* QR Code Section */}
                         <div>
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center justify-between mb-2">
                             <p className="text-xs text-white/70">QR Code:</p>
                             <button
                               onClick={() => toggleQRCode('btc')}
-                              className="flex items-center gap-2 px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs"
+                              className="flex items-center gap-1 px-2 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs"
                             >
-                              <QrCode className="w-4 h-4" />
+                              <QrCode className="w-3 h-3" />
                               {showQRCode === 'btc' ? 'Hide QR' : 'Show QR'}
                             </button>
                           </div>
                           
                           {showQRCode === 'btc' && (
-                            <div className="flex justify-center p-4 bg-white rounded-lg">
+                            <div className="flex justify-center p-3 bg-white rounded-lg">
                               <QRCodeSVG 
                                 value={bitcoinAddress} 
-                                size={200}
+                                size={150}
                                 bgColor="#ffffff"
                                 fgColor="#000000"
                                 level="M"
@@ -617,9 +617,9 @@ export default function FinancePage() {
                           )}
                         </div>
                         
-                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3">
-                          <p className="text-orange-400 text-sm font-semibold mb-2">ℹ️ Instructions:</p>
-                          <div className="text-white/80 text-xs space-y-1">
+                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2">
+                          <p className="text-orange-400 text-xs font-medium mb-1">ℹ️ Instructions:</p>
+                          <div className="text-white/80 text-xs space-y-0.5">
                             <p>• Send Bitcoin to the address above</p>
                             <p>• Minimum amount: 0.001 BTC</p>
                             <p>• After confirmation, you will receive ckBTC</p>
@@ -637,47 +637,47 @@ export default function FinancePage() {
 
           {/* Trading Tab */}
           {activeTab === "trade" && (
-            <div className="space-y-6">
-              <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-xl p-6 max-w-md mx-auto">
-                <h2 className="text-2xl font-bold mb-2 text-center flex items-center justify-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-green-400" />
+            <div className="space-y-4">
+              <div className="bg-white/5 backdrop-blur-xl rounded-xl border border-white/10 shadow-xl p-4 max-w-lg mx-auto">
+                <h2 className="text-xl font-bold mb-2 text-center flex items-center justify-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-green-400" />
                   Trading Center
                 </h2>
-                <p className="text-white/70 text-center mb-6">Trade ICP and ckBTC securely on the blockchain.</p>
+                <p className="text-white/70 text-center mb-4 text-sm">Trade ICP and ckBTC securely on the blockchain.</p>
                 
                 {/* From Token */}
                 <div className="space-y-2">
-                  <div className="bg-black/20 rounded-xl p-4 border border-white/10">
-                    <div className="flex items-center justify-between text-xs mb-2">
+                  <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+                    <div className="flex items-center justify-between text-xs mb-1">
                       <span className="text-white/70">From</span>
-                      <button onClick={handleMaxAmount} className="px-2 py-1 bg-white/10 hover:bg-white/20 rounded-md transition-colors text-xs">
+                      <button onClick={handleMaxAmount} className="px-1.5 py-0.5 bg-white/10 hover:bg-white/20 rounded-md transition-colors text-xs">
                         MAX
                       </button>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.0" className="w-full bg-transparent text-2xl font-bold placeholder-white/40 outline-none"/>
-                      <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.0" className="w-full bg-transparent text-xl font-bold placeholder-white/40 outline-none"/>
+                      <div className="flex items-center gap-1.5 p-1.5 bg-white/5 rounded-lg">
                         {getTokenIcon(fromToken)}
-                        <span className={`font-semibold ${getTokenColor(fromToken)}`}>{fromToken.toUpperCase()}</span>
+                        <span className={`font-medium text-sm ${getTokenColor(fromToken)}`}>{fromToken.toUpperCase()}</span>
                       </div>
                     </div>
                   </div>
 
                   {/* Swap Button */}
-                  <div className="flex justify-center py-2">
-                    <button onClick={handleSwapTokens} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-transform duration-200 hover:rotate-180">
-                      <ArrowUpDown className="w-5 h-5 text-white" />
+                  <div className="flex justify-center py-1">
+                    <button onClick={handleSwapTokens} className="p-1.5 bg-white/10 hover:bg-white/20 rounded-full transition-transform duration-200 hover:rotate-180">
+                      <ArrowUpDown className="w-4 h-4 text-white" />
                     </button>
                   </div>
 
                   {/* To Token */}
-                  <div className="bg-black/20 rounded-xl p-4 border border-white/10">
-                    <span className="text-white/70 text-xs mb-2 block">To (Estimated)</span>
-                    <div className="flex items-center gap-4">
-                      <input type="text" value={estimatedReceive} readOnly placeholder="0.0" className="w-full bg-transparent text-2xl font-bold text-white/80 placeholder-white/40 outline-none"/>
-                      <div className="flex items-center gap-2 p-2 bg-white/5 rounded-lg">
+                  <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+                    <span className="text-white/70 text-xs mb-1 block">To (Estimated)</span>
+                    <div className="flex items-center gap-3">
+                      <input type="text" value={estimatedReceive} readOnly placeholder="0.0" className="w-full bg-transparent text-xl font-bold text-white/80 placeholder-white/40 outline-none"/>
+                      <div className="flex items-center gap-1.5 p-1.5 bg-white/5 rounded-lg">
                         {getTokenIcon(toToken)}
-                        <span className={`font-semibold ${getTokenColor(toToken)}`}>{toToken.toUpperCase()}</span>
+                        <span className={`font-medium text-sm ${getTokenColor(toToken)}`}>{toToken.toUpperCase()}</span>
                       </div>
                     </div>
                   </div>
@@ -685,23 +685,23 @@ export default function FinancePage() {
 
                 {/* Status Messages */}
                 {(swapStatus !== "idle" || errorMessage) && (
-                  <div className="mt-6">
+                  <div className="mt-4">
                     {swapStatus === "pending" && (
-                      <div className="flex items-center gap-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                        <Clock className="w-5 h-5 text-blue-400 animate-spin flex-shrink-0" />
-                        <span className="text-blue-400 text-sm">{errorMessage || "Processing transaction..."}</span>
+                      <div className="flex items-center gap-2 p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                        <Clock className="w-4 h-4 text-blue-400 animate-spin flex-shrink-0" />
+                        <span className="text-blue-400 text-xs">{errorMessage || "Processing transaction..."}</span>
                       </div>
                     )}
                     {swapStatus === "success" && (
-                      <div className="flex items-center gap-3 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                        <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                        <span className="text-green-400 text-sm">Transaction completed successfully!</span>
+                      <div className="flex items-center gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+                        <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0" />
+                        <span className="text-green-400 text-xs">Transaction completed successfully!</span>
                       </div>
                     )}
                     {swapStatus === "error" && errorMessage && (
-                      <div className="flex items-center gap-3 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
-                        <span className="text-red-400 text-sm">{errorMessage}</span>
+                      <div className="flex items-center gap-2 p-2 bg-red-500/10 rounded-lg border border-red-500/20">
+                        <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
+                        <span className="text-red-400 text-xs">{errorMessage}</span>
                       </div>
                     )}
                   </div>
@@ -711,15 +711,15 @@ export default function FinancePage() {
                 <button
                   onClick={handleSwap}
                   disabled={isSwapDisabled}
-                  className={`w-full mt-6 py-3 rounded-xl font-semibold text-lg transition-all duration-200 ${
+                  className={`w-full mt-4 py-2.5 rounded-lg font-medium text-base transition-all duration-200 ${
                     isSwapDisabled
                       ? "bg-white/10 text-white/40 cursor-not-allowed"
                       : "bg-gradient-to-r from-[#FF4D00] to-[#FF007A] hover:from-[#FF4D00] hover:to-[#FF007A] text-white shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                   }`}
                 >
                   {isSwapping ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <RefreshCw className="w-5 h-5 animate-spin" />
+                    <div className="flex items-center justify-center gap-1.5">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
                       Processing...
                     </div>
                   ) : (
