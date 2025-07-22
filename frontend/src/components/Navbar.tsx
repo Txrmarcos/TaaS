@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Menu, X, Wallet, ChevronDown, Copy, Check } from "lucide-react";
 import { useAuth } from "frontend/src/app/auth/useAuth";
 import { useWalletBalance } from "../hooks/useWalletBalance";
-import ids from "../../../.dfx/local/canister_ids.json";
+import ids from "../../../canister_ids.json"; 
+
 
 type NavigationItem = {
     name: string;
@@ -21,10 +22,9 @@ const navigationItems: NavigationItem[] = [
 ];
 
 const canisterIds = [
-    { name: "Bot-Plan", id: ids["round-table"]?.local },
-    { name: "Round-Table", id: ids["bot-plan"]?.local },
-    { name: "Search-News", id: ids["search-news"]?.local },
-    { name: "Veredict", id: ids["verdict"]?.local },
+    { name: "Bot-Plan", id: ids["bot-plan"].ic },
+    { name: "Round-Table", id: ids["round-table"].ic },
+    { name: "Search-News", id: ids["search-news"].ic },
 ];
 
 export const Navbar = () => {
@@ -35,7 +35,6 @@ export const Navbar = () => {
     const router = useRouter();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Hooks para autenticação e saldo
     const { principal } = useAuth();
     const { icpBalance, ckBalance, isLoading } = useWalletBalance(principal);
 

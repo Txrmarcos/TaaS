@@ -22,13 +22,11 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
-// Imports para interagir com a IC
+
 import { HttpAgent, Actor } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
-import { IDL } from "@dfinity/candid";
 
-// --- CONSTANTES DE CANISTERS ---
 const ICP_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 const CK_BTC_LEDGER_CANISTER_ID = "mxzaz-hqaaa-aaaar-qaada-cai";
 const CK_BTC_MINTER_CANISTER_ID = "mqygn-kiaaa-aaaar-qaadq-cai";

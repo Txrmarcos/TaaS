@@ -1,14 +1,23 @@
-import ids from "../../../../.dfx/local/canister_ids.json";
+import ids from "../../../../canister_ids.json";
 import { HttpAgent, Actor } from "@dfinity/agent";
 import { idlFactory as round_idl } from "../../../../src/declarations/round-table/round-table.did.js";
 import { idlFactory as searchNewsId } from "../../../../src/declarations/search-news/search-news.did.js";
 import { idlFactory as bot_idl } from "../../../../src/declarations/bot-plan/bot-plan.did.js";
+import { Principal } from "@dfinity/principal";
+import { AuthClient } from "@dfinity/auth-client";
 
 // Interface para o contexto de loading (será injetado via callback)
 interface LoadingContextCallbacks {
   startLoading: (id: string) => void;
   stopLoading: (id: string) => void;
 }
+
+function safeStringify(obj: any): string {
+  return JSON.stringify(obj, (_, value) =>
+    typeof value === 'bigint' ? value.toString() : value
+  );
+}
+
 
 // Variável global para callbacks do loading context
 let loadingCallbacks: LoadingContextCallbacks | null = null;
@@ -62,7 +71,7 @@ function createActorProxy(actor: any, actorName: string) {
                   duration: `${duration.toFixed(2)}ms`,
                   timestamp: new Date().toISOString(),
                   success: true,
-                  dataSize: JSON.stringify(data).length
+                  dataSize: safeStringify(data).length
                 });
                 
                 return data;
@@ -110,40 +119,45 @@ function createActorProxy(actor: any, actorName: string) {
   });
 }
 
-const agent = new HttpAgent({
-  host: "http://127.0.0.1:4943",
-});
+export function createSearchNewsActor(authClient: AuthClient | null) {
+ const identity = authClient?.getIdentity(); 
+  const agent = new HttpAgent({
+    identity,
+    host: "https://ic0.app",
+  });
 
-agent.fetchRootKey();
+  if (process.env.DFX_NETWORK === "local") {
+    agent.fetchRootKey();
+  }
 
-if (process.env.NODE_ENV !== "production") {
-  agent.fetchRootKey();
+  const round = ids["round-table"]?.ic;
+  const plan = ids["bot-plan"]?.ic;
+  const news = ids["search-news"]?.ic;
+
+  const originalRoundtableActor = Actor.createActor(round_idl, {
+    agent,
+    canisterId: round,
+  });
+
+  const originalBotActor = Actor.createActor(bot_idl, {
+    agent,
+    canisterId: plan,
+  });
+
+  const originalSearchNewsActor = Actor.createActor(searchNewsId, {
+    agent,
+    canisterId: news,
+  });
+
+  // Retorna todos os proxies de uma vez
+  return {
+    roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
+    botActor: createActorProxy(originalBotActor, "BotPlan"),
+    searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
+  };
 }
 
-const round = ids["round-table"]?.local;
-const plan = ids["bot-plan"]?.local;
-const news = ids["search-news"]?.local;
 
-// Criando os atores originais
-const originalRoundtableActor = Actor.createActor(round_idl, {
-  agent,
-  canisterId: round,
-});
-
-const originalBotActor = Actor.createActor(bot_idl, {
-  agent,
-  canisterId: plan,
-});
-
-const originalSearchNewsActor = Actor.createActor(searchNewsId, {
-  agent,
-  canisterId: news,
-});
-
-// Exportando os atores com proxy para monitoramento
-export const roundtableActor = createActorProxy(originalRoundtableActor, "RoundTable");
-export const botActor = createActorProxy(originalBotActor, "BotPlan");
-export const searchNewsActor = createActorProxy(originalSearchNewsActor, "SearchNews");
 
 // Versão alternativa: Sistema de métricas mais avançado
 interface RequestMetrics {

@@ -3,9 +3,9 @@ import React, { useEffect, useState } from "react";
 import { Principal } from "@dfinity/principal";
 import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
-import { botActor } from "../utils/canister";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
+import { createSearchNewsActor } from "../utils/canister";
 
 export interface UserStatus {
     plan: {
@@ -18,7 +18,10 @@ export interface UserStatus {
 }
 
 export default function PlansPage() {
-    const { isAuthenticated, principal, isLoading } = useAuth();
+    const { isAuthenticated, principal, isLoading, authClient } = useAuth();
+
+        const { botActor } = createSearchNewsActor(authClient);
+
     const [actor, setActor] = useState<any>(botActor);
     const [status, setStatus] = useState<UserStatus | null>(null);
     const [isLoadingBalance, setIsLoadingBalance] = useState(false);

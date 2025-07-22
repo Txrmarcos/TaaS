@@ -17,7 +17,7 @@ actor BotPlanCanister {
 
   type Tokens = Nat;
 
-  let ledger = actor "mc6ru-gyaaa-aaaar-qaaaq-cai" : actor {
+  let ledger = actor "ryjl3-tyaaa-aaaaa-aaaba-cai" : actor {
     icrc1_balance_of: query ({ account: LedgerTypes.Account }) -> async Nat;
     icrc1_transfer: ({ 
       from_subaccount: ?Blob;
@@ -29,8 +29,7 @@ actor BotPlanCanister {
     }) -> async Result.Result<Nat, LedgerTypes.TransferError>;
   };
 
-  // Interface para o Cycles Minting Canister
-  let cycles_minting_canister = actor "rkp4c-7iaaa-aaaah-qc7pq-cai" : actor {
+  let cycles_minting_canister = actor "rkp4c-7iaaa-aaaaa-aaaca-cai" : actor {
     notify_top_up: ({
       block_index: Nat64;
       canister_id: Principal;
@@ -48,9 +47,9 @@ actor BotPlanCanister {
   stable var users: Trie.Trie<Text, UserStatus> = Trie.empty();
   
   private let MY_WALLET_PRINCIPAL = "7bikl-yrjtx-w6ib3-loqyc-buozt-ubb2o-vhkdb-vlmnz-jhyoo-5qiuc-5qe";
-  private let TARGET_CANISTER_PRINCIPAL = "dkwk6-4aaaa-aaaaf-qbbxa-cai"; // Canister fixo que vai receber os ciclos
+  private let TARGET_CANISTER_PRINCIPAL = "h7vld-naaaa-aaaaf-qbgsq-cai";
   private let TRANSFER_FEE = 10;
-  private let CMC_PRINCIPAL = "rkp4c-7iaaa-aaaah-qc7pq-cai"; // Cycles Minting Canister
+  private let CMC_PRINCIPAL = "rkp4c-7iaaa-aaaaa-aaaca-cai";
 
   func getQuota(p: Plan): Nat {
     switch (p) {

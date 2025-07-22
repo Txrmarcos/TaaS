@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/navigation";
-import { botActor } from "../utils/canister";
+import { createSearchNewsActor } from "../utils/canister";
 
 export interface UserStatus {
   plan: {
@@ -23,6 +23,7 @@ export function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const { botActor } = createSearchNewsActor(authClient);
   useEffect(() => {
     const init = async () => {
       const client = await AuthClient.create();

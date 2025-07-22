@@ -14,12 +14,11 @@ import {
     Loader2,
 } from "lucide-react";
 
-import { botActor, searchNewsActor } from "../utils/canister";
-import { AuthClient } from "@dfinity/auth-client";
+import { useAuth } from "@/context/AuthContext";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { createSearchNewsActor } from "../utils/canister";
 
-// Define UserStatus type locally (adjust fields as needed)
 type UserStatus = {
     plan: { Premium?: boolean; Pro?: boolean; Standard?: boolean };
     requestsLeft: number;
@@ -31,36 +30,47 @@ export default function BotTestPage() {
     const [prompt, setPrompt] = useState("");
     const [response, setResponse] = useState("");
     const [loading, setLoading] = useState(false);
-    const [principal, setPrincipal] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    
+    const { principal, isAuthenticated, isLoading,authClient } = useAuth();
+
+
+    const {botActor, searchNewsActor } = createSearchNewsActor(authClient);
 
     useEffect(() => {
-        (async () => {
-            const client = await AuthClient.create();
-            const identity = client.getIdentity();
-            setPrincipal(identity.getPrincipal().toText());
-        })();
-        fetchStatus();
-    }, []);
+        if (isAuthenticated && principal) {
+            fetchStatus();
+        }
+    }, [isAuthenticated, principal]);
 
     const fetchStatus = async () => {
+        if (!isAuthenticated || !principal) {
+            console.log("Usuário não autenticado");
+            return;
+        }
+        
         try {
+            console.log("Buscando status para principal:", principal.toText());
             const res = (await botActor.get_user_status()) as any;
             setStatus(res[0] as UserStatus);
         } catch (err) {
-            console.error(err);
+            console.error("Erro ao buscar status:", err);
         }
     };
 
     const handleSendPrompt = async () => {
-        if (!prompt.trim()) return;
+        if (!prompt.trim() || !isAuthenticated) return;
+        
+        console.log("Enviando prompt com principal:", principal?.toText());
+        
         try {
             setLoading(true);
             setResponse("");
             const res = await searchNewsActor.searchNews(prompt);
             setResponse(res as string);
             fetchStatus();
-        } catch {
+        } catch (err) {
+            console.error("Erro ao processar prompt:", err);
             setResponse("❌ Error processing prompt. Please try again.");
         } finally {
             setLoading(false);
@@ -103,6 +113,33 @@ export default function BotTestPage() {
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
+                <Navbar />
+                <main className="flex flex-col flex-grow px-4 pt-32 max-w-4xl mx-auto gap-6 items-center justify-center">
+                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <p>Carregando...</p>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
+                <Navbar />
+                <main className="flex flex-col flex-grow px-4 pt-32 max-w-4xl mx-auto gap-6 items-center justify-center">
+                    <AlertCircle className="w-12 h-12 text-yellow-400" />
+                    <h2 className="text-2xl font-bold">Acesso Restrito</h2>
+                    <p>Você precisa estar logado para acessar esta página.</p>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
@@ -181,7 +218,7 @@ export default function BotTestPage() {
 
                                 <button
                                     onClick={handleSendPrompt}
-                                    disabled={loading || !prompt.trim()}
+                                    disabled={loading || !prompt.trim() || !isAuthenticated}
                                     className="w-full px-6 py-4 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 hover:scale-[1.02] transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 font-semibold flex items-center justify-center space-x-3 text-sm sm:text-base"
                                 >
                                     {loading ? (
@@ -303,7 +340,7 @@ export default function BotTestPage() {
                             <div className="flex items-center justify-center space-x-3">
                                 <AlertCircle className="w-6 h-6 text-yellow-400" />
                                 <p className="text-white/80">
-                                    No status loaded. Click "Refresh".
+                                    {isAuthenticated ? "No status loaded. Click \"Refresh\"." : "Faça login para ver seu status."}
                                 </p>
                             </div>
                         </div>

@@ -5,6 +5,7 @@ import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
+  authClient: AuthClient | null;
   isAuthenticated: boolean;
   principal: Principal | null;
   login: () => Promise<void>;
@@ -15,7 +16,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [authClient, setAuthClient] = useState<any>(null);
+  const [authClient, setAuthClient] = useState<AuthClient | null>(null);
   const [principal, setPrincipal] = useState<Principal | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, principal, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ authClient,isAuthenticated, principal, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

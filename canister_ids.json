@@ -2,6 +2,12 @@
   "bot-plan": {
     "ic": "dkwk6-4aaaa-aaaaf-qbbxa-cai"
   },
+  "frontend": {
+    "ic": "5vhpn-tyaaa-aaaaf-qbija-cai"
+  },
+  "round-table": {
+    "ic": "54eer-fqaaa-aaaaf-qbiiq-cai"
+  },
   "search-news": {
     "ic": "h7vld-naaaa-aaaaf-qbgsq-cai"
   }

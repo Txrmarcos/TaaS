@@ -76,8 +76,8 @@ actor SearchNews {
     Debug.print("🧪 Testing manual JSON parsing for: " # prompt);
     return await makeHttpRequest(prompt);
   };
-  
-  func parseJson(jsonText: Text) : async Text {
+
+  func parseJson(jsonText: Text, prompt: Text) : async Text {
     Debug.print("🔧 Parsing only titles from JSON");
 
     var results : [Text] = [];
@@ -130,7 +130,7 @@ actor SearchNews {
 
     " # titles # "
 
-    Question: Did Bitcoin hit $120K?
+    Question: " # prompt # " ?
 
     Please analyze the titles and provide your assessment.";
 
@@ -192,7 +192,7 @@ actor SearchNews {
           return "❌ Não foi possível decodificar a resposta UTF-8.";
         };
         case (?jsonText) {
-          let response = await parseJson(jsonText);
+          let response = await parseJson(jsonText, userQuery);
           return response;
         };
       };

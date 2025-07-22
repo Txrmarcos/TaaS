@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
-import { roundtableActor, searchNewsActor } from "../utils/canister";
 import {
     Plus, ExternalLink, ThumbsUp, ThumbsDown, Globe, Clock, CheckCircle, XCircle, Shield, Link,
     TrendingUp, Calendar, User, GitPullRequest, Award, Search, Eye, ArrowRight, Zap, Target,
@@ -10,6 +9,7 @@ import {
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Principal } from "@dfinity/principal"; 
+import { createSearchNewsActor } from "../utils/canister";
 
 // Canister data
 type RawProposal = {
@@ -42,7 +42,7 @@ type FormattedProposal = {
 };
 
 export default function RoundtablePage() {
-    const { principal, isAuthenticated } = useAuth();
+    const { principal, isAuthenticated, authClient } = useAuth();
     const [proposals, setProposals] = useState<FormattedProposal[]>([]); 
     const [isLoadingProposals, setIsLoadingProposals] = useState(true);
     const [name, setName] = useState("");
@@ -56,6 +56,8 @@ export default function RoundtablePage() {
     const [whitelist, setWhitelist] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+
+    const { roundtableActor,searchNewsActor } = createSearchNewsActor(authClient);
 
     
     const fetchProposals = async () => {
