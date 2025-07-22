@@ -56,6 +56,7 @@ export default function RoundtablePage() {
     const [whitelist, setWhitelist] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [showFullWhitelist, setShowFullWhitelist] = useState(false);
 
     const { roundtableActor,searchNewsActor } = createSearchNewsActor(authClient);
 
@@ -84,8 +85,11 @@ export default function RoundtablePage() {
     };
   
      useEffect(() => {
-        fetchProposals();
-        fetchWhitelist();
+        const fetchData = async () => {
+            await fetchProposals();
+            await fetchWhitelist();
+        };
+        fetchData();
     }, []);
 
 
@@ -93,6 +97,7 @@ export default function RoundtablePage() {
         setIsLoadingWhitelist(true);
         try {
             const domains = await searchNewsActor.getWhitelist();
+            console.log("Whitelist fetched:", domains);
             setWhitelist(domains as string[]);
         } catch (err) {
             console.error("Error fetching whitelist:", err);
@@ -245,40 +250,61 @@ export default function RoundtablePage() {
                     <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                         {/* Sidebar */}
                         <div className="xl:col-span-1 space-y-6">
-                            <div className="g-white/5 backdrop-blubr-xl rounded-2xl p-6 border border-white/10 shadow-xl">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center space-x-2">
-                                        <Shield className="w-5 h-5 text-emerald-400" />
-                                        <h2 className="text-xl font-bold text-white">Whitelist</h2>
-                                    </div>
-                                    <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">
-                                        {whitelist.length}
-                                    </span>
-                                </div>
-                                
-                                {isLoadingWhitelist ? (
-                                    <div className="text-center py-8">
-                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mx-auto"></div>
-                                        <p className="mt-2 text-white/60 text-sm">Loading...</p>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div className="space-y-3 mb-4">
-                                            {whitelist.slice(0, 5).map((domain, index) => (
-                                                <div key={index} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
-                                                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                                                    <Link className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                                                    <span className="text-white/80 text-sm truncate">{domain}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <button className="w-full px-4 py-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2">
-                                            <Eye className="w-4 h-4" />
-                                            <span>View all</span>
-                                        </button>
-                                    </>
-                                )}
-                            </div>
+                           <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl">
+    <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+            <Shield className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-xl font-bold text-white">Whitelist</h2>
+        </div>
+        <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">
+            {whitelist.length}
+        </span>
+    </div>
+    
+    {isLoadingWhitelist ? (
+        <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mx-auto"></div>
+            <p className="mt-2 text-white/60 text-sm">Loading...</p>
+        </div>
+    ) : whitelist.length === 0 ? (
+        <div className="text-center py-8">
+            <Globe className="w-8 h-8 text-white/30 mx-auto mb-2" />
+            <p className="text-white/60 text-sm">No domains in whitelist</p>
+        </div>
+    ) : (
+        <>
+            <div className="space-y-3 mb-4 max-h-80 overflow-y-auto">
+                {(showFullWhitelist ? whitelist : whitelist.slice(0, 5)).map((domain, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
+                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0"></div>
+                        <Link className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        <span className="text-white/80 text-sm truncate" title={domain}>
+                            {domain}
+                        </span>
+                    </div>
+                ))}
+            </div>
+            
+            {whitelist.length > 5 && (
+                <button 
+                    onClick={() => setShowFullWhitelist(!showFullWhitelist)}
+                    className="w-full px-4 py-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2"
+                >
+                    <Eye className="w-4 h-4" />
+                    <span>
+                        {showFullWhitelist 
+                            ? `Show less` 
+                            : `View all (${whitelist.length - 5} more)`
+                        }
+                    </span>
+                    <div className={`transform transition-transform duration-200 ${showFullWhitelist ? 'rotate-180' : ''}`}>
+                        <ArrowRight className="w-4 h-4 rotate-90" />
+                    </div>
+                </button>
+            )}
+        </>
+    )}
+</div>
                             
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                                 <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
@@ -297,7 +323,7 @@ export default function RoundtablePage() {
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        </div> 
 
 
                         {/* Main Content */}

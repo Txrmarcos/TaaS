@@ -394,7 +394,7 @@ export default function FinancePage() {
                     <button
                       onClick={handleRefresh}
                       disabled={isLoadingBalance}
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 rounded-lg transition-all duration-200 font-medium disabled:opacity-50 text-sm"
+                     className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white/70 hover:text-white hover:bg-white/5  border border-[#FF4D00]/30 text-[#FF4D00] rounded-lg transition-all duration-200 font-medium disabled:opacity-50 text-sm"
                     >
                       <RefreshCw className={`w-3 h-3 ${isLoadingBalance ? 'animate-spin' : ''}`} />
                       {isLoadingBalance ? "Updating..." : "Refresh"}
@@ -455,7 +455,7 @@ export default function FinancePage() {
                     </p>
                     <button
                       onClick={() => copyToClipboard(principal?.toText() || "")}
-                      className="px-2 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
+                      className="px-2 py-1 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white/70 hover:text-white hover:bg-white/5 border border-[#FF4D00]/30 text-[#FF4D00] rounded transition-all duration-200 text-xs whitespace-nowrap"
                     >
                       <Copy className="w-3 h-3" />
                     </button>
