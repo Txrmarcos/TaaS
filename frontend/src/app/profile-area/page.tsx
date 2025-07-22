@@ -8,6 +8,8 @@ import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import { botActor } from "../utils/canister";
+import { useLoading } from "@/context/LoadingContext";
+import { InlineLoading } from "@/components/LoadingOverlay";
 
 export interface UserStatus {
     plan: {
@@ -26,6 +28,7 @@ interface Toast {
 
 export default function ProfilePage() {
   const { principal, logout, isLoading } = useAuth();
+  const { isLoading: isGlobalLoading } = useLoading();
   const [actor, setActor] = useState<any>(botActor);
   const [icpBalance, setIcpBalance] = useState<string | null>(null);
   const [ckBalance, setCkBalance] = useState<string | null>(null);
@@ -242,10 +245,12 @@ export default function ProfilePage() {
           {/* Wallet Section */}
           <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">Your Wallet</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl font-bold">Your Wallet</h2>
+              </div>
               <button 
                 onClick={handleRefresh} 
-                disabled={isLoadingBalance} 
+                disabled={isLoadingBalance || isGlobalLoading} 
                 className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${isLoadingBalance ? 'animate-spin' : ''}`} />
@@ -297,10 +302,15 @@ export default function ProfilePage() {
                 
                 <button
                   onClick={() => subscribePlan("Standard")}
-                  disabled={isSubscribing === "Standard" || currentPlan === "Standard"}
+                  disabled={isSubscribing === "Standard" || currentPlan === "Standard" || isGlobalLoading}
                   className="w-full py-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/30 text-green-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 mt-6"
                 >
-                  {isSubscribing === "Standard" ? "Activating..." : currentPlan === "Standard" ? "Current Plan" : "Select"}
+                  {isSubscribing === "Standard" ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Activating...
+                    </div>
+                  ) : currentPlan === "Standard" ? "Current Plan" : "Select"}
                 </button>
               </div>
 
@@ -324,10 +334,15 @@ export default function ProfilePage() {
                 
                 <button
                   onClick={() => subscribePlan("Pro")}
-                  disabled={isSubscribing === "Pro" || currentPlan === "Pro"}
+                  disabled={isSubscribing === "Pro" || currentPlan === "Pro" || isGlobalLoading}
                   className="w-full py-3 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 text-yellow-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 mt-6"
                 >
-                  {isSubscribing === "Pro" ? "Activating..." : currentPlan === "Pro" ? "Current Plan" : "Select"}
+                  {isSubscribing === "Pro" ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Activating...
+                    </div>
+                  ) : currentPlan === "Pro" ? "Current Plan" : "Select"}
                 </button>
               </div>
 
@@ -351,10 +366,15 @@ export default function ProfilePage() {
                 
                 <button
                   onClick={() => subscribePlan("Premium")}
-                  disabled={isSubscribing === "Premium" || currentPlan === "Premium"}
+                  disabled={isSubscribing === "Premium" || currentPlan === "Premium" || isGlobalLoading}
                   className="w-full py-3 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 text-pink-400 rounded-lg transition-all duration-200 font-semibold disabled:opacity-50 mt-6"
                 >
-                  {isSubscribing === "Premium" ? "Activating..." : currentPlan === "Premium" ? "Current Plan" : "Select"}
+                  {isSubscribing === "Premium" ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Activating...
+                    </div>
+                  ) : currentPlan === "Premium" ? "Current Plan" : "Select"}
                 </button>
               </div>
             </div>
