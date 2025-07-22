@@ -10,6 +10,8 @@ import Nat8 "mo:base/Nat8";
 import LLM "mo:llm";
 import Debug "mo:base/Debug";
 import Result "mo:base/Result";
+import Cycles "mo:base/ExperimentalCycles";
+import Nat64 "mo:base/Nat64";
 
 actor BotPlanCanister {
 
@@ -27,6 +29,14 @@ actor BotPlanCanister {
     }) -> async Result.Result<Nat, LedgerTypes.TransferError>;
   };
 
+  // Interface para o Cycles Minting Canister
+  let cycles_minting_canister = actor "rkp4c-7iaaa-aaaah-qc7pq-cai" : actor {
+    notify_top_up: ({
+      block_index: Nat64;
+      canister_id: Principal;
+    }) -> async Result.Result<Nat, Text>;
+  };
+
   type Plan = { #Standard; #Pro; #Premium };
 
   type UserStatus = {
@@ -38,7 +48,9 @@ actor BotPlanCanister {
   stable var users: Trie.Trie<Text, UserStatus> = Trie.empty();
   
   private let MY_WALLET_PRINCIPAL = "7bikl-yrjtx-w6ib3-loqyc-buozt-ubb2o-vhkdb-vlmnz-jhyoo-5qiuc-5qe";
+  private let TARGET_CANISTER_PRINCIPAL = "dkwk6-4aaaa-aaaaf-qbbxa-cai"; // Canister fixo que vai receber os ciclos
   private let TRANSFER_FEE = 10;
+  private let CMC_PRINCIPAL = "rkp4c-7iaaa-aaaah-qc7pq-cai"; // Cycles Minting Canister
 
   func getQuota(p: Plan): Nat {
     switch (p) {
@@ -74,7 +86,8 @@ actor BotPlanCanister {
     };
   };
 
-  private func transferPayment(caller: Principal, amount: Nat) : async Result.Result<Nat, Text> {
+  // Transfere 50% para sua wallet
+  private func transferToWallet(caller: Principal, amount: Nat) : async Result.Result<Nat, Text> {
     let subaccount = principalToSubaccount(caller);
     
     let myAccount : LedgerTypes.Account = {
@@ -95,85 +108,190 @@ actor BotPlanCanister {
       let result = await ledger.icrc1_transfer(transferArgs);
       switch (result) {
         case (#ok(blockIndex)) {
-          Debug.print("Transfer successful! Block index: " # Nat.toText(blockIndex));
+          Debug.print("Transfer to wallet successful! Block index: " # Nat.toText(blockIndex));
           #ok(blockIndex)
         };
         case (#err(error)) {
-          Debug.print("Transfer failed: " # debug_show(error));
-          #err("Transfer failed: " # debug_show(error))
+          Debug.print("Transfer to wallet failed: " # debug_show(error));
+          #err("Transfer to wallet failed: " # debug_show(error))
         };
       };
     } catch (error) {
-      Debug.print("Transfer error occurred");
-      #err("Transfer error occurred");
+      Debug.print("Transfer to wallet error occurred");
+      #err("Transfer to wallet error occurred");
     };
+  };
+
+  // Transfere 50% para o CMC para comprar ciclos para o canister fixo
+  private func transferForCycles(caller: Principal, amount: Nat) : async Result.Result<Nat, Text> {
+    let subaccount = principalToSubaccount(caller);
+    let targetCanister = Principal.fromText(TARGET_CANISTER_PRINCIPAL);
+    
+    let cmcAccount : LedgerTypes.Account = {
+      owner = Principal.fromText(CMC_PRINCIPAL);
+      subaccount = ?Blob.toArray(principalToSubaccount(targetCanister));
+    };
+
+    let transferArgs = {
+      from_subaccount = ?subaccount;
+      to = cmcAccount;
+      amount = amount;
+      fee = ?TRANSFER_FEE;
+      memo = null;
+      created_at_time = null;
+    };
+
+    try {
+      let result = await ledger.icrc1_transfer(transferArgs);
+      switch (result) {
+        case (#ok(blockIndex)) {
+          Debug.print("Transfer for cycles successful! Block index: " # Nat.toText(blockIndex) # " Target: " # TARGET_CANISTER_PRINCIPAL);
+          
+          // Notifica o CMC para converter ICP em ciclos para o canister fixo
+          try {
+            let topUpResult = await cycles_minting_canister.notify_top_up({
+              block_index = Nat64.fromNat(blockIndex);
+              canister_id = targetCanister;
+            });
+            
+            switch (topUpResult) {
+              case (#ok(cycles)) {
+                Debug.print("Top-up successful! Cycles received: " # Nat.toText(cycles) # " for canister: " # TARGET_CANISTER_PRINCIPAL);
+                #ok(blockIndex)
+              };
+              case (#err(error)) {
+                Debug.print("Top-up failed for " # TARGET_CANISTER_PRINCIPAL # ": " # error);
+                #err("Top-up failed for " # TARGET_CANISTER_PRINCIPAL # ": " # error)
+              };
+            };
+          } catch (error) {
+            Debug.print("Error notifying CMC for top-up to " # TARGET_CANISTER_PRINCIPAL);
+            #err("Error notifying CMC for top-up to " # TARGET_CANISTER_PRINCIPAL);
+          };
+        };
+        case (#err(error)) {
+          Debug.print("Transfer for cycles failed: " # debug_show(error));
+          #err("Transfer for cycles failed: " # debug_show(error))
+        };
+      };
+    } catch (error) {
+      Debug.print("Transfer for cycles error occurred");
+      #err("Transfer for cycles error occurred");
+    };
+  };
+
+  // Função principal para processar pagamento dividido
+  private func processSplitPayment(caller: Principal, totalAmount: Nat) : async Result.Result<(Nat, Nat), Text> {
+    let halfAmount = totalAmount / 2;
+    
+    Debug.print("Processing split payment - Total: " # Nat.toText(totalAmount) # ", Half: " # Nat.toText(halfAmount) # ", Target: " # TARGET_CANISTER_PRINCIPAL);
+    
+    // Transfere 50% para sua wallet
+    let walletResult = await transferToWallet(caller, halfAmount);
+    let walletBlockIndex = switch (walletResult) {
+      case (#ok(blockIndex)) { blockIndex };
+      case (#err(error)) { 
+        return #err("Erro na transferência para wallet: " # error);
+      };
+    };
+    
+    // Transfere 50% para comprar ciclos para o canister fixo
+    let cyclesResult = await transferForCycles(caller, halfAmount);
+    let cyclesBlockIndex = switch (cyclesResult) {
+      case (#ok(blockIndex)) { blockIndex };
+      case (#err(error)) { 
+        return #err("Erro na transferência para ciclos: " # error);
+      };
+    };
+    
+    #ok(walletBlockIndex, cyclesBlockIndex)
   };
 
   public shared({caller}) func check_balance() : async Nat {
     await checkUserBalance(caller)
   };
 
-  public shared({caller}) func subscribe(plan: Plan) : async Text {
-  let callerText = Principal.toText(caller);
-  let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
+  // Função para verificar o saldo de ciclos do canister fixo
+  public func get_target_cycles_balance() : async ?Nat {
+    try {
+      let canister = actor(TARGET_CANISTER_PRINCIPAL) : actor {
+        wallet_balance: query () -> async Nat;
+      };
+      let balance = await canister.wallet_balance();
+      ?balance
+    } catch (error) {
+      Debug.print("Error fetching cycles balance for " # TARGET_CANISTER_PRINCIPAL);
+      null
+    }
+  };
 
-  switch (Trie.find(users, key, Text.equal)) {
-    case (?existingStatus) {
-      let now = Time.now();
-      if (now < existingStatus.resetAt) {
-        switch (existingStatus.plan, plan) {
-          case (#Standard, #Standard) { return "⚠️ Plano Standard já ativo!" };
-          case (#Pro, #Pro) { return "⚠️ Plano Pro já ativo!" };
-          case (#Premium, #Premium) { return "⚠️ Plano Premium já ativo!" };
-          case (_, _) { 
-            // Planos diferentes - permite a mudança
-            Debug.print("Mudança de plano: " # debug_show(existingStatus.plan) # " -> " # debug_show(plan));
+  // Função pública para mostrar qual canister está configurado para receber ciclos
+  public query func get_target_canister() : async Text {
+    TARGET_CANISTER_PRINCIPAL
+  };
+
+  public shared({caller}) func subscribe(plan: Plan) : async Text {
+    let callerText = Principal.toText(caller);
+    let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
+
+    switch (Trie.find(users, key, Text.equal)) {
+      case (?existingStatus) {
+        let now = Time.now();
+        if (now < existingStatus.resetAt) {
+          switch (existingStatus.plan, plan) {
+            case (#Standard, #Standard) { return "⚠️ Plano Standard já ativo!" };
+            case (#Pro, #Pro) { return "⚠️ Plano Pro já ativo!" };
+            case (#Premium, #Premium) { return "⚠️ Plano Premium já ativo!" };
+            case (_, _) { 
+              Debug.print("Mudança de plano: " # debug_show(existingStatus.plan) # " -> " # debug_show(plan));
+            };
           };
         };
       };
+      case (null) {};
     };
-    case (null) {};
-  };
 
-  let price_e8s = switch (plan) {
-    case (#Standard) { 0 };
-    case (#Pro) { 2_000_000 };
-    case (#Premium) { 10_000_000 };
-  };
+    let price_e8s = switch (plan) {
+      case (#Standard) { 0 };
+      case (#Pro) { 2_000_0 };
+      case (#Premium) { 10_000_0 };
+    };
 
-  if (price_e8s == 0) {
-    activatePlan(plan, caller);
-    return "✅ Plano Standard ativado!";
-  };
+    if (price_e8s == 0) {
+      activatePlan(plan, caller);
+      return "✅ Plano Standard ativado!";
+    };
 
-  let balance = await checkUserBalance(caller);
-  let totalRequired = price_e8s + TRANSFER_FEE;
-  
-  if (balance >= totalRequired) {
-    let transferResult = await transferPayment(caller, price_e8s);
+    let balance = await checkUserBalance(caller);
+    let totalRequired = price_e8s + (TRANSFER_FEE * 2); // Taxa para ambas as transferências
     
-    switch (transferResult) {
-      case (#ok(blockIndex)) {
-        activatePlan(plan, caller);
-        return "💎 Plano " # debug_show(plan) # " ativado! Transação: " # Nat.toText(blockIndex);
+    if (balance >= totalRequired) {
+      let splitResult = await processSplitPayment(caller, price_e8s);
+      
+      switch (splitResult) {
+        case (#ok(walletBlock, cyclesBlock)) {
+          activatePlan(plan, caller);
+          return "💎 Plano " # debug_show(plan) # " ativado!\n" # 
+                 "🏦 Wallet: " # Nat.toText(walletBlock) # "\n" #
+                 "⚡ Ciclos para " # TARGET_CANISTER_PRINCIPAL # ": " # Nat.toText(cyclesBlock);
+        };
+        case (#err(errorMsg)) {
+          return "❌ Erro no pagamento dividido: " # errorMsg;
+        };
       };
-      case (#err(errorMsg)) {
-        return "❌ Erro ao transferir: " # errorMsg;
-      };
+    } else {
+      let subaccount = principalToSubaccount(caller);
+      let sub_hex = Blob.toArray(subaccount);
+      let sub_hex_text = Array.foldLeft<Nat8, Text>(
+        sub_hex,
+        "",
+        func (acc, b) {
+          acc # (if (b < 16) { "0" } else { "" }) # Nat8.toText(b)
+        }
+      );
+      return "⚠️ Saldo insuficiente.\nEnvie " # Nat.toText(totalRequired) # " e8s para dkwk6-4aaaa-aaaaf-qbbxa-cai\nSubaccount: " # sub_hex_text;
     };
-  } else {
-    let subaccount = principalToSubaccount(caller);
-    let sub_hex = Blob.toArray(subaccount);
-    let sub_hex_text = Array.foldLeft<Nat8, Text>(
-      sub_hex,
-      "",
-      func (acc, b) {
-        acc # (if (b < 16) { "0" } else { "" }) # Nat8.toText(b)
-      }
-    );
-    return "⚠️ Saldo insuficiente.\nEnvie " # Nat.toText(totalRequired) # " e8s para dkwk6-4aaaa-aaaaf-qbbxa-cai\nSubaccount: " # sub_hex_text;
   };
-};
 
   func activatePlan(plan: Plan, caller: Principal) {
     let quota = getQuota(plan);
@@ -223,7 +341,6 @@ actor BotPlanCanister {
     };
   };
 
-
   public shared func use_request_for(p: Principal) : async Bool {
     let callerText = Principal.toText(p);
     let key : Trie.Key<Text> = { hash = Text.hash(callerText); key = callerText };
@@ -253,7 +370,6 @@ actor BotPlanCanister {
         };
 
         users := Trie.put(users, key, Text.equal, finalStatus).0;
-
         return true;
       };
     };

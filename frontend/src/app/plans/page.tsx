@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Principal } from "@dfinity/principal";
 import { HttpAgent } from "@dfinity/agent";
-import { AccountIdentifier, SubAccount, LedgerCanister } from "@dfinity/ledger-icp";
+import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { botActor } from "../utils/canister";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
@@ -15,13 +15,6 @@ export interface UserStatus {
     };
     resetAt: bigint;
     requestsLeft: bigint;
-}
-
-export function principalToAccountIdentifier(principal: Principal, subaccount?: Uint8Array): string {
-  return AccountIdentifier.fromPrincipal({
-    principal,
-    subAccount: subaccount ? SubAccount.fromBytes(subaccount) : undefined
-  }).toHex();
 }
 
 export default function PlansPage() {

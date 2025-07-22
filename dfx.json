@@ -30,7 +30,14 @@
             }
         },
         "wasm": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.wasm"
-      } 
+      },
+    "frontend": {
+        "type": "assets",
+        "source": ["frontend/out"],
+        "frontend": {
+            "entrypoint": "frontend/out/index.html"
+        }
+    }
     },
     "output_env_file": ".env",
     "defaults": {

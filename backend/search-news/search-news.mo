@@ -14,19 +14,15 @@ import Timer "mo:base/Timer";
 
 actor SearchNews {
 
-  // Rate limiting
   stable var lastRequestTime : Int = 0;
-  let MIN_REQUEST_INTERVAL : Int = 3_000_000_000; // 3 segundos em nanosegundos
+  let MIN_REQUEST_INTERVAL : Int = 3_000_000_000;
 
-  // Lista de servidores alternativos
   let searchServers : [Text] = [
     "searx.perennialte.ch",
     "searx.be",
     "search.sapti.me",
     "searx.tiekoetter.com"
   ];
-
-  stable var currentServerIndex : Nat = 0;
 
   public shared query func transform(args: {
     context : Blob;
@@ -46,12 +42,10 @@ actor SearchNews {
     results: [NewsResult];
   };
 
-  // TODO: Replace with your actual BotPlanCanister ID
   let botPlanCanister = actor("dkwk6-4aaaa-aaaaf-qbbxa-cai") : actor {
     use_request_for : (Principal) -> async Bool;
   };
 
-  // Whitelist dinâmica - começa com domínios padrão
   stable var whitelist : [Text] = [
     "bbc.com", "cnn.com", "reuters.com", "nytimes.com", "globo.com",
     "brave.news"
@@ -78,7 +72,6 @@ actor SearchNews {
     return whitelist;
   };
 
-  // Função para testar parsing manual
   public func callAgent(prompt: Text) : async Text {
     Debug.print("🧪 Testing manual JSON parsing for: " # prompt);
     return await makeHttpRequest(prompt);
@@ -89,11 +82,9 @@ actor SearchNews {
 
     var results : [Text] = [];
 
-    // Remove o início e fim do array JSON
     let trimmed = Text.trim(jsonText, #text "[\"");
     let cleaned = Text.trim(trimmed, #text "\"]");
 
-    // Divide cada objeto (pelo separador "},{")
     let items = Text.split(cleaned, #text "},{");
 
     for (item in items) {
@@ -104,7 +95,7 @@ actor SearchNews {
       for (field in fields) {
         if (Text.contains(field, #text "\"title\"")) {
           let pair = Text.split(field, #char ':');
-          ignore pair.next(); // pula "title"
+          ignore pair.next();
           switch (pair.next()) {
             case (?value) {
               title := Text.trim(value, #text "\"");
@@ -121,12 +112,10 @@ actor SearchNews {
 
     Debug.print("📋 Parsed " # debug_show(results.size()) # " titles");
     
-    // Criar string concatenada dos títulos
     let titles = Array.foldLeft<Text, Text>(results, "", func(acc, title) {
       acc # "- " # title # "\n"
     });
 
-    // Instruções do sistema (comportamento do assistente)
     let systemPrompt = "You are a fact-checking assistant. Your job is to analyze news article titles and determine if a given statement is true, false, or uncertain based on the evidence.
 
     Always respond in this format:
@@ -166,13 +155,6 @@ actor SearchNews {
         });
       };
 
-  func getNextServer() : Text {
-    let server = searchServers[currentServerIndex];
-    currentServerIndex := (currentServerIndex + 1) % searchServers.size();
-    server;
-  };
-
-  // Função otimizada para fazer requisição HTTP - RETORNA APENAS O RESPONSE BODY
   func makeHttpRequest(userQuery: Text) : async Text {
     let encodedQuery = encodeQuery(userQuery);
     let url = "https://mnznnwrg2mgtemmtqmfvsptxni0ahiir.lambda-url.us-east-1.on.aws/?q=" # encodedQuery;
@@ -234,7 +216,6 @@ actor SearchNews {
       return "⏳ Aguarde " # debug_show(waitTime) # " segundos antes de fazer uma nova consulta.";
     };
 
-    // Verificar permissão do bot plan
     try {
       let allowed = await botPlanCanister.use_request_for(caller);
       if (not allowed) {

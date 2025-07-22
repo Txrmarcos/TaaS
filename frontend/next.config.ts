@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Simplified config for faster dev container compilation
+  output: "export",
+  images: {
+    unoptimized: true,
+  },
+  
   webpack: (config, { dev }) => {
     if (dev) {
       // Light polling - less intensive than before

@@ -2,9 +2,11 @@ import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
-import Option "mo:base/Option";
+import Debug "mo:base/Debug";
 
 actor RoundtableCanister {
+
+  let EXPIRATION_DELAY_NANOS = 60 * 1_000_000_000;
 
   type ProposalStatus = {
     #Pending;
@@ -28,6 +30,10 @@ actor RoundtableCanister {
 
   stable var proposals: [Proposal] = [];
   stable var nextId: Nat = 0;
+
+  let searchNews = actor "uzt4z-lp777-77774-qaabq-cai" : actor {
+    addToWhitelist: (Text) -> async Bool;
+  };
 
   public func propose_source(name: Text, url: Text, pr_link: Text, description: Text): async Nat {
     let caller = Principal.fromActor(RoundtableCanister);
@@ -72,11 +78,6 @@ actor RoundtableCanister {
           updatedVotesAgainst += 1;
         };
 
-        let newStatus =
-          if (updatedVotesFor >= 10) { #Approved }
-          else if (updatedVotesAgainst >= 10) { #Rejected }
-          else { #Pending };
-
         let newVoters = Array.append(proposal.voters, [caller]);
 
         let updatedProposal: Proposal = {
@@ -89,7 +90,7 @@ actor RoundtableCanister {
           created_at = proposal.created_at;
           votes_for = updatedVotesFor;
           votes_against = updatedVotesAgainst;
-          status = newStatus;
+          status = proposal.status;
           voters = newVoters;
         };
 
@@ -100,6 +101,48 @@ actor RoundtableCanister {
         return "Voto registrado com sucesso!";
       };
     };
+  };
+
+  // Lógica de avaliação de propostas expiradas (30 dias)
+  public func atualizarPropostas() : async [Text] {
+    let now = Time.now();
+    var logs: [Text] = [];
+    var urlsToWhitelist: [Text] = [];
+
+    proposals := Array.map<Proposal, Proposal>(proposals, func(p) {
+      if (p.status == #Pending and now >= p.created_at + EXPIRATION_DELAY_NANOS) {
+        let newStatus = if (p.votes_for > p.votes_against) { #Approved } else { #Rejected };
+
+        if (newStatus == #Approved) {
+          urlsToWhitelist := Array.append(urlsToWhitelist, [p.url]);
+          logs := Array.append(logs, ["Proposta #" # Nat.toText(p.id) # " aprovada e URL adicionada à whitelist."]);
+        } else {
+          logs := Array.append(logs, ["Proposta #" # Nat.toText(p.id) # " rejeitada."]);
+        };
+
+        {
+          id = p.id;
+          name = p.name;
+          url = p.url;
+          pr_link = p.pr_link;
+          description = p.description;
+          proposer = p.proposer;
+          created_at = p.created_at;
+          votes_for = p.votes_for;
+          votes_against = p.votes_against;
+          status = newStatus;
+          voters = p.voters;
+        }
+      } else {
+        p
+      }
+    });
+
+    for (url in urlsToWhitelist.vals()) {
+      ignore await searchNews.addToWhitelist(url);
+    };
+
+    return logs;
   };
 
   public func list_proposals(): async [Proposal] {

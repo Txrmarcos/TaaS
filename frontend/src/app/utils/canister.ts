@@ -10,6 +10,8 @@ const agent = new HttpAgent({
   host: "http://127.0.0.1:4943",
 });
 
+agent.fetchRootKey();
+
 if (process.env.NODE_ENV !== "production") {
   agent.fetchRootKey();
 }
