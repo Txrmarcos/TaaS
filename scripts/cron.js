@@ -2,17 +2,16 @@ import { HttpAgent, Actor } from "@dfinity/agent";
 import fetch from "node-fetch";
 import { idlFactory as roundtableIDL } from "../.dfx/local/canisters/RoundtableCanister"; // ou caminho real
 
-const canisterId = "l62sy-yx777-77777-aaabq-cai"; // Altere para o seu
-const host = "http://127.0.0.1:4943"; // Ou https://ic0.app se for mainnet
+const canisterId = "54eer-fqaaa-aaaaf-qbiiq-cai";
+const host = "https://ic0.app"; 
 
 global.fetch = fetch;
 
 async function main() {
-  const agent = new HttpAgent({ host });
+  const agent = new HttpAgent({ 
+    host,
+   });
 
-  if (host.includes("127.0.0.1")) {
-    await agent.fetchRootKey();
-  }
 
   const roundtable = Actor.createActor(roundtableIDL, {
     agent,
@@ -20,12 +19,23 @@ async function main() {
   });
 
   try {
+    console.log(`🚀 Conectando à mainnet: ${host}`);
+    console.log(`📋 Canister ID: ${canisterId}`);
+    
     const result = await roundtable.atualizarPropostas();
-    console.log("✅ Resultado da atualização:");
+    console.log("✅ Resultado da atualização na mainnet:");
     console.log(result);
   } catch (e) {
-    console.error("❌ Erro ao executar atualizarPropostas:", e);
+    console.error("❌ Erro ao executar atualizarPropostas na mainnet:", e);
+    
+    // Log mais detalhado para debug
+    if (e.message) {
+      console.error("Mensagem do erro:", e.message);
+    }
+    if (e.stack) {
+      console.error("Stack trace:", e.stack);
+    }
   }
 }
 
-main();
+main().catch(console.error);

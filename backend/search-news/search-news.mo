@@ -126,7 +126,7 @@ actor SearchNews {
 
     Be concise and objective.";
 
-    let userQuery = "Based on these recent news article titles:
+    let userQuery = "Based on these recent news article:
 
     " # titles # "
 
