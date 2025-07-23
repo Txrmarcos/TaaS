@@ -31,28 +31,28 @@ export default function FeaturesPage() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="text-center mb-16">
                     <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                        Nossos Serviços
+                        Our Services
                     </h1>
                     <p className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto">
-                        Ferramentas poderosas para validar informações e acessar
-                        notícias com curadoria especializada.
+                        Powerful tools to validate information and access news with expert curation.
                     </p>
                 </div>
+
 
                 <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
                     <FeatureCard
                         icon={<Newspaper className="w-8 h-8 text-white" />}
-                        title="Busca de Notícias da Mesa Redonda"
-                        description="Acesse um feed de notícias e artigos selecionados e recomendados por nossa mesa de especialistas. Filtre por relevância e tenha acesso a informações com curadoria de confiança para suas análises."
-                        buttonText="Explorar Notícias"
+                        title="Roundtable News Search"
+                        description="Access a feed of news and articles selected and recommended by our expert panel. Filter by relevance and gain access to trusted curated information for your analysis."
+                        buttonText="Explore News"
                         href="/news-search"
                     />
 
                     <FeatureCard
                         icon={<ShieldCheck className="w-8 h-8 text-white" />}
-                        title="Veredito de Fatos & Rating"
-                        description="Submeta uma afirmação ou pergunta em linguagem natural para receber um veredito detalhado. Nosso sistema consulta fontes de dados confiáveis para avaliar a veracidade do seu input, retornando um rating de confiança."
-                        buttonText="Verificar um Fato"
+                        title="Fact & Rating Verdict"
+                        description="Submit a claim or question in natural language to receive a detailed verdict. Our system queries reliable data sources to assess the veracity of your input, returning a confidence rating."
+                        buttonText="Verify a Fact"
                         href="/fact-check"
                     />
                 </div>

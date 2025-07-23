@@ -71,7 +71,7 @@ export const Navbar = () => {
             setCopiedId(id);
             setTimeout(() => setCopiedId(null), 2000);
         } catch (err) {
-            console.error("Erro ao copiar:", err);
+            console.error("Error copying:", err);
         }
     };
 
@@ -133,7 +133,7 @@ export const Navbar = () => {
                                 <div className="absolute top-full right-0 mt-2 w-80 bg-[#0B0E13]/95 backdrop-blur-md border border-white/10 rounded-xl shadow-lg overflow-hidden animate-fade-in">
                                     <div className="px-4 py-3 border-b border-white/10">
                                         <h3 className="text-sm font-semibold text-white">Canister IDs</h3>
-                                        <p className="text-xs text-white/60 mt-1">Clique para copiar ou visualizar</p>
+                                        <p className="text-xs text-white/60 mt-1">Click here to copy or view</p>
                                     </div>
                                     <div className="py-2 max-h-64 overflow-y-auto">
                                         {canisterIds.map((canister) => (

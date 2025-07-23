@@ -403,7 +403,7 @@ export default function ProfilePage() {
             <h2 className="text-2xl font-bold mb-6">Account Information</h2>
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div className="flex-1">
-                <p className="text-sm text-white/70 mb-1">Principal ID:</p>
+                <p className="text-sm text-white/70 mb-1">Main ID:</p>
                 <p className="text-sm font-mono text-white break-all">
                   {principal ? principal.toText() : "Loading..."}
                 </p>

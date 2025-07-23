@@ -53,7 +53,7 @@ export function useAuth() {
           router.push("/chat");
         },
         onError: (err: any) => {
-          console.error("Erro no login:", err);
+          console.error("Error during login:", err);
         },
       });
     } finally {
@@ -78,7 +78,7 @@ export function useAuth() {
   const fetchStatus = async () => {
       try {
           const res = (await botActor.get_user_status()) as any;
-          console.log("Status do usuário:", res);
+          console.log("User status:", res);
           if (res) {
               setStatus(res[0] as UserStatus);
           } else {
@@ -96,6 +96,6 @@ export function useAuth() {
     status,
     login,
     logout,
-    isLoading,
+    isLoading,    
   };
 }

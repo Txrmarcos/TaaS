@@ -15,7 +15,7 @@ const mockTransactions = [
     {
         id: 1,
         type: "request",
-        description: 'Veredito: "Inflação no Brasil > 3% em Jun/2025"',
+        description: 'Verdict: "Inflation in Brazil > 3% in Jun/2025"',
         amount: -0.05,
         date: "2025-07-12",
         status: "Completed",
@@ -23,7 +23,7 @@ const mockTransactions = [
     {
         id: 2,
         type: "deposit",
-        description: "Depósito via PIX",
+        description: "Deposit using PIX",
         amount: 50.0,
         date: "2025-07-11",
         status: "Completed",
@@ -31,7 +31,7 @@ const mockTransactions = [
     {
         id: 3,
         type: "subscription",
-        description: "Assinatura Plano Pro",
+        description: "Pro Plan Subscription",
         amount: -19.9,
         date: "2025-07-01",
         status: "Completed",
@@ -39,7 +39,7 @@ const mockTransactions = [
     {
         id: 4,
         type: "request",
-        description: 'Parsing: "Desemprego caiu em Maio de 2024"',
+        description: 'Parsing: "Unemployment fell in May 2024"',
         amount: -0.01,
         date: "2025-06-28",
         status: "Completed",
@@ -47,7 +47,7 @@ const mockTransactions = [
     {
         id: 5,
         type: "request",
-        description: 'Veredito: "Ações da ACME subiram 5%?"',
+        description: 'Verdict: "ACME stocks rose 5%?"',
         amount: -0.05,
         date: "2025-06-25",
         status: "Completed",
@@ -55,7 +55,7 @@ const mockTransactions = [
     {
         id: 6,
         type: "deposit",
-        description: "Depósito via Cartão de Crédito",
+        description: "Deposit using Credit Card",
         amount: 100.0,
         date: "2025-06-20",
         status: "Completed",
@@ -63,7 +63,7 @@ const mockTransactions = [
     {
         id: 7,
         type: "request",
-        description: 'Veredito: "PIB dos EUA cresceu no Q2 2025?"',
+        description: 'Verdict: "US GDP grew in Q2 2025?"',
         amount: -0.05,
         date: "2025-06-18",
         status: "Completed",
@@ -71,7 +71,7 @@ const mockTransactions = [
     {
         id: 8,
         type: "request",
-        description: 'Parsing: "Taxa de juros do BCE"',
+        description: 'Parsing: "ECB interest rate"',
         amount: -0.01,
         date: "2025-06-15",
         status: "Completed",
@@ -79,7 +79,7 @@ const mockTransactions = [
     {
         id: 9,
         type: "request",
-        description: 'Veredito: "Choveu em São Paulo em 10/06/2025?"',
+        description: 'Verdict: "Did it rain in São Paulo on 10/06/2025?"',
         amount: -0.05,
         date: "2025-06-10",
         status: "Completed",
@@ -87,7 +87,7 @@ const mockTransactions = [
     {
         id: 10,
         type: "subscription",
-        description: "Compra de 1000 créditos",
+        description: "Purchase of 1000 credits",
         amount: -9.9,
         date: "2025-06-05",
         status: "Completed",
@@ -95,7 +95,7 @@ const mockTransactions = [
     {
         id: 11,
         type: "request",
-        description: 'Veredito: "Candidato X venceu o debate?"',
+        description: 'Verdict: "Candidate X won the debate?"',
         amount: -0.05,
         date: "2025-06-02",
         status: "Completed",
@@ -103,7 +103,7 @@ const mockTransactions = [
     {
         id: 12,
         type: "deposit",
-        description: "Depósito via PIX",
+        description: "Deposit using PIX",
         amount: 25.0,
         date: "2025-06-01",
         status: "Completed",
@@ -147,9 +147,9 @@ export default function WalletPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <h1 className="text-4xl font-bold mb-4">Minha Carteira</h1>
+                <h1 className="text-4xl font-bold mb-4">My Wallet</h1>
                 <p className="text-lg text-gray-300 mb-10">
-                    Gerencie seu saldo, créditos e veja seu histórico de uso.
+                    Manage your balance, credits, and view your usage history.
                 </p>
 
                 {/* Card de Saldo Principal */}
@@ -161,7 +161,7 @@ export default function WalletPage() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-400">
-                                    Saldo Atual
+                                    Current Balance
                                 </p>
                                 <p className="text-4xl md:text-5xl font-bold text-white tracking-tight">
                                     R${" "}
@@ -174,11 +174,11 @@ export default function WalletPage() {
                         <div className="flex items-center space-x-4">
                             <button className="flex items-center space-x-2 px-5 py-3 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all duration-200 border border-white/20 font-semibold">
                                 <PlusCircle className="w-5 h-5" />
-                                <span>Depositar</span>
+                                <span>Deposit</span>
                             </button>
                             <button className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg font-semibold">
                                 <ShoppingCart className="w-5 h-5" />
-                                <span>Comprar Créditos</span>
+                                <span>Buy Credits</span>
                             </button>
                         </div>
                     </div>
@@ -188,7 +188,7 @@ export default function WalletPage() {
                 <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl flex flex-col">
                     <div className="p-6 border-b border-white/10">
                         <h2 className="text-2xl font-bold text-white">
-                            Histórico de Transações
+                            Transaction History
                         </h2>
 
                         {/* Filtros */}
@@ -201,7 +201,7 @@ export default function WalletPage() {
                                         : "bg-transparent text-gray-400 hover:bg-white/10"
                                 }`}
                             >
-                                Todos
+                                Everyone
                             </button>
                             <button
                                 onClick={() => setFilter("deposits")}
@@ -211,7 +211,7 @@ export default function WalletPage() {
                                         : "bg-transparent text-gray-400 hover:bg-white/10"
                                 }`}
                             >
-                                Depósitos e Compras
+                                Deposits and Purchases
                             </button>
                             <button
                                 onClick={() => setFilter("usage")}
@@ -221,7 +221,7 @@ export default function WalletPage() {
                                         : "bg-transparent text-gray-400 hover:bg-white/10"
                                 }`}
                             >
-                                Uso do Chatbot
+                                Usage of Chatbot
                             </button>
                         </div>
                     </div>
@@ -278,8 +278,7 @@ export default function WalletPage() {
                             {filteredTransactions.length === 0 && (
                                 <div className="p-10 text-center text-gray-400">
                                     <p>
-                                        Nenhuma transação encontrada para este
-                                        filtro.
+                                        No transactions found for this filter.
                                     </p>
                                 </div>
                             )}

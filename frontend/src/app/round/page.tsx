@@ -77,7 +77,7 @@ export default function RoundtablePage() {
 
             setProposals(formattedList);
         } catch (err) {
-            console.error("Erro ao buscar propostas:", err);
+            console.error("Error fetching proposals:", err);
             setProposals([]);
         } finally {
             setIsLoadingProposals(false);
@@ -462,7 +462,6 @@ export default function RoundtablePage() {
                                             const totalVotes = votesFor + votesAgainst;
                                             const approvalRate = totalVotes > 0 ? (votesFor / totalVotes) * 100 : 0;
                                             
-                                            // ✅ CORREÇÃO: Comparar a string do principal atual com as strings dos votantes
                                             const hasVoted = principal && proposal.voters.includes(principal.toText());
 
                                             return (
@@ -484,7 +483,6 @@ export default function RoundtablePage() {
                                                             </h3>
                                                             <div className="flex items-center space-x-2 text-sm text-white/50 mb-3 truncate">
                                                                 <User className="w-4 h-4" />
-                                                                {/* ✅ CORREÇÃO: Agora proposal.proposer é uma string e pode ser renderizada */}
                                                                 <span className="truncate" title={proposal.proposer}>{proposal.proposer}</span>
                                                                 <span>•</span>
                                                                 <Calendar className="w-4 h-4" /><span>{formatDate(proposal.created_at)}</span>

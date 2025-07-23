@@ -83,7 +83,7 @@ export const Header = () => {
                                 disabled={isLoading}
                                 className="px-3 py-2 rounded-lg bg-gradient-to-br from-red-500 to-pink-500 text-white text-xs font-semibold shadow-md hover:opacity-90 transition-all duration-300"
                             >
-                                {isLoading ? "Saindo..." : "Logout"}
+                                {isLoading ? "Exiting..." : "Logout"}
                             </button>
                         </div>
                     ) : (
@@ -124,7 +124,6 @@ export const Header = () => {
                                 {item.name}
                             </button>
                         ))}
-                        {/* Botão de Login/Logout no menu mobile */}
                         {isAuthenticated && principal ? (
                             <div className="block w-full mt-2 text-center">
                                 <span className="block text-xs text-white/70 font-mono truncate max-w-full mb-2">{principal.toText()}</span>
@@ -133,7 +132,7 @@ export const Header = () => {
                                     disabled={isLoading}
                                     className="w-full px-4 py-2 rounded-lg bg-gradient-to-br from-red-500 to-pink-500 text-white text-sm font-semibold shadow-md hover:opacity-90 transition-all duration-300 disabled:opacity-60"
                                 >
-                                    {isLoading ? "Saindo..." : "Logout"}
+                                    {isLoading ? "Exiting..." : "Logout"}
                                 </button>
                             </div>
                         ) : (
@@ -145,7 +144,7 @@ export const Header = () => {
                                 disabled={isLoading}
                                 className="block w-full mt-2 text-center px-4 py-2 rounded-lg bg-gradient-to-br from-[#FF4D00] to-[#FF007A] text-white text-sm font-semibold shadow-md hover:opacity-90 transition-all duration-300 disabled:opacity-60"
                             >
-                                {isLoading ? "Entrando..." : "Login"}
+                                {isLoading ? "Entering..." : "Login"}
                             </button>
                         )}
                     </nav>

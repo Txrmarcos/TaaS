@@ -45,23 +45,19 @@ export default function BotTestPage() {
 
     const fetchStatus = async () => {
         if (!isAuthenticated || !principal) {
-            console.log("Usuário não autenticado");
             return;
         }
         
         try {
-            console.log("Buscando status para principal:", principal.toText());
             const res = (await botActor.get_user_status()) as any;
             setStatus(res[0] as UserStatus);
         } catch (err) {
-            console.error("Erro ao buscar status:", err);
+            console.error("Error fetching status:", err);
         }
     };
 
     const handleSendPrompt = async () => {
         if (!prompt.trim() || !isAuthenticated) return;
-        
-        console.log("Enviando prompt com principal:", principal?.toText());
         
         try {
             setLoading(true);
@@ -70,7 +66,7 @@ export default function BotTestPage() {
             setResponse(res as string);
             fetchStatus();
         } catch (err) {
-            console.error("Erro ao processar prompt:", err);
+            console.error("Error processing prompt:", err);
             setResponse("❌ Error processing prompt. Please try again.");
         } finally {
             setLoading(false);
@@ -133,8 +129,8 @@ export default function BotTestPage() {
                 <Navbar />
                 <main className="flex flex-col flex-grow px-4 pt-32 max-w-4xl mx-auto gap-6 items-center justify-center">
                     <AlertCircle className="w-12 h-12 text-yellow-400" />
-                    <h2 className="text-2xl font-bold">Acesso Restrito</h2>
-                    <p>Você precisa estar logado para acessar esta página.</p>
+                    <h2 className="text-2xl font-bold">Restricted Access</h2>
+                    <p>You need to be logged in to access this page.</p>
                 </main>
                 <Footer />
             </div>

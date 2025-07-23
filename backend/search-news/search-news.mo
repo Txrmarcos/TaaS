@@ -1,28 +1,53 @@
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
+import Char "mo:base/Char";
 import Blob "mo:base/Blob";
 import Array "mo:base/Array";
-import Option "mo:base/Option";
 import IC "ic:aaaaa-aa";
-import JSON "mo:serde/JSON";
 import LLM "mo:llm";
-import Iter "mo:base/Iter";
 import Error "mo:base/Error";
 import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
-import Timer "mo:base/Timer";
+import _Nat8 "mo:base/Nat8";
+import _Sha256 "mo:sha2/Sha256";
 
 actor SearchNews {
 
-  stable var lastRequestTime : Int = 0;
-  let MIN_REQUEST_INTERVAL : Int = 3_000_000_000;
+  // --- Verdict Types and Logic ---
+  
+  public type VerdictResult = { #True; #False; #Uncertain };
+  
+  public type Verdict = {
+    result: VerdictResult;
+    source: Text;
+    hash: Text;
+    timestamp: Time.Time;
+    llm_message: Text;
+  };
 
-  let searchServers : [Text] = [
-    "searx.perennialte.ch",
-    "searx.be",
-    "search.sapti.me",
-    "searx.tiekoetter.com"
-  ];
+  // Convert a byte array to a hexadecimal string representation
+  func toHex(bytes: [_Nat8.Nat8]) : Text {
+    Array.foldLeft<_Nat8.Nat8, Text>(
+      bytes,
+      "",
+      func (acc, byte) {
+        acc # (if (byte < 16) { "0" } else { "" }) # _Nat8.toText(byte)
+      }
+    )
+  };
+
+  // Calculate the SHA-256 hash of a given text input
+  func calculateHash(input: Text): Text {
+    let blob = Text.encodeUtf8(input);
+    let hashBlob = _Sha256.fromBlob(#sha256, blob);
+    return toHex(Blob.toArray(hashBlob));
+  };
+
+  // --- Persistent Storage ---
+  
+  stable var lastRequestTime : Int = 0;
+  stable var storedVerdicts : [(Text, Verdict)] = [];
+  let MIN_REQUEST_INTERVAL : Int = 3_000_000_000;
 
   public shared query func transform(args: {
     context : Blob;
@@ -144,7 +169,41 @@ actor SearchNews {
         ]).send();
 
         switch (summary.message.content) {
-          case (?content) { return content; };
+          case (?content) { 
+            // Create and store verdict
+            let hash = calculateHash(prompt);
+            
+            // More robust parsing of LLM response
+            let lowercaseContent = Text.map(content, func(c: Char): Char {
+              if (c >= 'A' and c <= 'Z') {
+                Char.fromNat32(Char.toNat32(c) + 32)
+              } else { c }
+            });
+            
+            let result = if (Text.contains(lowercaseContent, #text "answer: true") or 
+                            Text.contains(lowercaseContent, #text "true")) { 
+              #True 
+            } else if (Text.contains(lowercaseContent, #text "answer: false") or 
+                      Text.contains(lowercaseContent, #text "false")) { 
+              #False 
+            } else { 
+              #Uncertain 
+            };
+            
+            let verdict : Verdict = {
+              result = result;
+              source = "bbc.com, cnn.com, reuters.com, nytimes.com, globo.com, brave.news";
+              hash = hash;
+              timestamp = Time.now();
+              llm_message = content;
+            };
+            
+            // Store the verdict
+            storedVerdicts := Array.append(storedVerdicts, [(hash, verdict)]);
+            Debug.print("✅ Verdict stored with hash: " # hash);
+            
+            return content; 
+          };
           case null { return "❌ No content returned from LLM."; };
         };
       };
@@ -173,7 +232,6 @@ actor SearchNews {
       headers = headers;
       body = null;
       max_response_bytes = ?2000000; 
-      is_replicated = ?false;
       transform = ?{
         function = transform;
         context = Blob.fromArray([]);
@@ -181,7 +239,7 @@ actor SearchNews {
     };
 
     try {
-      Cycles.add(25_000_000_000); 
+      Cycles.add<system>(25_000_000_000);
       let response = await IC.http_request(request);
 
       Debug.print("📊 Status: " # debug_show(response.status));
@@ -189,7 +247,7 @@ actor SearchNews {
 
       switch (Text.decodeUtf8(response.body)) {
         case null {
-          return "❌ Não foi possível decodificar a resposta UTF-8.";
+          return "❌ Unable to decode UTF-8 response.";
         };
         case (?jsonText) {
           let response = await parseJson(jsonText, userQuery);
@@ -198,38 +256,52 @@ actor SearchNews {
       };
 
     } catch (e) {
-      Debug.print("❌ Erro na requisição HTTP: " # Error.message(e));
-      return "❌ Erro na conexão com o servidor. Tente novamente." # Error.message(e);
+      Debug.print("❌ Error during HTTP request: " # Error.message(e));
+      return "❌ Connection error. Please try again." # Error.message(e);
     };
-  };
-
-  func isWhitelistedDomain(url: Text, domainList: [Text]) : Bool {
-    Option.isSome(Array.find(domainList, func(domain: Text) : Bool {
-      Text.contains(url, #text domain)
-    }));
   };
 
   public shared({caller}) func searchNews(userQuery: Text) : async Text {
     let now = Time.now();
     if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
       let waitTime = (MIN_REQUEST_INTERVAL - (now - lastRequestTime)) / 1_000_000_000;
-      return "⏳ Aguarde " # debug_show(waitTime) # " segundos antes de fazer uma nova consulta.";
+      return "⏳ Please wait " # debug_show(waitTime) # " seconds before making a new request.";
     };
 
     try {
       let allowed = await botPlanCanister.use_request_for(caller);
       if (not allowed) {
-        return "❌ Você atingiu o limite do seu plano ou não tem um plano ativo.";
+        return "❌ You have reached the limit of your plan or do not have an active plan.";
       };
     } catch (e) {
-      Debug.print("❌ Erro ao verificar bot plan: " # Error.message(e));
-      return "❌ Erro interno. Tente novamente.";
+      Debug.print("❌ Error checking bot plan: " # Error.message(e));
+      return "❌ Internal error. Please try again.";
     };
 
     lastRequestTime := now;
     Debug.print("🔍 Query: " # userQuery);
 
     return await makeHttpRequest(userQuery);
+  };
+
+  // --- Verdict Access Functions ---
+
+  public query func getVerdictByHash(hash : Text) : async ?Verdict {
+    for ((h, v) in storedVerdicts.vals()) {
+      if (h == hash) {
+        return ?v;
+      }
+    };
+    return null; // Not found
+  };
+
+  public query func getAllVerdicts() : async [(Text, Verdict)] {
+    return storedVerdicts;
+  };
+
+  public func getVerdictByStatement(statement: Text) : async ?Verdict {
+    let hash = calculateHash(statement);
+    return await getVerdictByHash(hash);
   };
 
 }
