@@ -1,4 +1,18 @@
 name: Atualizar Propostas
+run: |
+  sh -ci "$(curl -fsSL https://sdk.dfinity.org/install.sh)"
+  echo "$HOME/bin" >> $GITHUB_PATH
+
+name: Inicializar DFX e gerar arquivos
+run: |
+  dfx start --background
+  sleep 5 
+  dfx canister create --all
+  dfx build
+  dfx generate
+
+
+name: Atualizar Propostas
 
 on:
   schedule:
