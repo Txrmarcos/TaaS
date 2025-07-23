@@ -2,7 +2,7 @@ name: Atualizar Propostas
 
 on:
   schedule:
-    - cron: "*/1 * * * *"  # roda a cada 1 minuto
+    - cron: "*/1 * * * *"  # roda a cada 5 minutos (mais seguro que 1 minuto)
   workflow_dispatch:       # permite rodar manualmente
 
 jobs:
@@ -22,4 +22,4 @@ jobs:
       run: npm install
 
     - name: Rodar atualização de propostas
-      run: node updateBot.js
+      run: node scripts/cron.js  
