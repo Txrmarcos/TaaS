@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           router.push("/chat");
         },
         onError: (err: any) => {
-          console.error("Erro no login:", err);
+          console.error("Error logging in:", err);
         },
       });
     } finally {

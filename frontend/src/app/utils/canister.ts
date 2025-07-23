@@ -6,7 +6,6 @@ import { idlFactory as bot_idl } from "../../../../src/declarations/bot-plan/bot
 import { Principal } from "@dfinity/principal";
 import { AuthClient } from "@dfinity/auth-client";
 
-// Interface para o contexto de loading (será injetado via callback)
 interface LoadingContextCallbacks {
   startLoading: (id: string) => void;
   stopLoading: (id: string) => void;
@@ -19,54 +18,46 @@ function safeStringify(obj: any): string {
 }
 
 
-// Variável global para callbacks do loading context
 let loadingCallbacks: LoadingContextCallbacks | null = null;
 
-// Função para definir os callbacks do loading context
 export function setLoadingCallbacks(callbacks: LoadingContextCallbacks) {
   loadingCallbacks = callbacks;
 }
 
-// Função para criar proxy que monitora requisições e integra com loading
 function createActorProxy(actor: any, actorName: string) {
   return new Proxy(actor, {
     get(target, prop, receiver) {
       const originalMethod = target[prop];
       
-      // Se for uma função do ator, intercepta a chamada
       if (typeof originalMethod === 'function') {
         return function(this: any, ...args: any[]) {
           const requestId = `${actorName}_${String(prop)}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
           const startTime = performance.now();
           
-          // Inicia o loading se o contexto estiver disponível
           if (loadingCallbacks) {
             loadingCallbacks.startLoading(requestId);
           }
           
-          console.log(`🚀 [${actorName}] Iniciando requisição: ${String(prop)}`, {
+          console.log(`🚀 [${actorName}] Starting request: ${String(prop)}`, {
             requestId,
             timestamp: new Date().toISOString(),
             method: String(prop),
             args: args.length > 0 ? args : undefined
           });
 
-          // Chama o método original
           const result = originalMethod.apply(this, args);
           
-          // Se for uma Promise, monitora a conclusão
           if (result && typeof result.then === 'function') {
             return result
               .then((data: any) => {
                 const endTime = performance.now();
                 const duration = endTime - startTime;
                 
-                // Para o loading
                 if (loadingCallbacks) {
                   loadingCallbacks.stopLoading(requestId);
                 }
-                
-                console.log(`✅ [${actorName}] Requisição concluída: ${String(prop)}`, {
+
+                console.log(`✅ [${actorName}] Request completed: ${String(prop)}`, {
                   requestId,
                   duration: `${duration.toFixed(2)}ms`,
                   timestamp: new Date().toISOString(),
@@ -80,12 +71,11 @@ function createActorProxy(actor: any, actorName: string) {
                 const endTime = performance.now();
                 const duration = endTime - startTime;
                 
-                // Para o loading mesmo em caso de erro
                 if (loadingCallbacks) {
                   loadingCallbacks.stopLoading(requestId);
                 }
-                
-                console.error(`❌ [${actorName}] Requisição falhou: ${String(prop)}`, {
+
+                console.error(`❌ [${actorName}] Request failed: ${String(prop)}`, {
                   requestId,
                   duration: `${duration.toFixed(2)}ms`,
                   timestamp: new Date().toISOString(),
@@ -97,14 +87,13 @@ function createActorProxy(actor: any, actorName: string) {
               });
           }
           
-          // Para métodos síncronos, para o loading imediatamente
           if (loadingCallbacks) {
             loadingCallbacks.stopLoading(requestId);
           }
           
           const endTime = performance.now();
           const duration = endTime - startTime;
-          console.log(`✅ [${actorName}] Método síncrono executado: ${String(prop)}`, {
+          console.log(`✅ [${actorName}] Synchronous method executed: ${String(prop)}`, {
             requestId,
             duration: `${duration.toFixed(2)}ms`,
             timestamp: new Date().toISOString()
@@ -149,7 +138,6 @@ export function createSearchNewsActor(authClient: AuthClient | null) {
     canisterId: news,
   });
 
-  // Retorna todos os proxies de uma vez
   return {
     roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
     botActor: createActorProxy(originalBotActor, "BotPlan"),
@@ -159,7 +147,6 @@ export function createSearchNewsActor(authClient: AuthClient | null) {
 
 
 
-// Versão alternativa: Sistema de métricas mais avançado
 interface RequestMetrics {
   id: string;
   actor: string;
@@ -199,7 +186,6 @@ class RequestTracker {
         request.error = error.message || error;
       }
       
-      // Log detalhado
       const emoji = success ? '✅' : '❌';
       console.log(`${emoji} [${request.actor}] ${request.method}`, {
         duration: `${request.duration?.toFixed(2)}ms`,
@@ -221,7 +207,6 @@ class RequestTracker {
 
 export const requestTracker = new RequestTracker();
 
-// Hook para usar métricas no React (opcional)
 export function useRequestMetrics() {
   return {
     getMetrics: () => requestTracker.getMetrics(),

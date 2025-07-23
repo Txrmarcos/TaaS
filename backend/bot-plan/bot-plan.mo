@@ -190,7 +190,7 @@ actor BotPlanCanister {
     let walletBlockIndex = switch (walletResult) {
       case (#ok(blockIndex)) { blockIndex };
       case (#err(error)) { 
-        return #err("Erro na transferência para wallet: " # error);
+        return #err("Error during transfer to wallet: " # error);
       };
     };
     
@@ -199,7 +199,7 @@ actor BotPlanCanister {
     let cyclesBlockIndex = switch (cyclesResult) {
       case (#ok(blockIndex)) { blockIndex };
       case (#err(error)) { 
-        return #err("Erro na transferência para ciclos: " # error);
+        return #err("Error during transfer to cycles: " # error);
       };
     };
     
@@ -238,11 +238,11 @@ actor BotPlanCanister {
         let now = Time.now();
         if (now < existingStatus.resetAt) {
           switch (existingStatus.plan, plan) {
-            case (#Standard, #Standard) { return "⚠️ Plano Standard já ativo!" };
-            case (#Pro, #Pro) { return "⚠️ Plano Pro já ativo!" };
-            case (#Premium, #Premium) { return "⚠️ Plano Premium já ativo!" };
-            case (_, _) { 
-              Debug.print("Mudança de plano: " # debug_show(existingStatus.plan) # " -> " # debug_show(plan));
+            case (#Standard, #Standard) { return "⚠️ Standard plan is already active!" };
+            case (#Pro, #Pro) { return "⚠️ Pro plan is already active!" };
+            case (#Premium, #Premium) { return "⚠️ Premium plan is already active!" };
+            case (_, _) {
+              Debug.print("Plan change: " # debug_show(existingStatus.plan) # " -> " # debug_show(plan));
             };
           };
         };
@@ -258,11 +258,11 @@ actor BotPlanCanister {
 
     if (price_e8s == 0) {
       activatePlan(plan, caller);
-      return "✅ Plano Standard ativado!";
+      return "✅ Standard plan activated!";
     };
 
     let balance = await checkUserBalance(caller);
-    let totalRequired = price_e8s + (TRANSFER_FEE * 2); // Taxa para ambas as transferências
+    let totalRequired = price_e8s + (TRANSFER_FEE * 2); 
     
     if (balance >= totalRequired) {
       let splitResult = await processSplitPayment(caller, price_e8s);
@@ -270,12 +270,12 @@ actor BotPlanCanister {
       switch (splitResult) {
         case (#ok(walletBlock, cyclesBlock)) {
           activatePlan(plan, caller);
-          return "💎 Plano " # debug_show(plan) # " ativado!\n" # 
+          return "💎 Plan " # debug_show(plan) # " activated!\n" #
                  "🏦 Wallet: " # Nat.toText(walletBlock) # "\n" #
-                 "⚡ Ciclos para " # TARGET_CANISTER_PRINCIPAL # ": " # Nat.toText(cyclesBlock);
+                 "⚡ Cycles for " # TARGET_CANISTER_PRINCIPAL # ": " # Nat.toText(cyclesBlock);
         };
         case (#err(errorMsg)) {
-          return "❌ Erro no pagamento dividido: " # errorMsg;
+          return "❌ Error during split payment: " # errorMsg;
         };
       };
     } else {
@@ -288,7 +288,7 @@ actor BotPlanCanister {
           acc # (if (b < 16) { "0" } else { "" }) # Nat8.toText(b)
         }
       );
-      return "⚠️ Saldo insuficiente.\nEnvie " # Nat.toText(totalRequired) # " e8s para dkwk6-4aaaa-aaaaf-qbbxa-cai\nSubaccount: " # sub_hex_text;
+      return "⚠️ Insufficient balance.\nSend " # Nat.toText(totalRequired) # " e8s to dkwk6-4aaaa-aaaaf-qbbxa-cai\nSubaccount: " # sub_hex_text;
     };
   };
 

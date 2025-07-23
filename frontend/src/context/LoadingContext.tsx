@@ -27,7 +27,6 @@ export const LoadingProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     setActiveRequests(prev => {
-      // Evita duplicatas
       const filtered = prev.filter(req => req.id !== id);
       return [...filtered, request];
     });

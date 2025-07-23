@@ -189,7 +189,7 @@ actor SearchNews {
 
       switch (Text.decodeUtf8(response.body)) {
         case null {
-          return "❌ Não foi possível decodificar a resposta UTF-8.";
+          return "❌ Unable to decode UTF-8 response.";
         };
         case (?jsonText) {
           let response = await parseJson(jsonText, userQuery);
@@ -198,8 +198,8 @@ actor SearchNews {
       };
 
     } catch (e) {
-      Debug.print("❌ Erro na requisição HTTP: " # Error.message(e));
-      return "❌ Erro na conexão com o servidor. Tente novamente." # Error.message(e);
+      Debug.print("❌ Error during HTTP request: " # Error.message(e));
+      return "❌ Connection error. Please try again." # Error.message(e);
     };
   };
 
@@ -213,17 +213,17 @@ actor SearchNews {
     let now = Time.now();
     if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
       let waitTime = (MIN_REQUEST_INTERVAL - (now - lastRequestTime)) / 1_000_000_000;
-      return "⏳ Aguarde " # debug_show(waitTime) # " segundos antes de fazer uma nova consulta.";
+      return "⏳ Please wait " # debug_show(waitTime) # " seconds before making a new request.";
     };
 
     try {
       let allowed = await botPlanCanister.use_request_for(caller);
       if (not allowed) {
-        return "❌ Você atingiu o limite do seu plano ou não tem um plano ativo.";
+        return "❌ You have reached the limit of your plan or do not have an active plan.";
       };
     } catch (e) {
-      Debug.print("❌ Erro ao verificar bot plan: " # Error.message(e));
-      return "❌ Erro interno. Tente novamente.";
+      Debug.print("❌ Error checking bot plan: " # Error.message(e));
+      return "❌ Internal error. Please try again.";
     };
 
     lastRequestTime := now;

@@ -57,7 +57,7 @@ export default function PlansPage() {
             });
             setIcpDepositAddress(accountIdentifier.toHex());
         } catch (error) {
-            console.error("Erro ao gerar endereço ICP:", error);
+            console.error("Error generating ICP address:", error);
         }
     };
 
@@ -92,8 +92,8 @@ export default function PlansPage() {
             setBitcoinAddress(btcAddress);
             
         } catch (error) {
-            console.error("Erro ao gerar endereço Bitcoin:", error);
-            alert("Erro ao gerar endereço Bitcoin. Tente novamente.");
+            console.error("Error generating Bitcoin address:", error);
+            alert("Error generating Bitcoin address. Please try again.");
         } finally {
             setIsGeneratingAddress(false);
         }
@@ -120,13 +120,12 @@ export default function PlansPage() {
                 certified: false,
             });
 
-            console.log("Saldo ckBTC retornado:", balance);
             
             const ckBTCAmount = (Number(balance) / 100_000_000).toFixed(8);
             setCkBalance(ckBTCAmount); 
         } catch (error) {
-            console.error("Erro ao buscar saldo ckBTC:", error);
-            setCkBalance("Erro ao carregar saldo ckBTC");
+            console.error("Error fetching ckBTC balance:", error);
+            setCkBalance("Error loading ckBTC balance");
         } finally {
             setIsLoadingBalance(false);
         }
@@ -155,20 +154,19 @@ export default function PlansPage() {
             certified: false,
             });
 
-            console.log("Saldo retornado:", balance);
             
             const icpAmount = (Number(balance) / 100_000_000).toFixed(8);
             setIcpBalance(icpAmount);
             
         } catch (error) {
-            console.error("Detalhes do erro:", error);
-            
+            console.error("Error fetching ICP balance:", error);
+
             const errorMessage = error instanceof Error ? error.message : String(error);
             
             if (errorMessage.includes("update method")) {
-                setIcpBalance("Método não encontrado - verifique as dependências");
+                setIcpBalance("Method not found – please check dependencies");
             } else if (errorMessage.includes("agent")) {
-                setIcpBalance("Erro de conexão com IC");
+                setIcpBalance("Connection error with IC");
             } else {
                 setIcpBalance("0.00000000");
             }
@@ -180,7 +178,7 @@ export default function PlansPage() {
     const fetchStatus = async () => {
         try {
             const res = (await botActor.get_user_status()) as any;
-            console.log("Status do usuário:", res);
+            console.log("User status:", res);
             if (res) {
                 setStatus(res[0] as UserStatus);
             } else {
@@ -192,7 +190,7 @@ export default function PlansPage() {
     };
 
     const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
-        if (!actor) return alert("Faça login primeiro!");
+        if (!actor) return alert("Please log in first!");
 
         let planObj;
         switch (plan) {
@@ -215,7 +213,7 @@ export default function PlansPage() {
             await fetchStatus();
         } catch (err) {
             console.error(err);
-            alert("Erro ao assinar plano");
+            alert("Error subscribing to plan");
         }
     };
 
@@ -228,7 +226,7 @@ export default function PlansPage() {
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        alert("Copiado para a área de transferência!");
+        alert("Copied to clipboard!");
     };
 
     const getPlanColor = (planName: string) => {
@@ -278,7 +276,7 @@ export default function PlansPage() {
                             Internet Identity
                         </h1>
                         <p className="text-white/80">
-                            Conecte-se ao futuro descentralizado
+                            Connect to the decentralized future
                         </p>
                     </div>
                     
@@ -294,11 +292,11 @@ export default function PlansPage() {
                                         </span>
                                     </div>
                                     <h2 className="text-xl font-semibold text-white mb-2">
-                                        Conectado com sucesso!
+                                        Successfully connected!
                                     </h2>
                                     <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                                         <p className="text-xs text-white/70 mb-1">
-                                            Principal ID:
+                                            Main ID:
                                         </p>
                                         <p className="text-sm text-white font-mono break-all">
                                             {principal?.toText()}
@@ -315,7 +313,7 @@ export default function PlansPage() {
                                             </div>
                                             <div>
                                                 <h3 className="text-lg font-semibold text-white">
-                                                    Saldo ICP
+                                                    ICP Balance
                                                 </h3>
                                                 <p className="text-white/60 text-sm">
                                                     Internet Computer Protocol
@@ -347,7 +345,7 @@ export default function PlansPage() {
                                             onClick={() => setShowIcpDeposit(!showIcpDeposit)}
                                             className="py-2 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 rounded-lg transition-all duration-200 text-sm font-semibold"
                                         >
-                                            Depositar ICP
+                                            Deposit ICP
                                         </button>
                                     </div>
                                 </div>
@@ -357,13 +355,13 @@ export default function PlansPage() {
                                     <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 rounded-xl p-5 border border-cyan-500/20">
                                         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                                             <span className="text-cyan-400 mr-2">∞</span>
-                                            Depósito de ICP
+                                            Deposit ICP
                                         </h3>
                                         
                                         <div className="space-y-4">
                                             <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                                                 <p className="text-xs text-white/70 mb-2">
-                                                    Seu endereço ICP (Account Identifier):
+                                                    Your address ICP (Account Identifier):
                                                 </p>
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-sm text-white font-mono break-all mr-2">
@@ -373,14 +371,14 @@ export default function PlansPage() {
                                                         onClick={() => copyToClipboard(icpDepositAddress)}
                                                         className="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
                                                     >
-                                                        Copiar
+                                                        Copy
                                                     </button>
                                                 </div>
                                             </div>
 
                                             <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                                                 <p className="text-xs text-white/70 mb-2">
-                                                    Ou use seu Principal ID:
+                                                    Or use your Main ID:
                                                 </p>
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-sm text-white font-mono break-all mr-2">
@@ -390,21 +388,21 @@ export default function PlansPage() {
                                                         onClick={() => copyToClipboard(principal?.toText())}
                                                         className="px-3 py-1 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-500/30 text-cyan-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
                                                     >
-                                                        Copiar
+                                                        Copy
                                                     </button>
                                                 </div>
                                             </div>
                                             
                                             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                                                 <p className="text-blue-400 text-sm font-semibold mb-2">
-                                                    ℹ️ Instruções:
+                                                    ℹ️ Instructions:
                                                 </p>
                                                 <div className="text-white/80 text-xs space-y-1">
-                                                    <p>• Envie ICP para o Account Identifier ou Principal ID acima</p>
-                                                    <p>• Valor mínimo: 0.0001 ICP</p>
-                                                    <p>• Use o Account Identifier para exchanges</p>
-                                                    <p>• Use o Principal ID para dApps e carteiras IC</p>
-                                                    <p>• Transações são processadas quase instantaneamente</p>
+                                                    <p>• Send ICP to the Account Identifier or Main ID above</p>
+                                                    <p>• Minimum amount: 0.0001 ICP</p>
+                                                    <p>• Use the Account Identifier for exchanges</p>
+                                                    <p>• Use the Main ID for dApps and IC wallets</p>
+                                                    <p>• Transactions are processed almost instantly</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -420,7 +418,7 @@ export default function PlansPage() {
                                             </div>
                                             <div>
                                                 <h3 className="text-lg font-semibold text-white">
-                                                    Saldo ckBTC
+                                                    ckBTC Balance
                                                 </h3>
                                                 <p className="text-white/60 text-sm">
                                                     Chain-key Bitcoin
@@ -452,7 +450,7 @@ export default function PlansPage() {
                                             onClick={() => setShowBitcoinDeposit(!showBitcoinDeposit)}
                                             className="py-2 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded-lg transition-all duration-200 text-sm font-semibold"
                                         >
-                                            Depositar BTC
+                                            Deposit BTC
                                         </button>
                                     </div>
                                 </div>
@@ -462,13 +460,13 @@ export default function PlansPage() {
                                     <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl p-5 border border-orange-500/20">
                                         <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
                                             <span className="text-orange-400 mr-2">₿</span>
-                                            Depósito de Bitcoin
+                                            Bitcoin Deposit
                                         </h3>
                                         
                                         {!bitcoinAddress ? (
                                             <div className="text-center">
                                                 <p className="text-white/80 mb-4">
-                                                    Gere seu endereço Bitcoin único para depositar
+                                                    Generate your unique Bitcoin address to deposit
                                                 </p>
                                                 <button
                                                     onClick={generateBitcoinAddress}
@@ -487,7 +485,7 @@ export default function PlansPage() {
                                             <div className="space-y-4">
                                                 <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                                                     <p className="text-xs text-white/70 mb-2">
-                                                        Seu endereço Bitcoin:
+                                                        Your Bitcoin address:
                                                     </p>
                                                     <div className="flex items-center justify-between">
                                                         <p className="text-sm text-white font-mono break-all mr-2">
@@ -497,20 +495,20 @@ export default function PlansPage() {
                                                             onClick={() => copyToClipboard(bitcoinAddress)}
                                                             className="px-3 py-1 bg-orange-500/20 hover:bg-orange-500/30 border border-orange-500/30 text-orange-400 rounded transition-all duration-200 text-xs whitespace-nowrap"
                                                         >
-                                                            Copiar
+                                                            Copy
                                                         </button>
                                                     </div>
                                                 </div>
                                                 
                                                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                                                     <p className="text-blue-400 text-sm font-semibold mb-2">
-                                                        ℹ️ Instruções:
+                                                        ℹ️ Instructions:
                                                     </p>
                                                     <div className="text-white/80 text-xs space-y-1">
-                                                        <p>• Envie Bitcoin para o endereço acima</p>
-                                                        <p>• Valor mínimo: 0.001 BTC</p>
-                                                        <p>• Após confirmação, você receberá ckBTC</p>
-                                                        <p>• Processo pode levar algumas horas</p>
+                                                        <p>• Send Bitcoin to the address above</p>
+                                                        <p>• Minimum amount: 0.001 BTC</p>
+                                                        <p>• After confirmation, you will receive ckBTC</p>
+                                                        <p>• Process may take a few hours</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -523,12 +521,12 @@ export default function PlansPage() {
                                     <div className="bg-white/5 rounded-xl p-5 border border-white/10 space-y-3">
                                         <h3 className="text-lg font-semibold text-white flex items-center">
                                             <span className="w-2 h-2 bg-green-400 rounded-full mr-3"></span>
-                                            Status da Conta
+                                            Account Status
                                         </h3>
                                         <div className="grid grid-cols-1 gap-3">
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/70">
-                                                    Plano Atual:
+                                                    Current Plan:
                                                 </span>
                                                 <span
                                                     className={`font-semibold ${getPlanColor(
@@ -544,7 +542,7 @@ export default function PlansPage() {
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/70">
-                                                    Requests Restantes:
+                                                    Remaining Requests:
                                                 </span>
                                                 <span className="text-white font-semibold">
                                                     {status.requestsLeft
@@ -554,7 +552,7 @@ export default function PlansPage() {
                                             </div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-white/70">
-                                                    Reset em:
+                                                    Reset at:
                                                 </span>
                                                 <span className="text-white font-semibold text-sm">
                                                     {status.resetAt
@@ -573,7 +571,7 @@ export default function PlansPage() {
                                                 ⚠️
                                             </span>
                                             <span className="text-orange-300">
-                                                Nenhum plano ativo encontrado
+                                                No active plan found
                                             </span>
                                         </div>
                                     </div>
@@ -582,7 +580,7 @@ export default function PlansPage() {
                                 {/* Subscription Plans */}
                                 <div className="space-y-3">
                                     <h3 className="text-lg font-semibold text-white">
-                                        Escolha seu Plano
+                                        Choose Your Plan
                                     </h3>
                                     <div className="grid grid-cols-1 gap-3">
                                         <button

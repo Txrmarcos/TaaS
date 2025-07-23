@@ -63,10 +63,10 @@ actor RoundtableCanister {
     let optProposal = Array.find<Proposal>(proposals, func(p) { p.id == id });
 
     switch (optProposal) {
-      case (null) { return "Proposta não encontrada."; };
+      case (null) { return "Proposal not found."; };
       case (?proposal) {
         if (Array.find<Principal>(proposal.voters, func(v) { Principal.equal(v, caller) }) != null) {
-          return "Você já votou nesta proposta.";
+          return "You have already voted on this proposal.";
         };
 
         var updatedVotesFor = proposal.votes_for;
@@ -98,7 +98,7 @@ actor RoundtableCanister {
           if (p.id == id) { updatedProposal } else { p }
         });
 
-        return "Voto registrado com sucesso!";
+        return "Vote registered successfully!";
       };
     };
   };
@@ -115,9 +115,9 @@ actor RoundtableCanister {
 
         if (newStatus == #Approved) {
           urlsToWhitelist := Array.append(urlsToWhitelist, [p.url]);
-          logs := Array.append(logs, ["Proposta #" # Nat.toText(p.id) # " aprovada e URL adicionada à whitelist."]);
+          logs := Array.append(logs, ["Proposal #" # Nat.toText(p.id) # " approved and URL added to whitelist."]);
         } else {
-          logs := Array.append(logs, ["Proposta #" # Nat.toText(p.id) # " rejeitada."]);
+          logs := Array.append(logs, ["Proposal #" # Nat.toText(p.id) # " rejected."]);
         };
 
         {
