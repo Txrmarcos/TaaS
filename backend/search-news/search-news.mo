@@ -104,6 +104,8 @@ actor SearchNews {
 
   func parseJson(jsonText: Text, prompt: Text) : async Text {
     Debug.print("🔧 Parsing only titles from JSON");
+    Debug.print("📄 Raw JSON received: " # jsonText);
+    Debug.print("❓ Original prompt: " # prompt);
 
     var results : [Text] = [];
 
@@ -136,10 +138,13 @@ actor SearchNews {
     };
 
     Debug.print("📋 Parsed " # debug_show(results.size()) # " titles");
+    Debug.print("📝 Extracted titles: " # debug_show(results));
     
     let titles = Array.foldLeft<Text, Text>(results, "", func(acc, title) {
       acc # "- " # title # "\n"
     });
+
+    Debug.print("📄 Formatted titles for LLM:\n" # titles);
 
     let systemPrompt = "You are a fact-checking assistant. Your job is to analyze news article titles and determine if a given statement is true, false, or uncertain based on the evidence.
 
@@ -159,6 +164,10 @@ actor SearchNews {
 
     Please analyze the titles and provide your assessment.";
 
+        Debug.print("🤖 Sending query to LLM...");
+        Debug.print("📝 System prompt: " # systemPrompt);
+        Debug.print("👤 User query: " # userQuery);
+
         let summary = await LLM.chat(#Llama3_1_8B).withMessages([
           #system_ {
             content = systemPrompt;
@@ -168,10 +177,15 @@ actor SearchNews {
           },
         ]).send();
 
+        Debug.print("🤖 LLM response received");
+
         switch (summary.message.content) {
           case (?content) { 
+            Debug.print("✅ LLM returned content: " # content);
+            
             // Create and store verdict
             let hash = calculateHash(prompt);
+            Debug.print("🔐 Generated hash for prompt '" # prompt # "': " # hash);
             
             // More robust parsing of LLM response
             let lowercaseContent = Text.map(content, func(c: Char): Char {
@@ -180,13 +194,18 @@ actor SearchNews {
               } else { c }
             });
             
+            Debug.print("🔍 Lowercase content for analysis: " # lowercaseContent);
+            
             let result = if (Text.contains(lowercaseContent, #text "answer: true") or 
                             Text.contains(lowercaseContent, #text "true")) { 
+              Debug.print("✅ Verdict result: TRUE");
               #True 
             } else if (Text.contains(lowercaseContent, #text "answer: false") or 
                       Text.contains(lowercaseContent, #text "false")) { 
+              Debug.print("❌ Verdict result: FALSE");
               #False 
             } else { 
+              Debug.print("❓ Verdict result: UNCERTAIN");
               #Uncertain 
             };
             
@@ -198,13 +217,19 @@ actor SearchNews {
               llm_message = content;
             };
             
+            Debug.print("📦 Created verdict object: " # debug_show(verdict));
+            
             // Store the verdict
             storedVerdicts := Array.append(storedVerdicts, [(hash, verdict)]);
             Debug.print("✅ Verdict stored with hash: " # hash);
+            Debug.print("📊 Total verdicts stored: " # debug_show(storedVerdicts.size()));
             
             return content; 
           };
-          case null { return "❌ No content returned from LLM."; };
+          case null { 
+            Debug.print("❌ LLM returned null content");
+            return "❌ No content returned from LLM."; 
+          };
         };
       };
 
@@ -236,6 +261,7 @@ actor SearchNews {
         function = transform;
         context = Blob.fromArray([]);
       };
+      is_replicated = ?false;
     };
 
     try {
@@ -262,17 +288,24 @@ actor SearchNews {
   };
 
   public shared({caller}) func searchNews(userQuery: Text) : async Text {
+    Debug.print("🚀 searchNews called with query: " # userQuery);
+    Debug.print("👤 Caller: " # debug_show(caller));
+    
     let now = Time.now();
     if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
       let waitTime = (MIN_REQUEST_INTERVAL - (now - lastRequestTime)) / 1_000_000_000;
+      Debug.print("⏳ Rate limit hit. Wait time: " # debug_show(waitTime) # " seconds");
       return "⏳ Please wait " # debug_show(waitTime) # " seconds before making a new request.";
     };
 
     try {
+      Debug.print("🔍 Checking bot plan for caller...");
       let allowed = await botPlanCanister.use_request_for(caller);
       if (not allowed) {
+        Debug.print("❌ Bot plan check failed - limit reached or no active plan");
         return "❌ You have reached the limit of your plan or do not have an active plan.";
       };
+      Debug.print("✅ Bot plan check passed");
     } catch (e) {
       Debug.print("❌ Error checking bot plan: " # Error.message(e));
       return "❌ Internal error. Please try again.";
@@ -280,27 +313,39 @@ actor SearchNews {
 
     lastRequestTime := now;
     Debug.print("🔍 Query: " # userQuery);
+    Debug.print("📡 Making HTTP request...");
 
-    return await makeHttpRequest(userQuery);
+    let result = await makeHttpRequest(userQuery);
+    Debug.print("🏁 searchNews completed. Result length: " # debug_show(result.size()));
+    return result;
   };
 
   // --- Verdict Access Functions ---
 
   public query func getVerdictByHash(hash : Text) : async ?Verdict {
+    Debug.print("🔍 Searching for verdict with hash: " # hash);
+    Debug.print("📊 Total verdicts available: " # debug_show(storedVerdicts.size()));
+    
     for ((h, v) in storedVerdicts.vals()) {
+      Debug.print("🔍 Checking hash: " # h);
       if (h == hash) {
+        Debug.print("✅ Found verdict for hash: " # hash);
         return ?v;
-      }
+      };
     };
+    Debug.print("❌ No verdict found for hash: " # hash);
     return null; // Not found
   };
 
   public query func getAllVerdicts() : async [(Text, Verdict)] {
+    Debug.print("📋 Retrieving all verdicts. Total count: " # debug_show(storedVerdicts.size()));
     return storedVerdicts;
   };
 
   public func getVerdictByStatement(statement: Text) : async ?Verdict {
+    Debug.print("🔍 Looking up verdict by statement: " # statement);
     let hash = calculateHash(statement);
+    Debug.print("🔐 Generated hash for statement: " # hash);
     return await getVerdictByHash(hash);
   };
 
