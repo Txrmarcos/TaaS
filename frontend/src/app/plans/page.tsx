@@ -296,7 +296,7 @@ export default function PlansPage() {
                                     </h2>
                                     <div className="bg-white/5 rounded-lg p-3 border border-white/10">
                                         <p className="text-xs text-white/70 mb-1">
-                                            Main ID:
+                                            Principal ID:
                                         </p>
                                         <p className="text-sm text-white font-mono break-all">
                                             {principal?.toText()}
@@ -378,7 +378,7 @@ export default function PlansPage() {
 
                                             <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                                                 <p className="text-xs text-white/70 mb-2">
-                                                    Or use your Main ID:
+                                                    Or use your Principal ID:
                                                 </p>
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-sm text-white font-mono break-all mr-2">
@@ -398,10 +398,10 @@ export default function PlansPage() {
                                                     ℹ️ Instructions:
                                                 </p>
                                                 <div className="text-white/80 text-xs space-y-1">
-                                                    <p>• Send ICP to the Account Identifier or Main ID above</p>
+                                                    <p>• Send ICP to the Account Identifier or Principal ID above</p>
                                                     <p>• Minimum amount: 0.0001 ICP</p>
                                                     <p>• Use the Account Identifier for exchanges</p>
-                                                    <p>• Use the Main ID for dApps and IC wallets</p>
+                                                    <p>• Use the Principal ID for dApps and IC wallets</p>
                                                     <p>• Transactions are processed almost instantly</p>
                                                 </div>
                                             </div>
