@@ -1,11 +1,23 @@
 {
   "name": "taas-bot",
-  "scripts": {
-    "update-bot": "node scripts/atualizar.js"
-  },
+  "version": "1.0.0",
   "type": "module",
+  "description": "TaaS Roundtable Automation",
+  "main": "scripts/cron.js",
+  "scripts": {
+    "start": "node scripts/cron.js",
+    "update-proposals": "node scripts/cron.js"
+  },
   "dependencies": {
-    "@dfinity/agent": "^0.17.0",
+    "@dfinity/agent": "^1.0.1",
+    "@dfinity/principal": "^1.0.1",
+    "@dfinity/candid": "^1.0.1",
     "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
