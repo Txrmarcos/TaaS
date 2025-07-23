@@ -20,7 +20,7 @@ export interface UserStatus {
 export default function PlansPage() {
     const { isAuthenticated, principal, isLoading, authClient } = useAuth();
 
-        const { botActor } = createSearchNewsActor(authClient);
+    const { botActor } = createSearchNewsActor(authClient);
 
     const [actor, setActor] = useState<any>(botActor);
     const [status, setStatus] = useState<UserStatus | null>(null);

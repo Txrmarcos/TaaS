@@ -7,9 +7,9 @@ import { ArrowRight, RefreshCw, CheckCircle, XCircle, User } from "lucide-react"
 import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
-import { botActor } from "../utils/canister";
 import { useLoading } from "@/context/LoadingContext";
 import { InlineLoading } from "@/components/LoadingOverlay";
+import { createSearchNewsActor } from "../utils/canister";
 
 export interface UserStatus {
     plan: {
@@ -27,6 +27,9 @@ interface Toast {
 }
 
 export default function ProfilePage() {
+
+  const {authClient } = useAuth();
+  const {botActor} = createSearchNewsActor(authClient);
   const { principal, logout, isLoading } = useAuth();
   const { isLoading: isGlobalLoading } = useLoading();
   const [actor, setActor] = useState<any>(botActor);

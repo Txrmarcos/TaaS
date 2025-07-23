@@ -3,7 +3,6 @@ import { HttpAgent, Actor } from "@dfinity/agent";
 import { idlFactory as round_idl } from "../../../../src/declarations/round-table/round-table.did.js";
 import { idlFactory as searchNewsId } from "../../../../src/declarations/search-news/search-news.did.js";
 import { idlFactory as bot_idl } from "../../../../src/declarations/bot-plan/bot-plan.did.js";
-import { Principal } from "@dfinity/principal";
 import { AuthClient } from "@dfinity/auth-client";
 
 interface LoadingContextCallbacks {

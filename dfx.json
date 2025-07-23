@@ -1,12 +1,6 @@
 
 {
   "canisters": {
-    "verdict": {
-      "main": "backend/verdict/verdict.mo",
-      "type": "motoko",
-      "candid": "backend/verdict/verdict.did",
-      "args": "--enhanced-orthogonal-persistence"
-    },
     "bot-plan": {
         "dependencies": ["llm"],
         "type": "motoko",
