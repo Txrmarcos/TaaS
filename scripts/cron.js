@@ -1,17 +1,14 @@
 import { HttpAgent, Actor } from "@dfinity/agent";
-import fetch from "node-fetch";
-import { idlFactory as roundtableIDL } from "../.dfx/local/canisters/RoundtableCanister"; // ou caminho real
+import { idlFactory as roundtableIDL } from "../dfx/local/canisters/RoundtableCanister";
 
 const canisterId = "54eer-fqaaa-aaaaf-qbiiq-cai";
-const host = "https://ic0.app"; 
+const host = "https://ic0.app";
 
-global.fetch = fetch;
 
 async function main() {
-  const agent = new HttpAgent({ 
+  const agent = new HttpAgent({
     host,
-   });
-
+  });
 
   const roundtable = Actor.createActor(roundtableIDL, {
     agent,
