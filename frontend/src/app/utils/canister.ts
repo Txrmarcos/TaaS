@@ -38,11 +38,17 @@ function createActorProxy(actor: any, actorName: string) {
           }
           
           console.log(`🚀 [${actorName}] Starting request: ${String(prop)}`, {
-            requestId,
-            timestamp: new Date().toISOString(),
-            method: String(prop),
-            args: args.length > 0 ? args : undefined
-          });
+          requestId,
+          timestamp: new Date().toISOString(),
+          method: String(prop),
+          args: args.length > 0 ? args.map(arg => ({
+            type: typeof arg,
+            value: arg,
+            stringified: JSON.stringify(arg, (_, value) =>
+              typeof value === 'bigint' ? value.toString() : value
+            )
+          })) : undefined
+        });
 
           const result = originalMethod.apply(this, args);
           

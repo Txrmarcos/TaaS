@@ -12,6 +12,8 @@ import {
     Send,
     Sparkles,
     Loader2,
+    XCircle,
+    HelpCircle,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -25,17 +27,27 @@ type UserStatus = {
     resetAt: bigint;
 };
 
+// Tipos para o Verdict baseados no código Motoko
+type VerdictResult = "True" | "False" | "Uncertain" | "Error";
+
+type Verdict = {
+    result: { [key in VerdictResult]?: null };
+    source: string;
+    hash: string;
+    timestamp: bigint;
+    llm_message: string;
+};
+
 export default function BotTestPage() {
     const [status, setStatus] = useState<UserStatus | null>(null);
     const [prompt, setPrompt] = useState("");
-    const [response, setResponse] = useState("");
+    const [verdict, setVerdict] = useState<Verdict | null>(null);
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState(false);
     
-    const { principal, isAuthenticated, isLoading,authClient } = useAuth();
+    const { principal, isAuthenticated, isLoading, authClient } = useAuth();
 
-
-    const {botActor, searchNewsActor } = createSearchNewsActor(authClient);
+    const { botActor, searchNewsActor } = createSearchNewsActor(authClient);
 
     useEffect(() => {
         if (isAuthenticated && principal) {
@@ -61,13 +73,22 @@ export default function BotTestPage() {
         
         try {
             setLoading(true);
-            setResponse("");
+            setVerdict(null);
             const res = await searchNewsActor.searchNews(prompt);
-            setResponse(res as string);
+            console.log("Received verdict:", res);
+            setVerdict(res as Verdict);
             fetchStatus();
         } catch (err) {
             console.error("Error processing prompt:", err);
-            setResponse("❌ Error processing prompt. Please try again.");
+            // Criar um verdict de erro em caso de falha
+            const errorVerdict: Verdict = {
+                result: { Error: null },
+                source: "",
+                hash: "",
+                timestamp: BigInt(Date.now() * 1000000),
+                llm_message: "❌ Error processing prompt. Please try again."
+            };
+            setVerdict(errorVerdict);
         } finally {
             setLoading(false);
         }
@@ -81,6 +102,52 @@ export default function BotTestPage() {
         } catch (err) {
             console.error("Error copying:", err);
         }
+    };
+
+    // Função auxiliar para extrair o resultado do verdict
+    const getVerdictResult = (verdict: Verdict | null): VerdictResult => {
+    if (!verdict || !verdict.result) return "Error";
+    if (verdict.result.True !== undefined) return "True";
+    if (verdict.result.False !== undefined) return "False";
+    if (verdict.result.Uncertain !== undefined) return "Uncertain";
+    return "Error";
+};
+
+
+    // Função para obter o ícone baseado no resultado
+    const getVerdictIcon = (result: VerdictResult) => {
+        switch (result) {
+            case "True":
+                return <CheckCircle className="w-5 h-5 text-green-400" />;
+            case "False":
+                return <XCircle className="w-5 h-5 text-red-400" />;
+            case "Uncertain":
+                return <HelpCircle className="w-5 h-5 text-yellow-400" />;
+            case "Error":
+                return <AlertCircle className="w-5 h-5 text-red-500" />;
+        }
+    };
+
+    
+
+    // Função para obter a cor do resultado
+    const getVerdictColor = (result: VerdictResult) => {
+        switch (result) {
+            case "True":
+                return "from-green-400/20 to-green-600/20 border-green-400/30";
+            case "False":
+                return "from-red-400/20 to-red-600/20 border-red-400/30";
+            case "Uncertain":
+                return "from-yellow-400/20 to-yellow-600/20 border-yellow-400/30";
+            case "Error":
+                return "from-red-500/20 to-red-700/20 border-red-500/30";
+        }
+    };
+
+    // Função para formatar o timestamp
+    const formatTimestamp = (timestamp: bigint) => {
+        const date = new Date(Number(timestamp / BigInt(1000000)));
+        return date.toLocaleString();
     };
 
     const getPlanColor = (plan: UserStatus["plan"]) => {
@@ -152,7 +219,7 @@ export default function BotTestPage() {
                                     <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <h2 className="text-3xl font-bold text-white">AI Chat</h2>
+                                    <h2 className="text-3xl font-bold text-white">AI Fact Checker</h2>
                                 </div>
                             </div>
                         </div>
@@ -160,11 +227,11 @@ export default function BotTestPage() {
                         {/* Chat Content */}
                         <div className="p-4 sm:p-6 flex-1 flex flex-col space-y-6">
                             {/* Welcome Section - Shows First */}
-                            {!response && !loading && (
+                            {!verdict && !loading && (
                                 <div className="flex flex-col items-center justify-center py-8 space-y-6">
                                     <div className="text-center space-y-2">
-                                        <h3 className="text-lg sm:text-xl font-semibold text-white">Ready to Help</h3>
-                                        <p className="text-xs sm:text-sm text-white/75 mt-1">Ask anything about markets, news, and financial insights to verify truthfulness.</p>
+                                        <h3 className="text-lg sm:text-xl font-semibold text-white">Ready to Verify</h3>
+                                        <p className="text-xs sm:text-sm text-white/75 mt-1">Ask anything about news, claims, or statements to verify their truthfulness.</p>
                                     </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
                                         <button 
@@ -230,24 +297,24 @@ export default function BotTestPage() {
                                     ) : (
                                         <>
                                             <Send className="w-5 h-5" />
-                                            <span>Send Message</span>
+                                            <span>Verify Statement</span>
                                         </>
                                     )}
                                 </button>
                             </div>
 
-                            {/* Response Section */}
-                            {response && (
+                            {/* Verdict Response Section */}
+                            {verdict && (
                                 <div className="space-y-4 animate-fadeIn">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center space-x-3">
                                             <div className="w-8 h-8 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] rounded-lg flex items-center justify-center">
                                                 <Sparkles className="w-4 h-4 text-white" />
                                             </div>
-                                            <h3 className="text-lg sm:text-xl font-semibold text-white">AI Response</h3>
+                                            <h3 className="text-lg sm:text-xl font-semibold text-white">Fact Check Result</h3>
                                         </div>
                                         <button
-                                            onClick={() => copyToClipboard(response)}
+                                            onClick={() => copyToClipboard(verdict.llm_message)}
                                             className="p-2 sm:p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-all duration-200 group"
                                             title="Copy response"
                                         >
@@ -258,12 +325,42 @@ export default function BotTestPage() {
                                             )}
                                         </button>
                                     </div>
-                                    <div className="bg-gradient-to-br from-white/5 to-white/10 rounded-xl p-4 sm:p-6 border border-white/10 backdrop-blur-sm shadow-inner">
-                                        <div className="prose prose-invert prose-sm sm:prose-base max-w-none">
+
+                                    {/* Verdict Card */}
+                                    <div className={`bg-gradient-to-br ${getVerdictColor(getVerdictResult(verdict))} rounded-xl p-4 sm:p-6 border backdrop-blur-sm shadow-inner`}>
+                                        {/* Verdict Header */}
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center space-x-3">
+                                                {getVerdictIcon(getVerdictResult(verdict))}
+                                                <span className="text-lg font-bold text-white">
+                                                    {getVerdictResult(verdict).toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-white/60">
+                                                {formatTimestamp(verdict.timestamp)}
+                                            </div>
+                                        </div>
+
+                                        {/* LLM Message */}
+                                        <div className="prose prose-invert prose-sm sm:prose-base max-w-none mb-4">
                                             <p className="text-white/90 whitespace-pre-line leading-relaxed text-sm sm:text-base">
-                                                {response}
+                                                {verdict.llm_message}
                                             </p>
                                         </div>
+
+                                        {/* Metadata */}
+                                        {verdict.source && (
+                                            <div className="border-t border-white/10 pt-3 mt-3">
+                                                <div className="text-xs text-white/60">
+                                                    <span className="font-medium">Sources:</span> {verdict.source}
+                                                </div>
+                                                {verdict.hash && (
+                                                    <div className="text-xs text-white/40 mt-1">
+                                                        <span className="font-medium">Hash:</span> {verdict.hash.slice(0, 16)}...
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}

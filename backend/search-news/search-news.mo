@@ -14,8 +14,8 @@ import _Sha256 "mo:sha2/Sha256";
 actor SearchNews {
 
   // --- Verdict Types and Logic ---
-  
-  public type VerdictResult = { #True; #False; #Uncertain };
+
+  public type VerdictResult = { #True; #False; #Uncertain; #Error };
   
   public type Verdict = {
     result: VerdictResult;
@@ -97,12 +97,12 @@ actor SearchNews {
     return whitelist;
   };
 
-  public func callAgent(prompt: Text) : async Text {
+  public func callAgent(prompt: Text) : async Verdict {
     Debug.print("🧪 Testing manual JSON parsing for: " # prompt);
     return await makeHttpRequest(prompt);
   };
 
-  func parseJson(jsonText: Text, prompt: Text) : async Text {
+  func parseJson(jsonText: Text, prompt: Text) : async Verdict {
     Debug.print("🔧 Parsing only titles from JSON");
     Debug.print("📄 Raw JSON received: " # jsonText);
     Debug.print("❓ Original prompt: " # prompt);
@@ -224,11 +224,18 @@ actor SearchNews {
             Debug.print("✅ Verdict stored with hash: " # hash);
             Debug.print("📊 Total verdicts stored: " # debug_show(storedVerdicts.size()));
             
-            return content; 
+            return verdict; 
           };
           case null { 
             Debug.print("❌ LLM returned null content");
-            return "❌ No content returned from LLM."; 
+            var verdict: Verdict = {
+              result = #Error;
+              source = "";
+              hash = "";
+              timestamp = Time.now();
+              llm_message = "❌ No content returned from LLM.";
+            };
+            return verdict; 
           };
         };
       };
@@ -239,7 +246,7 @@ actor SearchNews {
         });
       };
 
-  func makeHttpRequest(userQuery: Text) : async Text {
+  func makeHttpRequest(userQuery: Text) : async Verdict {
     let encodedQuery = encodeQuery(userQuery);
     let url = "https://mnznnwrg2mgtemmtqmfvsptxni0ahiir.lambda-url.us-east-1.on.aws/?q=" # encodedQuery;
 
@@ -273,7 +280,13 @@ actor SearchNews {
 
       switch (Text.decodeUtf8(response.body)) {
         case null {
-          return "❌ Unable to decode UTF-8 response.";
+          return {
+            result = #Error;
+            source = "";
+            hash = "";
+            timestamp = Time.now();
+            llm_message = "❌ Unable to decode UTF-8 response.";
+          };
         };
         case (?jsonText) {
           let response = await parseJson(jsonText, userQuery);
@@ -283,11 +296,18 @@ actor SearchNews {
 
     } catch (e) {
       Debug.print("❌ Error during HTTP request: " # Error.message(e));
-      return "❌ Connection error. Please try again." # Error.message(e);
+      var verdict: Verdict = {
+        result = #Error;
+        source = "";
+        hash = "";
+        timestamp = Time.now();
+        llm_message = "❌ Connection error. Please try again." # Error.message(e);
+      };
+      return verdict;
     };
   };
 
-  public shared({caller}) func searchNews(userQuery: Text) : async Text {
+  public shared({caller}) func searchNews(userQuery: Text) : async Verdict {
     Debug.print("🚀 searchNews called with query: " # userQuery);
     Debug.print("👤 Caller: " # debug_show(caller));
     
@@ -295,7 +315,13 @@ actor SearchNews {
     if (now - lastRequestTime < MIN_REQUEST_INTERVAL) {
       let waitTime = (MIN_REQUEST_INTERVAL - (now - lastRequestTime)) / 1_000_000_000;
       Debug.print("⏳ Rate limit hit. Wait time: " # debug_show(waitTime) # " seconds");
-      return "⏳ Please wait " # debug_show(waitTime) # " seconds before making a new request.";
+      return {
+        result = #Error;
+        source = "";
+        hash = "";
+        timestamp = Time.now();
+        llm_message = "⏳ Please wait " # debug_show(waitTime) # " seconds before making a new request.";
+      };
     };
 
     try {
@@ -303,12 +329,24 @@ actor SearchNews {
       let allowed = await botPlanCanister.use_request_for(caller);
       if (not allowed) {
         Debug.print("❌ Bot plan check failed - limit reached or no active plan");
-        return "❌ You have reached the limit of your plan or do not have an active plan.";
+        return {
+          result = #Error;
+          source = "";
+          hash = "";
+          timestamp = Time.now();
+          llm_message = "❌ You have reached the limit of your plan or do not have an active plan.";
+        };
       };
       Debug.print("✅ Bot plan check passed");
     } catch (e) {
       Debug.print("❌ Error checking bot plan: " # Error.message(e));
-      return "❌ Internal error. Please try again.";
+      return {
+        result = #Error;
+        source = "";
+        hash = "";
+        timestamp = Time.now();
+        llm_message = "❌ Internal error. Please try again.";
+      };
     };
 
     lastRequestTime := now;
@@ -316,7 +354,7 @@ actor SearchNews {
     Debug.print("📡 Making HTTP request...");
 
     let result = await makeHttpRequest(userQuery);
-    Debug.print("🏁 searchNews completed. Result length: " # debug_show(result.size()));
+    Debug.print("🏁 searchNews completed. Result length: " # debug_show(result));
     return result;
   };
 
