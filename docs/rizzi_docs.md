@@ -56,7 +56,7 @@
 
         Ele envia uma IPV6 request para um Proxy que roda em um ambiente Web2 (como uma função Lambda na AWS).
 
-        A Lambda recebe essa requisição, a traduz e executa uma IPV4 request para o site de notícias (NEWS) alvo.
+        A Lambda recebe essa requisição, a traduz e executa uma IPV4 request para o site de notícias (newsapi.org) alvo.
 
         Após coletar (fazer o parse) das informações, a Lambda envia uma notificação (notice) de volta para o canister search-news com os dados coletados.
 
