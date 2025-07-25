@@ -120,7 +120,7 @@ Before running the project, make sure you have the following installed:
 
 ### 0.3 Available Commands
 
-### DFX Commands
+#### DFX Commands
 - `dfx start` - Start the local Internet Computer replica
 - `dfx start --clean` - Start with a clean state (removes previous data)
 - `dfx start --background` - Start the replica in background mode
@@ -135,18 +135,18 @@ Before running the project, make sure you have the following installed:
 - `dfx identity list` - List available identities
 - `dfx identity use <identity-name>` - Switch to a different identity
 
-### Mops Commands
+#### Mops Commands
 - `mops install` - Install all Motoko packages from mops.toml
 - `mops add <package-name>` - Add a new package dependency
 - `mops test` - Run tests (if configured)
 - `mops sources` - Show package sources and versions
 
-### Frontend Commands
+#### Frontend Commands
 - `npm install` - Install frontend dependencies
 - `npm start` - Start the development server
 - `npm run build` - Build the frontend for production
 
-### Development Workflow
+#### Development Workflow
 1. **Build Backend**: `dfx build` - Compile your canisters
 2. **Deploy Backend**: `dfx deploy` - Deploy to local replica
 3. **Start Frontend**: `cd frontend && npm start` - Run frontend dev server
