@@ -24,7 +24,11 @@ It's designed to combat misinformation by creating a transparent, community-driv
 - [Marcos Teixeira](https://www.linkedin.com/in/marcos-teixeira-37676a24a/)
 
 ## Table of Contents
-
+- [0. Get Started](#0-get-started)
+  - [0.1 Prerequisites](#01-prerequisites)
+  - [0.2 Installation](#02-installation)
+  - [0.3 Available Commands](#03-available-commands)
+  - [0.4 Next Steps](#04-next-steps)
 - [1. Business Vision](#1-business-vision)
   - [1.1 Leveraging TaaS in the ICP Ecosystem](#11-leveraging-taas-in-the-icp-ecosystem)
   - [1.2 Integration Simplicity](#12-integration-simplicity)
@@ -46,6 +50,116 @@ It's designed to combat misinformation by creating a transparent, community-driv
   - [4.5 Case Study: Path to Profitability](#45-case-study-path-to-profitability)
   - [4.6 Data for Visualization](#46-data-for-visualization)
   - [4.7 Finantial Conclusion](#47-finantial-conclusion)
+
+
+
+
+## 0. Get Started
+Follow these steps to set up and run the TaaS project on Internet Computer Protocol (ICP).
+
+### 0.1 Prerequisites
+
+Before running the project, make sure you have the following installed:
+
+- [DFX](https://internetcomputer.org/docs/current/developer-docs/setup/install/) - The DFINITY command-line execution environment
+- [Mops](https://mops.one/) - Package manager for Motoko
+- [Node.js](https://nodejs.org/) (version 16 or higher)
+
+
+### 0.2 Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Txrmarcos/TaaS.git
+   cd taas
+   ```
+
+2. **Install backend dependencies (Mops packages)**
+   ```bash
+   mops install
+   ```
+
+3. **Install frontend dependencies**
+   ```bash
+   cd frontend
+   npm install
+   cd ..
+   ```
+
+4. **Start the local Internet Computer replica**
+   ```bash
+   dfx start --background
+   ```
+
+5. **Deploy the canisters**
+   ```bash
+   dfx deploy
+   ```
+
+## Running the Project
+
+1. **Start the development server**
+   ```bash
+   dfx start
+   ```
+
+2. **In a new terminal, deploy your canisters**
+   ```bash
+   dfx deploy --network local
+   ```
+
+3. **Start the frontend development server**
+   ```bash
+   cd frontend
+   npm start
+   ```
+
+4. **Access the application**
+   - Frontend: `http://localhost:3000`
+   - Candid Interface: `http://localhost:4943/?canisterId={canister-id}`
+
+### 0.3 Available Commands
+
+### DFX Commands
+- `dfx start` - Start the local Internet Computer replica
+- `dfx start --clean` - Start with a clean state (removes previous data)
+- `dfx start --background` - Start the replica in background mode
+- `dfx stop` - Stop the local ICP replica
+- `dfx build` - Compile all canisters without deploying
+- `dfx build <canister-name>` - Build a specific canister
+- `dfx deploy` - Build and deploy all canisters to local network
+- `dfx deploy --network ic` - Deploy to the main Internet Computer network
+- `dfx deploy <canister-name>` - Deploy a specific canister
+- `dfx canister status` - Check the status of all canisters
+- `dfx canister call <canister-name> <method>` - Call a canister method
+- `dfx identity list` - List available identities
+- `dfx identity use <identity-name>` - Switch to a different identity
+
+### Mops Commands
+- `mops install` - Install all Motoko packages from mops.toml
+- `mops add <package-name>` - Add a new package dependency
+- `mops test` - Run tests (if configured)
+- `mops sources` - Show package sources and versions
+
+### Frontend Commands
+- `npm install` - Install frontend dependencies
+- `npm start` - Start the development server
+- `npm run build` - Build the frontend for production
+
+### Development Workflow
+1. **Build Backend**: `dfx build` - Compile your canisters
+2. **Deploy Backend**: `dfx deploy` - Deploy to local replica
+3. **Start Frontend**: `cd frontend && npm start` - Run frontend dev server
+4. **Test**: Access frontend at `http://localhost:3000`
+5. **Iterate**: Make changes and repeat the process
+
+### 0.4 Next Steps
+
+After successfully running the project:
+1. Explore the candid interface to interact with the canisters
+2. Check the project documentation for API details
+3. Review the source code to understand the implementation
+4. Consider contributing to the project development
 
 ## 1. Business Vision
 Truth-as-a-Service (TaaS) acts as a decentralized, auditable fact-checking engine that removes uncertainty around data veracity. It offers near-instant verification of factual claims using only audited, trusted sources and stores its results immutably on-chain. This makes TaaS an invaluable middleware service for applications needing trustworthy, verifiable data.
