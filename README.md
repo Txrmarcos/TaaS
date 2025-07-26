@@ -7,9 +7,9 @@
 
 ## Project Summary
 
-*TaaS* is a decentralized protocol built on the [Internet Computer Protocol (ICP)](https://internetcomputer.org/) that provides fast, auditable fact verification on-chain.
+[TaaS](https://5vhpn-tyaaa-aaaaf-qbija-cai.icp0.io/) is a decentralized protocol built on the [Internet Computer Protocol (ICP)](https://internetcomputer.org/) that provides fast, auditable fact verification on-chain.
 
-It accepts user claims, sources information from the web, processes reasoning through LLMs, aggregates community input, and stores tamper-proof verdicts.
+It accepts user claims, sources information from the web, processes reasoning through LLMs *(AI Track)*, aggregates community input, and stores tamper-proof verdicts.
 
 <p align="center">
   <img src="images/dApp-taas.png" alt="TaaS" height="300" style="border-radius:16px;"/>
@@ -50,9 +50,6 @@ It's designed to combat misinformation by creating a transparent, community-driv
   - [4.5 Case Study: Path to Profitability](#45-case-study-path-to-profitability)
   - [4.6 Data for Visualization](#46-data-for-visualization)
   - [4.7 Finantial Conclusion](#47-finantial-conclusion)
-
-
-
 
 ## 0. Get Started
 Follow these steps to set up and run the TaaS project on Internet Computer Protocol (ICP).
