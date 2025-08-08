@@ -85,7 +85,6 @@ actor BotPlanCanister {
     };
   };
 
-  // Transfere 50% para sua wallet
   private func transferToWallet(caller: Principal, amount: Nat) : async Result.Result<Nat, Text> {
     let subaccount = principalToSubaccount(caller);
     

@@ -1,6 +1,3 @@
-// PostsCanister.mo
-// Este é o canister central que gere as notícias (posts), incluindo a sua criação,
-// interações (likes, comentários) e o estado da verificação pelo TaaS.
 
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
