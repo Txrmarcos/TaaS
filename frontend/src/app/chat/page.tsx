@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
-import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { createSearchNewsActor } from "../utils/canister";
 
@@ -180,7 +180,7 @@ export default function BotTestPage() {
     if (isLoading) {
         return (
             <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
-                <Navbar />
+                <Sidebar />
                 <main className="flex flex-col flex-grow px-4 pt-32 max-w-4xl mx-auto gap-6 items-center justify-center">
                     <Loader2 className="w-8 h-8 animate-spin" />
                     <p>Carregando...</p>
@@ -193,7 +193,7 @@ export default function BotTestPage() {
     if (!isAuthenticated) {
         return (
             <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
-                <Navbar />
+                <Sidebar />
                 <main className="flex flex-col flex-grow px-4 pt-32 max-w-4xl mx-auto gap-6 items-center justify-center">
                     <AlertCircle className="w-12 h-12 text-yellow-400" />
                     <h2 className="text-2xl font-bold">Restricted Access</h2>
@@ -206,7 +206,7 @@ export default function BotTestPage() {
 
     return (
         <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
-            <Navbar />
+            <Sidebar />
 
             <main className="flex flex-col flex-grow px-4 pt-32 max-w-4xl mx-auto gap-6">
                 {/* Chat Section */}

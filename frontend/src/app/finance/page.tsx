@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { 
   ArrowUpDown, 
@@ -304,7 +304,7 @@ export default function FinancePage() {
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white">
-        <Navbar />
+        <Sidebar />
         <main className="flex flex-col flex-grow items-center justify-center px-4">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-4">Financial Area</h1>
@@ -318,7 +318,7 @@ export default function FinancePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
-      <Navbar />
+      <Sidebar />
 
       <main className="flex flex-col flex-grow items-center justify-start px-2 pt-32 pb-12">
         <div className="w-full max-w-7xl">

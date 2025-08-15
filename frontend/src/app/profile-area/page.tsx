@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../auth/useAuth";
-import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { ArrowRight, RefreshCw, CheckCircle, XCircle, User } from "lucide-react";
 import { HttpAgent } from "@dfinity/agent";
@@ -211,7 +211,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
-      <Navbar />
+      <Sidebar />
 
       {/* Toast Notification */}
       {toast && (

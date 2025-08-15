@@ -6,7 +6,7 @@ import {
     Plus, ExternalLink, ThumbsUp, ThumbsDown, Globe, Clock, CheckCircle, XCircle, Shield, Link,
     TrendingUp, Calendar, User, GitPullRequest, Award, Search, Eye, ArrowRight, Zap, Target,
 } from "lucide-react";
-import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { Principal } from "@dfinity/principal"; 
 import { createSearchNewsActor } from "../utils/canister";
@@ -197,7 +197,7 @@ export default function RoundtablePage() {
     
     return (
         <div className="min-h-screen bg-[#0B0E13] text-white">
-            <Navbar />
+            <Sidebar />
             <main className="flex flex-col flex-grow px-4 pt-32 pb-20 max-w mx-auto">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Hero Section */}
