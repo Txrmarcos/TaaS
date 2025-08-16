@@ -24,7 +24,6 @@ pnpm-debug.log*
 # System / IDE
 .DS_Store
 
-.devcontainer/*
 # Ignore temporary files and folders
 
 .dfx/
