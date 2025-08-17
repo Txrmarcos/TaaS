@@ -52,17 +52,12 @@ export default function PublishPage() {
     const router = useRouter();
 
     // --- ACCESS CONTROL ---
-    // In a real app, this would come from your auth hook.
-    // e.g., const { user } = useAuth(); const isJournalist = user?.role === 'journalist';
-    // For demonstration, we use local state. Change to 'true' to see the unlocked page.
     const [isJournalist, setIsJournalist] = useState(false); 
     const [isLoadingRole, setIsLoadingRole] = useState(true);
 
     useEffect(() => {
-        // Simulates checking the user's role when the page loads
         const checkUserRole = async () => {
-            await new Promise(resolve => setTimeout(resolve, 500)); // Simulates an API call
-            // Change the value below to test both scenarios
+            await new Promise(resolve => setTimeout(resolve, 500)); 
             setIsJournalist(true); 
             setIsLoadingRole(false);
         };
@@ -75,20 +70,17 @@ export default function PublishPage() {
         }
     }, [isAuthenticated]);
 
-    // Form state
+    // Form state and other logic...
     const [title, setTitle] = useState("");
     const [subtitle, setSubtitle] = useState("");
     const [content, setContent] = useState("");
     const [attachment, setAttachment] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // UI state
     const [isPublishing, setIsPublishing] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [isLoadingPublications, setIsLoadingPublications] = useState(true);
     const [publications, setPublications] = useState<Publication[]>([]);
 
-    // Mock fetching of past publications
     const fetchPastPublications = async () => {
         setIsLoadingPublications(true);
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -100,14 +92,12 @@ export default function PublishPage() {
         if (isJournalist) {
            fetchPastPublications();
         } else {
-            // If not a journalist, we don't need to load publications, so we set loading to false.
             setIsLoadingPublications(false);
         }
     }, [isJournalist]);
 
-    // Function to handle article submission
     const handlePublish = async () => {
-        if (!isJournalist) return; // Extra safeguard
+        if (!isJournalist) return;
         if (!title.trim() || !content.trim()) {
             setMessage({ type: 'error', text: "Title and content are required." });
             return;
@@ -137,7 +127,6 @@ export default function PublishPage() {
         setPublications([newPublication, ...publications]);
     };
 
-    // Effect to clear the message after a while
     useEffect(() => {
         if (message) {
             const timer = setTimeout(() => setMessage(null), 5000);
@@ -151,19 +140,43 @@ export default function PublishPage() {
 
     if (isLoadingRole) {
         return (
-            <div className="min-h-screen bg-[#0B0E13] flex items-center justify-center">
+            <div className="min-h-screen flex items-center justify-center">
+                 {/* --- CÓDIGO DO FUNDO ADICIONADO AQUI --- */}
+                <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+                    <div 
+                        className="absolute w-full h-full top-0 left-0 bg-transparent"
+                        style={{
+                            backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                            backgroundSize: '2rem 2rem',
+                            animation: 'grid-pan 60s linear infinite',
+                        }}
+                    ></div>
+                </div>
                  <Loader2 className="animate-spin h-12 w-12 text-orange-400"/>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#0B0E13] text-white">
+        // A classe bg-[#0B0E13] foi removida daqui
+        <div className="min-h-screen text-white">
+            {/* --- CÓDIGO DO FUNDO ADICIONADO AQUI --- */}
+            <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+                <div 
+                    className="absolute w-full h-full top-0 left-0 bg-transparent"
+                    style={{
+                        backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                        backgroundSize: '2rem 2rem',
+                        animation: 'grid-pan 60s linear infinite',
+                    }}
+                ></div>
+            </div>
+
             <Sidebar />
             <main className="w-full pt-24 pb-20 md:pl-20 lg:pl-64">
-                {/* This container is relative to position the locking overlay */}
                 <div className="relative">
-                    {/* The page content blurs if the user is not a journalist */}
                     <div className={`transition-all duration-500 ${!isJournalist ? 'blur-md pointer-events-none' : 'blur-0'}`}>
                         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                             {/* Hero Section */}
@@ -184,7 +197,6 @@ export default function PublishPage() {
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/10 shadow-2xl mb-12">
                                 <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8 text-center">Create New Article</h2>
                                 <div className="space-y-6">
-                                    {/* Form fields are restored here */}
                                     <div>
                                         <label className="flex items-center text-sm font-medium text-white/70 mb-2"><Heading1 className="w-4 h-4 mr-2" /> Main Title</label>
                                         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="The impactful title of your article"/>
@@ -220,7 +232,6 @@ export default function PublishPage() {
 
                             {message && (<div className="mb-8"><div className={`rounded-xl p-4 text-center backdrop-blur-xl border ${message.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' : 'bg-red-500/20 border-red-500/30 text-red-300'}`}><p className="font-medium">{message.text}</p></div></div>)}
 
-                            {/* Past Publications Section */}
                             <div>
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
                                     <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3"><History className="w-7 h-7 sm:w-8 sm:h-8"/> Your Publications</h2>
@@ -231,7 +242,6 @@ export default function PublishPage() {
                         </div>
                     </div>
 
-                    {/* Locking Overlay */}
                     {!isJournalist && (
                         <div className="absolute inset-0 z-40 flex items-start justify-center p-4 pt-60">
                             <div className="w-full max-w-lg text-center bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 shadow-2xl">
@@ -243,7 +253,7 @@ export default function PublishPage() {
                                     Upgrade your profile to a Journalist account to publish news freely and contribute to a global, uncensored information network.
                                 </p>
                                 <button
-                                    onClick={() => router.push('/profile-area')} // Redirects to the profile page
+                                    onClick={() => router.push('/profile-area')}
                                     className="w-full max-w-xs mx-auto px-6 py-3 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg font-semibold flex items-center justify-center space-x-2"
                                 >
                                     <span>Upgrade Profile</span>
@@ -255,6 +265,14 @@ export default function PublishPage() {
                 </div>
             </main>
             <Footer />
+
+            {/* --- CÓDIGO DO CSS ADICIONADO AQUI --- */}
+            <style jsx global>{`
+                @keyframes grid-pan {
+                    0% { background-position: 0% 0%; }
+                    100% { background-position: 100% 100%; }
+                }
+            `}</style>
         </div>
     );
 }

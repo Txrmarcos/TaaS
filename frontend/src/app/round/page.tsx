@@ -59,7 +59,6 @@ export default function RoundtablePage() {
     const [showFullWhitelist, setShowFullWhitelist] = useState(false);
 
     const { roundtableActor,searchNewsActor } = createSearchNewsActor(authClient);
-
     
     const fetchProposals = async () => {
         setIsLoadingProposals(true);
@@ -92,7 +91,6 @@ export default function RoundtablePage() {
         fetchData();
     }, []);
 
-
     const fetchWhitelist = async () => {
         setIsLoadingWhitelist(true);
         try {
@@ -106,8 +104,6 @@ export default function RoundtablePage() {
             setIsLoadingWhitelist(false);
         }
     };
-
-
 
     const submitProposal = async () => {
         if (!name.trim() || !url.trim() || !prLink.trim() || !desc.trim()) {
@@ -148,7 +144,6 @@ export default function RoundtablePage() {
             setMessage("❌ Error voting");
         }
     };
-
 
     const formatDate = (timestamp: bigint) => {
         const date = new Date(Number(timestamp) / 1000000);
@@ -193,13 +188,27 @@ export default function RoundtablePage() {
             return () => clearTimeout(timer);
         }
     }, [message]);
-
     
     return (
-        <div className="min-h-screen bg-[#0B0E13] text-white">
+        // A classe bg-[#0B0E13] foi removida daqui
+        <div className="min-h-screen text-white">
+        
+            {/* --- CÓDIGO DO FUNDO ADICIONADO AQUI --- */}
+            <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+                <div 
+                    className="absolute w-full h-full top-0 left-0 bg-transparent"
+                    style={{
+                        backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                        backgroundSize: '2rem 2rem',
+                        animation: 'grid-pan 60s linear infinite',
+                    }}
+                ></div>
+            </div>
+
             <Sidebar />
-            <main className="flex flex-col flex-grow px-4 pt-32 pb-20 max-w mx-auto">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="md:pl-20 lg:pl-64">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
                     {/* Hero Section */}
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/80 to-[#FF007A]/80 px-4 py-2 rounded-full mb-6">
@@ -251,60 +260,60 @@ export default function RoundtablePage() {
                         {/* Sidebar */}
                         <div className="xl:col-span-1 space-y-6">
                            <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl">
-    <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-            <Shield className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-bold text-white">Whitelist</h2>
-        </div>
-        <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">
-            {whitelist.length}
-        </span>
-    </div>
-    
-    {isLoadingWhitelist ? (
-        <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mx-auto"></div>
-            <p className="mt-2 text-white/60 text-sm">Loading...</p>
-        </div>
-    ) : whitelist.length === 0 ? (
-        <div className="text-center py-8">
-            <Globe className="w-8 h-8 text-white/30 mx-auto mb-2" />
-            <p className="text-white/60 text-sm">No domains in whitelist</p>
-        </div>
-    ) : (
-        <>
-            <div className="space-y-3 mb-4 max-h-80 overflow-y-auto">
-                {(showFullWhitelist ? whitelist : whitelist.slice(0, 5)).map((domain, index) => (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
-                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0"></div>
-                        <Link className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        <span className="text-white/80 text-sm truncate" title={domain}>
-                            {domain}
-                        </span>
-                    </div>
-                ))}
-            </div>
-            
-            {whitelist.length > 5 && (
-                <button 
-                    onClick={() => setShowFullWhitelist(!showFullWhitelist)}
-                    className="w-full px-4 py-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2"
-                >
-                    <Eye className="w-4 h-4" />
-                    <span>
-                        {showFullWhitelist 
-                            ? `Show less` 
-                            : `View all (${whitelist.length - 5} more)`
-                        }
-                    </span>
-                    <div className={`transform transition-transform duration-200 ${showFullWhitelist ? 'rotate-180' : ''}`}>
-                        <ArrowRight className="w-4 h-4 rotate-90" />
-                    </div>
-                </button>
-            )}
-        </>
-    )}
-</div>
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Shield className="w-5 h-5 text-emerald-400" />
+                                        <h2 className="text-xl font-bold text-white">Whitelist</h2>
+                                    </div>
+                                    <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full border border-emerald-500/30">
+                                        {whitelist.length}
+                                    </span>
+                                </div>
+                                
+                                {isLoadingWhitelist ? (
+                                    <div className="text-center py-8">
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-400 mx-auto"></div>
+                                        <p className="mt-2 text-white/60 text-sm">Loading...</p>
+                                    </div>
+                                ) : whitelist.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <Globe className="w-8 h-8 text-white/30 mx-auto mb-2" />
+                                        <p className="text-white/60 text-sm">No domains in whitelist</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="space-y-3 mb-4 max-h-80 overflow-y-auto">
+                                            {(showFullWhitelist ? whitelist : whitelist.slice(0, 5)).map((domain, index) => (
+                                                <div key={index} className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-all duration-200">
+                                                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse flex-shrink-0"></div>
+                                                    <Link className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                                                    <span className="text-white/80 text-sm truncate" title={domain}>
+                                                        {domain}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        
+                                        {whitelist.length > 5 && (
+                                            <button 
+                                                onClick={() => setShowFullWhitelist(!showFullWhitelist)}
+                                                className="w-full px-4 py-2 bg-white/10 text-white/70 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm flex items-center justify-center space-x-2"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                <span>
+                                                    {showFullWhitelist 
+                                                        ? `Show less` 
+                                                        : `View all (${whitelist.length - 5} more)`
+                                                    }
+                                                </span>
+                                                <div className={`transform transition-transform duration-200 ${showFullWhitelist ? 'rotate-180' : ''}`}>
+                                                    <ArrowRight className="w-4 h-4 rotate-90" />
+                                                </div>
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                            </div>
                             
                             <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10">
                                 <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
@@ -324,7 +333,6 @@ export default function RoundtablePage() {
                                 </div>
                             </div>
                         </div> 
-
 
                         {/* Main Content */}
                         <div className="xl:col-span-3">
@@ -368,52 +376,27 @@ export default function RoundtablePage() {
                                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-sm font-medium text-white/70 mb-2">Source Name</label>
-                                                <input
-                                                    type="text" value={name} onChange={(e) => setName(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                                    placeholder="Ex: OpenAI GPT-4 API"
-                                                />
+                                                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="Ex: OpenAI GPT-4 API" />
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-medium text-white/70 mb-2">Official URL</label>
-                                                <input
-                                                    type="url" value={url} onChange={(e) => setUrl(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                                    placeholder="https://example.com"
-                                                />
+                                                <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="https://example.com" />
                                             </div>
                                             <div className="lg:col-span-2">
                                                 <label className="block text-sm font-medium text-white/70 mb-2">Pull Request Link</label>
-                                                <input
-                                                    type="url" value={prLink} onChange={(e) => setPrLink(e.target.value)}
-                                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                                                    placeholder="https://github.com/org/repo/pull/123"
-                                                />
+                                                <input type="url" value={prLink} onChange={(e) => setPrLink(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="https://github.com/org/repo/pull/123" />
                                             </div>
                                             <div className="lg:col-span-2">
                                                 <label className="block text-sm font-medium text-white/70 mb-2">Detailed Description</label>
-                                                <textarea
-                                                    value={desc} onChange={(e) => setDesc(e.target.value)} rows={4}
-                                                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
-                                                    placeholder="Describe the source in detail, its usefulness and why it should be approved..."
-                                                />
+                                                <textarea value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none" placeholder="Describe the source in detail, its usefulness and why it should be approved..."></textarea>
                                             </div>
                                         </div>
 
                                         <div className="flex flex-col sm:flex-row gap-4 mt-8">
-                                            <button
-                                                onClick={submitProposal} disabled={isSubmitting}
-                                                className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg disabled:opacity-50 font-semibold flex items-center justify-center space-x-2"
-                                            >
-                                                {isSubmitting ? (
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                                ) : (
-                                                    <><ArrowRight className="w-4 h-4" /><span>Submit Proposal</span></>
-                                                )}
+                                            <button onClick={submitProposal} disabled={isSubmitting} className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg disabled:opacity-50 font-semibold flex items-center justify-center space-x-2">
+                                                {isSubmitting ? ( <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div> ) : ( <><ArrowRight className="w-4 h-4" /><span>Submit Proposal</span></> )}
                                             </button>
-                                            <button onClick={() => setShowForm(false)}
-                                                className="px-6 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20"
-                                            >
+                                            <button onClick={() => setShowForm(false)} className="px-6 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200 border border-white/20">
                                                 Cancel
                                             </button>
                                         </div>
@@ -461,14 +444,9 @@ export default function RoundtablePage() {
                                             const StatusIcon = status.icon;
                                             const totalVotes = votesFor + votesAgainst;
                                             const approvalRate = totalVotes > 0 ? (votesFor / totalVotes) * 100 : 0;
-                                            
                                             const hasVoted = principal && proposal.voters.includes(principal.toText());
-
                                             return (
-                                                <div
-                                                    key={String(proposal.id)}
-                                                    className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl hover:shadow-2xl transition-all duration-300 group hover:bg-white/10"
-                                                >
+                                                <div key={String(proposal.id)} className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl hover:shadow-2xl transition-all duration-300 group hover:bg-white/10">
                                                     <div className="flex items-start justify-between mb-4">
                                                         <div className="flex-1">
                                                             <div className="flex items-center space-x-2 mb-3">
@@ -478,9 +456,7 @@ export default function RoundtablePage() {
                                                                 </span>
                                                                 <span className="text-white/40 text-xs">#{String(proposal.id)}</span>
                                                             </div>
-                                                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">
-                                                                {proposal.name}
-                                                            </h3>
+                                                            <h3 className="text-xl font-bold text-white mb-2 group-hover:text-orange-300 transition-colors">{proposal.name}</h3>
                                                             <div className="flex items-center space-x-2 text-sm text-white/50 mb-3 truncate">
                                                                 <User className="w-4 h-4" />
                                                                 <span className="truncate" title={proposal.proposer}>{proposal.proposer}</span>
@@ -492,12 +468,8 @@ export default function RoundtablePage() {
                                                     <p className="text-white/70 mb-6 line-clamp-3 leading-relaxed">{proposal.description}</p>
                                                     <div className="flex items-center justify-between mb-4">
                                                         <div className="flex items-center space-x-4">
-                                                            <a href={proposal.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-400 hover:text-blue-300 transition-colors">
-                                                                <ExternalLink className="w-4 h-4 mr-1" /><span className="text-sm">Source</span>
-                                                            </a>
-                                                            <a href={proposal.pr_link} target="_blank" rel="noopener noreferrer" className="flex items-center text-orange-400 hover:text-orange-300 transition-colors">
-                                                                <GitPullRequest className="w-4 h-4 mr-1" /><span className="text-sm">PR</span>
-                                                            </a>
+                                                            <a href={proposal.url} target="_blank" rel="noopener noreferrer" className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"><ExternalLink className="w-4 h-4 mr-1" /><span className="text-sm">Source</span></a>
+                                                            <a href={proposal.pr_link} target="_blank" rel="noopener noreferrer" className="flex items-center text-orange-400 hover:text-orange-300 transition-colors"><GitPullRequest className="w-4 h-4 mr-1" /><span className="text-sm">PR</span></a>
                                                         </div>
                                                         <div className="text-right">
                                                             <div className="text-sm text-white/60 mb-1">{approvalRate.toFixed(0)}% approval</div>
@@ -505,31 +477,12 @@ export default function RoundtablePage() {
                                                         </div>
                                                     </div>
                                                     <div className="mb-6">
-                                                        <div className="flex justify-between text-sm text-white/50 mb-2">
-                                                            <span>Voting Progress</span><span>{votesFor}/{totalVotes}</span>
-                                                        </div>
-                                                        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                                                            <div
-                                                                className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500 ease-out"
-                                                                style={{ width: `${Math.max(approvalRate, 5)}%` }}
-                                                            />
-                                                        </div>
+                                                        <div className="flex justify-between text-sm text-white/50 mb-2"><span>Voting Progress</span><span>{votesFor}/{totalVotes}</span></div>
+                                                        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden"><div className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-500 ease-out" style={{ width: `${Math.max(approvalRate, 5)}%` }}/></div>
                                                     </div>
                                                     <div className="grid grid-cols-2 gap-3">
-                                                        <button 
-                                                            onClick={() => vote(proposal.id, true)} 
-                                                            disabled={!isAuthenticated || !!hasVoted}
-                                                            className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        >
-                                                            <ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Approve</span>
-                                                        </button>
-                                                        <button 
-                                                            onClick={() => vote(proposal.id, false)} 
-                                                            disabled={!isAuthenticated || !!hasVoted}
-                                                            className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-red-600/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"
-                                                        >
-                                                            <ThumbsDown className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Reject</span>
-                                                        </button>
+                                                        <button onClick={() => vote(proposal.id, true)} disabled={!isAuthenticated || !!hasVoted} className="px-4 py-3 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-400 rounded-xl hover:from-emerald-500/30 hover:to-teal-500/30 transition-all duration-200 border border-emerald-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"><ThumbsUp className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Approve</span></button>
+                                                        <button onClick={() => vote(proposal.id, false)} disabled={!isAuthenticated || !!hasVoted} className="px-4 py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-400 rounded-xl hover:from-red-500/30 hover:to-red-600/30 transition-all duration-200 border border-red-500/30 flex items-center justify-center space-x-2 group disabled:opacity-40 disabled:cursor-not-allowed"><ThumbsDown className="w-4 h-4 group-hover:scale-110 transition-transform" /><span className="font-medium">Reject</span></button>
                                                     </div>
                                                     {hasVoted && <p className="text-center text-xs text-white/50 mt-3">You have already voted on this proposal.</p>}
                                                 </div>
@@ -543,6 +496,14 @@ export default function RoundtablePage() {
                 </div>
             </main>
             <Footer />
+
+            {/* --- CÓDIGO DO CSS ADICIONADO AQUI --- */}
+            <style jsx global>{`
+                @keyframes grid-pan {
+                    0% { background-position: 0% 0%; }
+                    100% { background-position: 100% 100%; }
+                }
+            `}</style>
         </div>
     );
 }

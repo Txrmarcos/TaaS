@@ -94,7 +94,6 @@ export default function ProfilePage() {
     try {
       const res = await actor.subscribe(planObj);
 
-      // Check if the canister returned a structured result (Ok/Err)
       if (res && 'Ok' in res) {
         showToast('success', `${plan} plan activated successfully!`);
         await fetchStatus();
@@ -116,7 +115,6 @@ export default function ProfilePage() {
       console.error("Error subscribing to plan:", err);
       let message = "An error occurred while subscribing to the plan.";
 
-      // Parse the error message string for known canister reject messages
       const errorMessageString = String(err).toLowerCase();
       
       if (errorMessageString.includes('Saldo insuficiente') || errorMessageString.includes('⚠️  ')) {
@@ -210,7 +208,22 @@ export default function ProfilePage() {
   const currentPlan = status ? Object.keys(status.plan)[0] : null;
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
+    // A classe bg-[#0B0E13] foi removida daqui
+    <div className="flex flex-col min-h-screen text-white font-sans">
+    
+      {/* --- CÓDIGO DO FUNDO ADICIONADO AQUI --- */}
+      <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+          <div 
+              className="absolute w-full h-full top-0 left-0 bg-transparent"
+              style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                  backgroundSize: '2rem 2rem',
+                  animation: 'grid-pan 60s linear infinite',
+              }}
+          ></div>
+      </div>
+    
       <Sidebar />
 
       {/* Toast Notification */}
@@ -454,6 +467,14 @@ export default function ProfilePage() {
       </main>
 
       <Footer />
+
+      {/* --- CÓDIGO DO CSS ADICIONADO AQUI --- */}
+      <style jsx global>{`
+        @keyframes grid-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+      `}</style>
     </div>
   );
-} 
+}
