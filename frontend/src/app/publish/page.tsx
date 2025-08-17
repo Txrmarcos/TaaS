@@ -1,0 +1,260 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../auth/useAuth"; // Adjust the path if necessary
+import { Sidebar } from "@/components/Sidebar"; // Adjust the path if necessary
+import { Footer } from "@/components/Footer"; // Adjust the path if necessary
+import {
+    FilePlus, Send, History, Image as ImageIcon, Video, FileText, Heading1, Heading2, Trash2, Eye, Loader2, Award, ArrowRight
+} from "lucide-react";
+
+// Type for a publication (article)
+type Publication = {
+    id: number;
+    title: string;
+    subtitle: string;
+    contentSnippet: string;
+    publishedAt: Date;
+    views: number;
+};
+
+// Mock data to simulate past publications
+const MOCK_PUBLICATIONS: Publication[] = [
+    {
+        id: 1,
+        title: "The Rise of Generative AI in Investigative Journalism",
+        subtitle: "How algorithms are changing the way stories are discovered",
+        contentSnippet: "Generative artificial intelligence is becoming an indispensable tool in modern newsrooms. From complex data analysis to...",
+        publishedAt: new Date("2025-08-15T10:30:00Z"),
+        views: 1250,
+    },
+    {
+        id: 2,
+        title: "Web3 and Data Sovereignty: The Future of Privacy",
+        subtitle: "Who really controls your information on the new internet?",
+        contentSnippet: "With the advancement of decentralized technologies, the promise of full control over one's own data has never been closer. However, the challenges...",
+        publishedAt: new Date("2025-08-10T18:00:00Z"),
+        views: 3400,
+    },
+    {
+        id: 3,
+        title: "Climate Crisis: Field Reports from the Amazon",
+        subtitle: "An anonymous look at the impacts of illegal deforestation",
+        contentSnippet: "Directly from the front lines, this report exposes the harsh realities faced by local communities and the ecosystem due to exploitation...",
+        publishedAt: new Date("2025-07-28T09:15:00Z"),
+        views: 890,
+    }
+];
+
+export default function PublishPage() {
+    const { isAuthenticated } = useAuth();
+    const router = useRouter();
+
+    // --- ACCESS CONTROL ---
+    // In a real app, this would come from your auth hook.
+    // e.g., const { user } = useAuth(); const isJournalist = user?.role === 'journalist';
+    // For demonstration, we use local state. Change to 'true' to see the unlocked page.
+    const [isJournalist, setIsJournalist] = useState(false); 
+    const [isLoadingRole, setIsLoadingRole] = useState(true);
+
+    useEffect(() => {
+        // Simulates checking the user's role when the page loads
+        const checkUserRole = async () => {
+            await new Promise(resolve => setTimeout(resolve, 500)); // Simulates an API call
+            // Change the value below to test both scenarios
+            setIsJournalist(true); 
+            setIsLoadingRole(false);
+        };
+
+        if (isAuthenticated) {
+            checkUserRole();
+        } else {
+             setIsLoadingRole(false);
+             setIsJournalist(false);
+        }
+    }, [isAuthenticated]);
+
+    // Form state
+    const [title, setTitle] = useState("");
+    const [subtitle, setSubtitle] = useState("");
+    const [content, setContent] = useState("");
+    const [attachment, setAttachment] = useState<File | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // UI state
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [isLoadingPublications, setIsLoadingPublications] = useState(true);
+    const [publications, setPublications] = useState<Publication[]>([]);
+
+    // Mock fetching of past publications
+    const fetchPastPublications = async () => {
+        setIsLoadingPublications(true);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        setPublications(MOCK_PUBLICATIONS);
+        setIsLoadingPublications(false);
+    };
+
+    useEffect(() => {
+        if (isJournalist) {
+           fetchPastPublications();
+        } else {
+            // If not a journalist, we don't need to load publications, so we set loading to false.
+            setIsLoadingPublications(false);
+        }
+    }, [isJournalist]);
+
+    // Function to handle article submission
+    const handlePublish = async () => {
+        if (!isJournalist) return; // Extra safeguard
+        if (!title.trim() || !content.trim()) {
+            setMessage({ type: 'error', text: "Title and content are required." });
+            return;
+        }
+
+        setIsPublishing(true);
+        setMessage(null);
+        await new Promise(resolve => setTimeout(resolve, 2000)); 
+        setMessage({ type: 'success', text: "Your article was successfully published on the network!" });
+        setTitle("");
+        setSubtitle("");
+        setContent("");
+        setAttachment(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+        setIsPublishing(false);
+
+        const newPublication: Publication = {
+            id: Date.now(),
+            title,
+            subtitle,
+            contentSnippet: content.substring(0, 150) + "...",
+            publishedAt: new Date(),
+            views: 0
+        };
+        setPublications([newPublication, ...publications]);
+    };
+
+    // Effect to clear the message after a while
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => setMessage(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
+    };
+
+    if (isLoadingRole) {
+        return (
+            <div className="min-h-screen bg-[#0B0E13] flex items-center justify-center">
+                 <Loader2 className="animate-spin h-12 w-12 text-orange-400"/>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-[#0B0E13] text-white">
+            <Sidebar />
+            <main className="w-full pt-24 pb-20 md:pl-20 lg:pl-64">
+                {/* This container is relative to position the locking overlay */}
+                <div className="relative">
+                    {/* The page content blurs if the user is not a journalist */}
+                    <div className={`transition-all duration-500 ${!isJournalist ? 'blur-md pointer-events-none' : 'blur-0'}`}>
+                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                            {/* Hero Section */}
+                            <div className="text-center mb-12">
+                                <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/80 to-[#FF007A]/80 px-4 py-2 rounded-full mb-6">
+                                    <FilePlus className="w-4 h-4 text-white" />
+                                    <span className="text-white/80 text-sm font-medium">Freedom of Speech</span>
+                                </div>
+                                <h1 className="text-3xl sm:text-4xl font-bold mb-2 flex items-center justify-center gap-3">
+                                    Journalist Dashboard
+                                </h1>
+                                <p className="text-lg sm:text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
+                                    Publish your articles anonymously and securely. Your voice, protected by Web3.
+                                </p>
+                            </div>
+
+                            {/* Publication Form */}
+                            <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-4 sm:p-6 lg:p-8 border border-white/10 shadow-2xl mb-12">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-8 text-center">Create New Article</h2>
+                                <div className="space-y-6">
+                                    {/* Form fields are restored here */}
+                                    <div>
+                                        <label className="flex items-center text-sm font-medium text-white/70 mb-2"><Heading1 className="w-4 h-4 mr-2" /> Main Title</label>
+                                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="The impactful title of your article"/>
+                                    </div>
+                                    <div>
+                                        <label className="flex items-center text-sm font-medium text-white/70 mb-2"><Heading2 className="w-4 h-4 mr-2" /> Subtitle (Optional)</label>
+                                        <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="A complement to the title"/>
+                                    </div>
+                                    <div>
+                                        <label className="flex items-center text-sm font-medium text-white/70 mb-2"><FileText className="w-4 h-4 mr-2" /> Article Content</label>
+                                        <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={12} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" placeholder="Write your story here... The content supports Markdown for formatting."></textarea>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-white/70 mb-2">Attach Media (Image/Video)</label>
+                                        <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-white/20 border-dashed rounded-xl cursor-pointer hover:border-orange-500 transition-colors" onClick={() => fileInputRef.current?.click()}>
+                                            <div className="space-y-1 text-center">
+                                                <div className="flex text-sm text-white/60">
+                                                    {attachment ? (<p className="font-semibold text-orange-400">{attachment.name}</p>) : (<div className="flex flex-col items-center"><div className="flex gap-4 mb-2"><ImageIcon className="w-10 h-10 sm:w-12 sm:h-12 text-white/30" /><Video className="w-10 h-10 sm:w-12 sm:h-12 text-white/30" /></div><p className="text-sm">Drag and drop or <span className="font-semibold text-orange-400">click to browse</span></p><p className="text-xs text-white/40">PNG, JPG, GIF, MP4 up to 10MB</p></div>)}
+                                                </div>
+                                                <input ref={fileInputRef} id="file-upload" name="file-upload" type="file" className="sr-only" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-8">
+                                    <button onClick={handlePublish} disabled={isPublishing || !isAuthenticated} className="w-full px-6 py-4 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center space-x-2">
+                                        {isPublishing ? <Loader2 className="animate-spin w-5 h-5" /> : <Send className="w-5 h-5" />}
+                                        <span>{isPublishing ? "Publishing to the Network..." : "Publish Article"}</span>
+                                    </button>
+                                    {!isAuthenticated && <p className="text-center text-red-400 text-xs mt-2">You must be logged in to publish.</p>}
+                                </div>
+                            </div>
+
+                            {message && (<div className="mb-8"><div className={`rounded-xl p-4 text-center backdrop-blur-xl border ${message.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-300' : 'bg-red-500/20 border-red-500/30 text-red-300'}`}><p className="font-medium">{message.text}</p></div></div>)}
+
+                            {/* Past Publications Section */}
+                            <div>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3"><History className="w-7 h-7 sm:w-8 sm:h-8"/> Your Publications</h2>
+                                    <div className="text-sm text-white/60 whitespace-nowrap">{publications.length} articles found</div>
+                                </div>
+                                {isLoadingPublications ? (<div className="text-center py-16"><Loader2 className="animate-spin rounded-full h-12 w-12 text-orange-400 mx-auto"/><p className="mt-4 text-white/60">Loading your publications...</p></div>) : publications.length === 0 ? (<div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10"><FileText className="w-16 h-16 text-white/30 mx-auto mb-4" /><p className="text-white/60 text-xl mb-2">No articles published yet</p><p className="text-white/40 text-sm">Use the form above to share your first story.</p></div>) : (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{publications.map((pub) => (<div key={pub.id} className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-xl hover:shadow-2xl transition-all duration-300 group hover:border-orange-500/50 flex flex-col justify-between"><div><div className="flex justify-between items-start mb-3 gap-3"><h3 className="text-lg font-bold text-white group-hover:text-orange-300 transition-colors">{pub.title}</h3><span className="text-xs text-white/40 bg-white/5 px-2 py-1 rounded-full border border-white/10 whitespace-nowrap">{formatDate(pub.publishedAt)}</span></div><p className="text-sm text-white/80 font-light mb-4">{pub.subtitle}</p><p className="text-sm text-white/60 line-clamp-3 leading-relaxed">{pub.contentSnippet}</p></div><div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between"><div className="flex items-center space-x-2 text-sm text-white/50"><Eye className="w-4 h-4"/><span>{pub.views.toLocaleString('en-US')} views</span></div><button className="text-red-400 hover:text-red-300 transition-colors p-2 rounded-full hover:bg-red-500/20"><Trash2 className="w-4 h-4"/></button></div></div>))}</div>)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Locking Overlay */}
+                    {!isJournalist && (
+                        <div className="absolute inset-0 z-40 flex items-start justify-center p-4 pt-60">
+                            <div className="w-full max-w-lg text-center bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 shadow-2xl">
+                                <div className="w-16 h-16 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <Award className="w-8 h-8 text-orange-400" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-white mb-2">Unlock Journalist Features</h2>
+                                <p className="text-white/70 mb-8 leading-relaxed">
+                                    Upgrade your profile to a Journalist account to publish news freely and contribute to a global, uncensored information network.
+                                </p>
+                                <button
+                                    onClick={() => router.push('/profile-area')} // Redirects to the profile page
+                                    className="w-full max-w-xs mx-auto px-6 py-3 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg font-semibold flex items-center justify-center space-x-2"
+                                >
+                                    <span>Upgrade Profile</span>
+                                    <ArrowRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </main>
+            <Footer />
+        </div>
+    );
+}

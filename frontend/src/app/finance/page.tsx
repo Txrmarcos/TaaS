@@ -320,8 +320,8 @@ export default function FinancePage() {
     <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
       <Sidebar />
 
-      <main className="flex flex-col flex-grow items-center justify-start px-2 pt-32 pb-12">
-        <div className="w-full max-w-7xl">
+      <main className="flex flex-col flex-grow items-center justify-center px-4 pt-32 pb-20">
+        <div className="w-full max-w-4xl">
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold mb-2 flex items-center justify-center gap-2">

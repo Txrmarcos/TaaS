@@ -11,8 +11,8 @@ import {
     Users,         // Ícone para Rounded Table
     Banknote,      // Ícone para Finance
     User,          // Ícone para Profile
-    Box,           // Ícone para Canisters
-    LayoutGrid     // Ícone para Dashboard
+    Box,           // Ícone para Canister
+    Newspaper      // Ícone para Dashboard
 } from "lucide-react";
 import { useAuth } from "frontend/src/app/auth/useAuth";
 import { useWalletBalance } from "../hooks/useWalletBalance";
@@ -32,6 +32,7 @@ const navigationItems: NavigationItem[] = [
     { name: "Rounded Table", href: "/round", icon: Users },
     { name: "Finance", href: "/finance", icon: Banknote },
     { name: "Profile", href: "/profile-area", icon: User },
+    { name: "Publish News", href: "/publish", icon: Newspaper },
 ];
 
 const canisterIds = [
