@@ -41,7 +41,7 @@ export default function RegisterProfilePage() {
                     // If profile exists and firstLogin is false, redirect to chat
                     if (!profile.firstLogin) {
                         console.log("User has already completed registration, redirecting...");
-                        router.push("/chat");
+                        router.push("/news-feed");
                         return;
                     }
                     
@@ -145,7 +145,7 @@ export default function RegisterProfilePage() {
             
             setFormState('success');
             setTimeout(() => {
-                router.push("/chat");
+                router.push("/news-feed");
             }, 1500);
 
         } catch (err: any) {

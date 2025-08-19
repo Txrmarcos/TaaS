@@ -8,6 +8,7 @@ import {
     ChevronDown, 
     Wallet,
     MessageSquare, // Ícone para Chat
+    Edit3,         // Ícone para Escrever News
     Users,         // Ícone para Rounded Table
     Banknote,      // Ícone para Finance
     User,          // Ícone para Profile
@@ -28,11 +29,12 @@ type NavigationItem = {
 
 // Lista de itens de navegação com seus ícones
 const navigationItems: NavigationItem[] = [
-    { name: "Chat", href: "/chat", icon: MessageSquare },
+    { name: "News Feed", href: "/news-feed", icon: Newspaper },
+    { name: "Publish News", href: "/publish", icon: Edit3 },
     { name: "Rounded Table", href: "/round", icon: Users },
+    { name: "Chat", href: "/chat", icon: MessageSquare },
     { name: "Finance", href: "/finance", icon: Banknote },
     { name: "Profile", href: "/profile-area", icon: User },
-    { name: "Publish News", href: "/publish", icon: Newspaper },
 ];
 
 const canisterIds = [
@@ -108,7 +110,7 @@ export const Sidebar = () => {
             {/* ======================= */}
             {/* DESKTOP SIDEBAR      */}
             {/* ======================= */}
-            <aside className="hidden lg:flex flex-col w-72 h-screen fixed top-0 left-0 z-40 bg-[#0B0E13] border-r border-white/10 p-6">
+            <aside className="hidden lg:flex flex-col w-72 h-screen fixed top-0 left-0 z-40 bg-[#0B0E13] border-r border-white/10 p-6 overflow-y-auto">
                 {/* Logo */}
                 <div className="flex items-center gap-3 cursor-pointer mb-8" onClick={() => router.push('/')}>
                     <div className="px-3 py-1.5 rounded-lg bg-gradient-to-br from-[#FF4D00] to-[#FF007A] shadow-md">
