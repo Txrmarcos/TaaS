@@ -15,7 +15,6 @@
         "main": "backend/search-news/search-news.mo"
     },
     "posts": {
-        
         "type": "motoko",
         "main": "backend/posts/posts.mo"
     },

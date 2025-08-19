@@ -4,7 +4,8 @@ import { HttpAgent, Actor } from "@dfinity/agent";
 import { idlFactory as round_idl } from "../../../../src/declarations/round-table/round-table.did.js";
 import { idlFactory as searchNewsId } from "../../../../src/declarations/search-news/search-news.did.js";
 import { idlFactory as bot_idl } from "../../../../src/declarations/bot-plan/bot-plan.did.js";
-import { idlFactory as usersIdlFactory } from "../../../../src/declarations/users/users.did.js"; 
+import { idlFactory as usersIdlFactory } from "../../../../src/declarations/users/users.did.js";
+import { idlFactory as post_idl } from "../../../../src/declarations/posts/posts.did.js";
 import { AuthClient } from "@dfinity/auth-client";
 import ids from "../../../../canister_ids.json";
 
@@ -117,20 +118,23 @@ function createActorProxy(actor: any, actorName: string) {
   });
 }
 
-export function createSearchNewsActor(authClient: AuthClient | null) {
+export async function createSearchNewsActor(authClient: AuthClient | null) {
   const identity = authClient?.getIdentity();
-
-  const round = ids["round-table"]?.ic;
-  const plan = ids["bot-plan"]?.ic;
-  const news = ids["search-news"]?.ic;
-  const user = ids["users"]?.ic;
-  // const post = ids["post"]?.ic;
-
-
+  
   const agent = new HttpAgent({
     identity,
-    host:"https://ic0.app",
+    host:"http://127.0.0.1:4943",
   });
+  
+  if (process.env.NODE_ENV !== "production") {
+    await agent.fetchRootKey();
+  }
+  
+    const round = ids["round-table"]?.ic;
+    const plan = ids["bot-plan"]?.ic;
+    const news = ids["search-news"]?.ic;
+    const user = ids["users"]?.ic;
+    const posts = ids["posts"]?.ic;
 
   const originalUsersActor = Actor.createActor(usersIdlFactory, {
     agent,
@@ -153,17 +157,18 @@ export function createSearchNewsActor(authClient: AuthClient | null) {
   });
 
 
-  // const postNewsActor = Actor.createActor(searchNewsId, {
-  //   agent,
-  //   canisterId: post,
-  // });
+  const originalPostActor = Actor.createActor(post_idl, {
+    agent,
+    canisterId: posts
+  });
+
 
   return {
     roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
     botActor: createActorProxy(originalBotActor, "BotPlan"),
     searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
     usersActor: createActorProxy(originalUsersActor, "Users"),
-    // postNewsActor: createActorProxy(postNewsActor, "PostNews"),
+    postNewsActor: createActorProxy(originalPostActor, "PostNews"),
   };
 }
 

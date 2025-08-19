@@ -161,7 +161,7 @@ actor class PostsCanister() {
     posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
   };
 
-  public shared query func getAllPosts(): async [Post] {
+  public query func getAllPosts(): async [Post] {
   let allPosts = Iter.toArray(Trie.iter(posts));
   let onlyPosts = Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post });
 
