@@ -59,3 +59,28 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 77, 0, 0.7);
 }
+
+/* Custom slim scrollbar */
+::-webkit-scrollbar {
+  height: 6px;  /* altura da barra horizontal */
+  width: 6px;   /* largura da barra vertical */
+}
+
+::-webkit-scrollbar-track {
+  background: transparent; /* fundo invisível */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3); /* cinza claro/transparente */
+  border-radius: 9999px; /* arredondado */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5); /* mais forte no hover */
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}

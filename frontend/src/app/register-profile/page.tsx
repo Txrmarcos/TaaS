@@ -7,7 +7,7 @@ import { Copy, Check, Loader2, User, FileText, ShieldCheck, ArrowRight } from "l
 
 export default function RegisterProfilePage() {
     const router = useRouter();
-    const { principal, mockRegisterProfile } = useAuth();
+    const { principal } = useAuth();
     
     const [bio, setBio] = useState("");
     const [isJournalist, setIsJournalist] = useState(false);
@@ -44,9 +44,7 @@ export default function RegisterProfilePage() {
         setFormState('loading');
         setError(null);
 
-        try {
-            await mockRegisterProfile({ bio, isJournalist });
-            
+        try {            
             setFormState('success');
             setTimeout(() => {
                 router.push("/chat");

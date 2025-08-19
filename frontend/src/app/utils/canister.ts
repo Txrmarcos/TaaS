@@ -127,8 +127,10 @@ export function createSearchNewsActor(authClient: AuthClient | null) {
 
   // 🎯 2. ID do canister 'users' local fixo
   // Lembre-se de pegar este ID do seu arquivo .dfx/local/canister_ids.json
-  const usersCanisterId = "vizcg-th777-77774-qaaea-cai";
-
+  const usersCanisterId = "ufxgi-4p777-77774-qaadq-cai";
+  const botCanisterId = "uxrrr-q7777-77774-qaaaq-cai";
+  const searchNewsCanisterId = "ucwa4-rx777-77774-qaada-cai";
+  const roundtableCanisterId = "ulvla-h7777-77774-qaacq-cai";
 
   const agent = new HttpAgent({
     identity,
@@ -147,11 +149,29 @@ export function createSearchNewsActor(authClient: AuthClient | null) {
     canisterId: usersCanisterId,
   });
 
+  // Cria o actor apenas para o canister 'bot'
+  const originalBotActor = Actor.createActor(bot_idl, {
+    agent,
+    canisterId: botCanisterId,
+  });
+
+  // Cria o actor apenas para o canister 'search news'
+  const originalSearchNewsActor = Actor.createActor(searchNewsId, {
+    agent,
+    canisterId: searchNewsCanisterId,
+  });
+
+  // Cria o actor apenas para o canister 'round table'
+  const originalRoundtableActor = Actor.createActor(round_idl, {
+    agent,
+    canisterId: roundtableCanisterId,
+  });
+
   // Retorna um objeto com os actors. Os que não estão em uso foram comentados.
   return {
-    // roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
-    // botActor: createActorProxy(originalBotActor, "BotPlan"),
-    // searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
+    roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
+    botActor: createActorProxy(originalBotActor, "BotPlan"),
+    searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
     usersActor: createActorProxy(originalUsersActor, "Users"),
   };
 }
