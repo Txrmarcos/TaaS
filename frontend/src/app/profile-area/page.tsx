@@ -8,7 +8,6 @@ import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import { useLoading } from "@/context/LoadingContext";
-import { InlineLoading } from "@/components/LoadingOverlay";
 import { createSearchNewsActor } from "../utils/canister";
 
 export interface UserStatus {

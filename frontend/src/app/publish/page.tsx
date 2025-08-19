@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../auth/useAuth"; // Adjust the path if necessary
 import { Sidebar } from "@/components/Sidebar"; // Adjust the path if necessary
 import { Footer } from "@/components/Footer"; // Adjust the path if necessary
+import { createSearchNewsActor } from "../utils/canister"; // Ajuste o caminho conforme sua estrutura
 import {
     FilePlus, Send, History, Image as ImageIcon, Video, FileText, Heading1, Heading2, Trash2, Eye, Loader2, Award, ArrowRight
 } from "lucide-react";
@@ -48,29 +49,58 @@ const MOCK_PUBLICATIONS: Publication[] = [
 ];
 
 export default function PublishPage() {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, authClient, principal } = useAuth();
     const router = useRouter();
-
-    // --- ACCESS CONTROL ---
+    const { usersActor,searchNewsActor } = createSearchNewsActor(authClient);
+    
     const [isJournalist, setIsJournalist] = useState(false); 
     const [isLoadingRole, setIsLoadingRole] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const checkUserRole = async () => {
-            await new Promise(resolve => setTimeout(resolve, 500)); 
-            setIsJournalist(true); 
-            setIsLoadingRole(false);
+            if (!isAuthenticated || !authClient || !principal) {
+                setIsLoadingRole(false);
+                setIsJournalist(false);
+                return;
+            }
+
+            try {
+                console.log("Checking journalist status for:", principal.toText());
+                
+                // Verifica se está autenticado
+                const isAuth = await authClient.isAuthenticated();
+                if (!isAuth) {
+                    console.log("User not authenticated");
+                    setIsJournalist(false);
+                    setIsLoadingRole(false);
+                    return;
+                }
+
+                // Cria a conexão com o canister
+
+                const isJournalist = await usersActor.isJournalist(principal);
+                console.log("Journalist status:", isJournalist);
+                
+                setIsJournalist(isJournalist);
+                setError(null);
+                
+            } catch (err: any) {
+                console.error("Error checking journalist status:", err);
+                setIsJournalist(false);
+            } finally {
+                setIsLoadingRole(false);
+            }
         };
 
         if (isAuthenticated) {
             checkUserRole();
         } else {
-             setIsLoadingRole(false);
-             setIsJournalist(false);
+            setIsLoadingRole(false);
+            setIsJournalist(false);
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, authClient, principal, router]);
 
-    // Form state and other logic...
     const [title, setTitle] = useState("");
     const [subtitle, setSubtitle] = useState("");
     const [content, setContent] = useState("");
@@ -105,26 +135,60 @@ export default function PublishPage() {
 
         setIsPublishing(true);
         setMessage(null);
-        await new Promise(resolve => setTimeout(resolve, 2000)); 
-        setMessage({ type: 'success', text: "Your article was successfully published on the network!" });
-        setTitle("");
-        setSubtitle("");
-        setContent("");
-        setAttachment(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = "";
-        }
-        setIsPublishing(false);
+        
+        try {
 
-        const newPublication: Publication = {
-            id: Date.now(),
-            title,
-            subtitle,
-            contentSnippet: content.substring(0, 150) + "...",
-            publishedAt: new Date(),
-            views: 0
-        };
-        setPublications([newPublication, ...publications]);
+            // const post = await  postNewsActor.createPost(title, subtitle, content, attachment);
+            // await searchNewsActor.searchNews(prompt)
+            // logica do taas
+            //  post.id
+            //chamar canister id do taas, passar o content dps disso chamar o canister
+            // postNewsActor.updateTaaSStatus(post.id, ); (Rejected; Verified; Pending)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            setMessage({ type: 'success', text: "Your article was successfully published on the network!" });
+            setTitle("");
+            setSubtitle("");
+            setContent("");
+            setAttachment(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+
+            const newPublication: Publication = {
+                id: Date.now(),
+                title,
+                subtitle,
+                contentSnippet: content.substring(0, 150) + "...",
+                publishedAt: new Date(),
+                views: 0
+            };
+            setPublications([newPublication, ...publications]);
+            
+        } catch (err: any) {
+            console.error("Error publishing article:", err);
+            setMessage({ type: 'error', text: `Error publishing article: ${err.message || "Unknown error"}` });
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
+    // Função para tentar registrar como jornalista
+    const handleRegisterAsJournalist = async () => {
+        if (!isAuthenticated || !authClient || !principal) {
+            setError("You need to be authenticated to register as journalist.");
+            return;
+        }
+
+        try {
+            setIsLoadingRole(true);
+            await usersActor.registerAsJournalist();
+            setIsJournalist(true);
+        } catch (err: any) {
+            console.error("Error registering as journalist:", err);
+            setError(`Error registering as journalist: ${err.message || "Unknown error"}`);
+        } finally {
+            setIsLoadingRole(false);
+        }
     };
 
     useEffect(() => {
@@ -153,7 +217,10 @@ export default function PublishPage() {
                         }}
                     ></div>
                 </div>
-                 <Loader2 className="animate-spin h-12 w-12 text-orange-400"/>
+                <div className="text-center">
+                    <Loader2 className="animate-spin h-12 w-12 text-orange-400 mx-auto mb-4"/>
+                    <p className="text-white/60">Checking your journalist status...</p>
+                </div>
             </div>
         );
     }
@@ -176,6 +243,15 @@ export default function PublishPage() {
 
             <Sidebar />
             <main className="w-full pt-24 pb-20 md:pl-20 lg:pl-64">
+                {/* Mensagem de erro global */}
+                {error && (
+                    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-6">
+                        <div className="rounded-xl p-4 text-center backdrop-blur-xl border bg-red-500/20 border-red-500/30 text-red-300">
+                            <p className="font-medium">{error}</p>
+                        </div>
+                    </div>
+                )}
+
                 <div className="relative">
                     <div className={`transition-all duration-500 ${!isJournalist ? 'blur-md pointer-events-none' : 'blur-0'}`}>
                         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -242,7 +318,7 @@ export default function PublishPage() {
                         </div>
                     </div>
 
-                    {!isJournalist && (
+                    {!isJournalist && !isLoadingRole && (
                         <div className="absolute inset-0 z-40 flex items-start justify-center p-4 pt-60">
                             <div className="w-full max-w-lg text-center bg-white/5 backdrop-blur-xl rounded-2xl p-8 border border-orange-500/30 shadow-2xl">
                                 <div className="w-16 h-16 bg-gradient-to-r from-[#FF4D00]/20 to-[#FF007A]/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -250,15 +326,25 @@ export default function PublishPage() {
                                 </div>
                                 <h2 className="text-2xl font-bold text-white mb-2">Unlock Journalist Features</h2>
                                 <p className="text-white/70 mb-8 leading-relaxed">
-                                    Upgrade your profile to a Journalist account to publish news freely and contribute to a global, uncensored information network.
+                                    You need to be registered as a journalist to publish articles on our decentralized platform.
                                 </p>
-                                <button
-                                    onClick={() => router.push('/profile-area')}
-                                    className="w-full max-w-xs mx-auto px-6 py-3 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg font-semibold flex items-center justify-center space-x-2"
-                                >
-                                    <span>Upgrade Profile</span>
-                                    <ArrowRight className="w-4 h-4" />
-                                </button>
+                                <div className="space-y-4">
+                                    <button
+                                        onClick={handleRegisterAsJournalist}
+                                        disabled={isLoadingRole}
+                                        className="w-full max-w-xs mx-auto px-6 py-3 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg font-semibold flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isLoadingRole ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
+                                        <span>{isLoadingRole ? "Registering..." : "Register as Journalist"}</span>
+                                    </button>
+                                    <button
+                                        onClick={() => router.push('/profile-area')}
+                                        className="w-full max-w-xs mx-auto px-6 py-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-200 shadow-lg font-semibold flex items-center justify-center space-x-2 border border-white/20"
+                                    >
+                                        <span>Go to Profile</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

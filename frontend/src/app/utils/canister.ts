@@ -6,6 +6,7 @@ import { idlFactory as searchNewsId } from "../../../../src/declarations/search-
 import { idlFactory as bot_idl } from "../../../../src/declarations/bot-plan/bot-plan.did.js";
 import { idlFactory as usersIdlFactory } from "../../../../src/declarations/users/users.did.js"; 
 import { AuthClient } from "@dfinity/auth-client";
+import ids from "../../../../canister_ids.json";
 
 interface LoadingContextCallbacks {
   startLoading: (id: string) => void;
@@ -119,40 +120,50 @@ function createActorProxy(actor: any, actorName: string) {
 export function createSearchNewsActor(authClient: AuthClient | null) {
   const identity = authClient?.getIdentity();
 
-  // --- LÓGICA DE AMBIENTE REMOVIDA ---
-  // A conexão agora é fixa (hardcoded) para o ambiente local.
-  
-  // 🎯 1. Host local fixo
-  const host = "http://127.0.0.1:4943";
-
-  // 🎯 2. ID do canister 'users' local fixo
-  // Lembre-se de pegar este ID do seu arquivo .dfx/local/canister_ids.json
-  const usersCanisterId = "vizcg-th777-77774-qaaea-cai";
+  const round = ids["round-table"]?.ic;
+  const plan = ids["bot-plan"]?.ic;
+  const news = ids["search-news"]?.ic;
+  const user = ids["users"]?.ic;
+  // const post = ids["post"]?.ic;
 
 
   const agent = new HttpAgent({
     identity,
-    host,
+    host:"https://ic0.app",
   });
 
-  // fetchRootKey é necessário para o ambiente local
-  agent.fetchRootKey().catch(err => {
-    console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
-    console.error(err);
-  });
-  
-  // Cria o actor apenas para o canister 'users'
   const originalUsersActor = Actor.createActor(usersIdlFactory, {
     agent,
-    canisterId: usersCanisterId,
+    canisterId: user,
   });
 
-  // Retorna um objeto com os actors. Os que não estão em uso foram comentados.
+  const originalRoundtableActor = Actor.createActor(round_idl, {
+    agent,
+    canisterId: round,
+  });
+
+  const originalBotActor = Actor.createActor(bot_idl, {
+    agent,
+    canisterId: plan,
+  });
+
+  const originalSearchNewsActor = Actor.createActor(searchNewsId, {
+    agent,
+    canisterId: news,
+  });
+
+
+  // const postNewsActor = Actor.createActor(searchNewsId, {
+  //   agent,
+  //   canisterId: post,
+  // });
+
   return {
-    // roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
-    // botActor: createActorProxy(originalBotActor, "BotPlan"),
-    // searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
+    roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
+    botActor: createActorProxy(originalBotActor, "BotPlan"),
+    searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
     usersActor: createActorProxy(originalUsersActor, "Users"),
+    // postNewsActor: createActorProxy(postNewsActor, "PostNews"),
   };
 }
 

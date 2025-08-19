@@ -4,27 +4,66 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/auth/useAuth"; 
 import { Copy, Check, Loader2, User, FileText, ShieldCheck, ArrowRight } from "lucide-react";
+import { createSearchNewsActor } from "../utils/canister"; // Ajuste o caminho conforme sua estrutura
 
 export default function RegisterProfilePage() {
     const router = useRouter();
-    const { principal, mockRegisterProfile } = useAuth();
+    const { principal, authClient } = useAuth();
     
+    const [username, setUsername] = useState("");
     const [bio, setBio] = useState("");
+    const [profileImgUrl, setProfileImgUrl] = useState("");
     const [isJournalist, setIsJournalist] = useState(false);
     const [formState, setFormState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [error, setError] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
-
     const [isReady, setIsReady] = useState(false);
+
     useEffect(() => {
-        if (principal) {
-            const timer = setTimeout(() => setIsReady(true), 100);
-            return () => clearTimeout(timer);
-        }
-    }, [principal]);
+        const checkFirstLogin = async () => {
+            if (!principal || !authClient) {
+                console.log("Missing requirements:", { principal: !!principal, authClient: !!authClient });
+                return;
+            }
 
+            try {
+                console.log("Creating actors...");
+                const { usersActor } = createSearchNewsActor(authClient);
+                
+                // Check what methods are available (for debugging)
+                console.log("Actor created successfully");
+                
+                // Try to get existing profile first
+                try {
+                    const profile = await usersActor.getProfile(principal);
+                    console.log("Existing profile found:", profile);
+                    
+                    // If profile exists and firstLogin is false, redirect to chat
+                    if (!profile.firstLogin) {
+                        console.log("User has already completed registration, redirecting...");
+                        router.push("/chat");
+                        return;
+                    }
+                    
+                    console.log("User has profile but hasn't completed first login setup");
+                } catch (profileError) {
+                    console.log("No existing profile found - this is expected for new users");
+                }
+                
+                // Set component as ready
+                setIsReady(true);
 
-    const principalText = principal ? principal.toText() : "Loading identy...";
+            } catch (err) {
+                console.error("Error during initialization:", err);
+                setError("Failed to initialize. Please try refreshing the page.");
+                setIsReady(true); // Show the form anyway
+            }
+        };
+
+        checkFirstLogin();
+    }, [principal, authClient, router]);
+
+    const principalText = principal ? principal.toText() : "Loading identity...";
 
     const copyPrincipal = () => {
         if (!principal) return;
@@ -35,6 +74,14 @@ export default function RegisterProfilePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Validações
+        if (username.trim().length < 3) {
+            setError("Username must be at least 3 characters long.");
+            setFormState('error');
+            return;
+        }
+        
         if (bio.trim().length < 10) {
             setError("Your bio must be at least 10 characters long.");
             setFormState('error');
@@ -45,16 +92,79 @@ export default function RegisterProfilePage() {
         setError(null);
 
         try {
-            await mockRegisterProfile({ bio, isJournalist });
+            if (!authClient) {
+                throw new Error("Authentication client not available. Please login first.");
+            }
+
+            const isAuthenticated = await authClient.isAuthenticated();
+            if (!isAuthenticated) {
+                throw new Error("Not authenticated. Please login first.");
+            }
+
+            console.log("Auth status:", {
+                principal: principal?.toText(),
+                isAuthenticated,
+                identity: authClient.getIdentity().getPrincipal().toText()
+            });
+
+            // Small delay to ensure auth stability
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            console.log("Creating actors with authenticated client...");
+            const { usersActor } = createSearchNewsActor(authClient);
+            
+            console.log("Calling createUser with:", {
+                username: username.trim(),
+                bio: bio.trim(),
+                profileImgUrl: profileImgUrl.trim() || ""
+            });
+            
+            // Create user profile
+            const userProfile = await usersActor.createUser(
+                username.trim(),
+                bio.trim(),
+                profileImgUrl.trim() || ""
+            );
+            
+            console.log("User profile created successfully:", userProfile);
+            
+            // Register as journalist if requested
+            if (isJournalist) {
+                console.log("Registering user as journalist...");
+                await usersActor.registerAsJournalist();
+                console.log("User registered as journalist successfully");
+            }
+            
+            // Mark first login as completed (optional, since the Motoko code handles this automatically)
+            try {
+                await usersActor.markFirstLoginDone();
+                console.log("First login marked as completed");
+            } catch (markError) {
+                console.warn("Could not mark first login as done (this might be okay):", markError);
+            }
             
             setFormState('success');
             setTimeout(() => {
                 router.push("/chat");
             }, 1500);
 
-        } catch (err) {
-            console.error("Erro ao salvar perfil mockado:", err);
-            setError("Unable to save profile. Please try again.");
+        } catch (err: any) {
+            console.error("Detailed error:", {
+                message: err.message,
+                stack: err.stack,
+                name: err.name,
+                cause: err.cause
+            });
+            
+            // More user-friendly error messages
+            let errorMessage = "An unexpected error occurred. Please try again.";
+            if (err.message?.includes("already exists") || err.message?.includes("já possui")) {
+                errorMessage = "A profile already exists for this account. Please refresh the page.";
+            } else if (err.message?.includes("not authenticated") || err.message?.includes("not available")) {
+                errorMessage = "Authentication issue. Please try logging out and logging back in.";
+            }
+            
+            setError(errorMessage);
             setFormState('error');
         }
     };
@@ -93,10 +203,30 @@ export default function RegisterProfilePage() {
                             </div>
                             <div className="flex items-center gap-2 bg-[#0B0E13] border border-white/10 rounded-lg px-3 py-2.5">
                                 <p className="flex-1 text-sm font-mono text-white/70 truncate">{principalText}</p>
-                                <button type="button" onClick={copyPrincipal} className="p-1 text-white/60 hover:text-white transition-colors" title="Copiar ID">
+                                <button type="button" onClick={copyPrincipal} className="p-1 text-white/60 hover:text-white transition-colors" title="Copy ID">
                                     {isCopied ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Campo Username */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <User className="h-5 w-5 text-[#FF4D00]" />
+                                <label htmlFor="username" className="block text-sm font-medium text-white/80">
+                                    Username
+                                </label>
+                            </div>
+                            <input
+                                id="username"
+                                type="text"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                className="w-full bg-[#0B0E13] border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder-white/40 focus:ring-2 focus:ring-[#FF4D00] focus:border-[#FF4D00] transition-colors"
+                                placeholder="Choose your username..."
+                                required
+                                minLength={3}
+                            />
                         </div>
 
                         {/* Campo Bio */}
@@ -113,10 +243,29 @@ export default function RegisterProfilePage() {
                                 onChange={(e) => setBio(e.target.value)}
                                 rows={4}
                                 className="w-full bg-[#0B0E13] border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder-white/40 focus:ring-2 focus:ring-[#FF4D00] focus:border-[#FF4D00] transition-colors"
-                                placeholder="Descreva-se em poucas palavras..."
+                                placeholder="Describe yourself in a few words..."
                                 required
+                                minLength={10}
                             />
                             <p className="text-xs text-white/50">This will be displayed publicly on your profile.</p>
+                        </div>
+
+                        {/* Campo Profile Image URL (Opcional) */}
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <User className="h-5 w-5 text-[#FF4D00]" />
+                                <label htmlFor="profileImg" className="block text-sm font-medium text-white/80">
+                                    Profile Image URL (Optional)
+                                </label>
+                            </div>
+                            <input
+                                id="profileImg"
+                                type="url"
+                                value={profileImgUrl}
+                                onChange={(e) => setProfileImgUrl(e.target.value)}
+                                className="w-full bg-[#0B0E13] border border-white/10 rounded-lg px-3 py-2 text-white/90 placeholder-white/40 focus:ring-2 focus:ring-[#FF4D00] focus:border-[#FF4D00] transition-colors"
+                                placeholder="https://example.com/your-image.jpg"
+                            />
                         </div>
 
                         {/* Campo Jornalista */}
@@ -156,7 +305,7 @@ export default function RegisterProfilePage() {
                                 {formState === 'success' && <Check className="h-5 w-5" />}
                                 <span>
                                     {formState === 'idle' && 'Complete Registration'}
-                                    {formState === 'loading' && 'Saving...'}
+                                    {formState === 'loading' && 'Creating Profile...'}
                                     {formState === 'success' && 'Profile created!'}
                                     {formState === 'error' && 'Try again'}
                                 </span>
