@@ -24,27 +24,24 @@ actor class UsersCanister() {
     isJournalist: Bool;
     ownedNewsletters: [NewsletterId];
     subscribedNewsletters: [NewsletterId];
+    firstLogin: Bool; // Novo campo para identificar o primeiro login
   };
 
   // --- ESTADO ESTÁVEL ---
-  // Usamos Trie para garantir que os dados persistam durante as atualizações do canister.
   stable var profiles: Trie.Trie<UserId, UserProfile> = Trie.empty();
 
   // --- Funções Auxiliares ---
   
-  // Cria uma chave para o Trie a partir de um Principal.
   func keyFromPrincipal(p: Principal): Trie.Key<Principal> {
     { key = p; hash = Principal.hash(p) }
   };
 
   // --- Funções Públicas (Atualizações - `update`) ---
 
-  // Cria um novo perfil de utilizador.
   public shared(msg) func createUser(username: Text, bio: Text, profileImgUrl: Text): async UserProfile {
     let caller = msg.caller;
     let key = keyFromPrincipal(caller);
 
-    // Verifica se o utilizador já existe.
     if (Trie.find(profiles, key, Principal.equal) != null) {
       Debug.trap("Este utilizador já possui um perfil.");
     };
@@ -57,16 +54,16 @@ actor class UsersCanister() {
       isJournalist = false;
       ownedNewsletters = [];
       subscribedNewsletters = [];
+      firstLogin = true; // Inicialmente true
     };
 
     profiles := Trie.put(profiles, key, Principal.equal, newUserProfile).0;
     return newUserProfile;
   };
 
-  // Permite a um utilizador atualizar o seu perfil.
   public shared(msg) func updateProfile(newBio: Text, newProfileImgUrl: Text): async UserProfile {
     let caller = msg.caller;
-    let userProfile = await getProfile(caller); // Reutiliza a função de consulta
+    let userProfile = await getProfile(caller);
 
     let updatedProfile = {
       id = userProfile.id;
@@ -76,13 +73,13 @@ actor class UsersCanister() {
       isJournalist = userProfile.isJournalist;
       ownedNewsletters = userProfile.ownedNewsletters;
       subscribedNewsletters = userProfile.subscribedNewsletters;
+      firstLogin = userProfile.firstLogin; // Mantemos o valor atual
     };
 
     profiles := Trie.put(profiles, keyFromPrincipal(caller), Principal.equal, updatedProfile).0;
     return updatedProfile;
   };
 
-  // Regista o utilizador como jornalista.
   public shared(msg) func registerAsJournalist(): async UserProfile {
     let caller = msg.caller;
     let userProfile = await getProfile(caller);
@@ -99,17 +96,16 @@ actor class UsersCanister() {
       isJournalist = true;
       ownedNewsletters = userProfile.ownedNewsletters;
       subscribedNewsletters = userProfile.subscribedNewsletters;
+      firstLogin = userProfile.firstLogin;
     };
     profiles := Trie.put(profiles, keyFromPrincipal(caller), Principal.equal, updatedProfile).0;
     return updatedProfile;
   };
 
-  // Subscreve o utilizador a uma newsletter.
   public shared(msg) func subscribeToNewsletter(newsletterId: NewsletterId): async () {
     let caller = msg.caller;
     let userProfile = await getProfile(caller);
 
-    // Adiciona o ID da newsletter à lista de subscrições, evitando duplicados.
     if (List.find<NewsletterId>(List.fromArray<NewsletterId>(userProfile.subscribedNewsletters), func(x) { x == newsletterId }) == null) {
       let subscriptionsList = List.fromArray<NewsletterId>(userProfile.subscribedNewsletters);
       let updatedSubscriptionsList = List.push<NewsletterId>(newsletterId, subscriptionsList);
@@ -122,14 +118,13 @@ actor class UsersCanister() {
         isJournalist = userProfile.isJournalist;
         ownedNewsletters = userProfile.ownedNewsletters;
         subscribedNewsletters = updatedSubscriptions;
+        firstLogin = userProfile.firstLogin;
       };
       profiles := Trie.put(profiles, keyFromPrincipal(caller), Principal.equal, updatedProfile).0;
     };
   };
 
-  // Adiciona uma newsletter criada à lista de newsletters do jornalista.
   public shared(msg) func addOwnedNewsletter(journalistId: UserId, newsletterId: NewsletterId): async () {
-    // Validação de segurança: apenas canisters autorizados podem chamar isto.
     let key = keyFromPrincipal(journalistId);
     switch (Trie.find(profiles, key, Principal.equal)) {
       case (?userProfile) {
@@ -147,6 +142,7 @@ actor class UsersCanister() {
           isJournalist = userProfile.isJournalist;
           ownedNewsletters = updatedOwned;
           subscribedNewsletters = userProfile.subscribedNewsletters;
+          firstLogin = userProfile.firstLogin;
         };
         profiles := Trie.put(profiles, key, Principal.equal, updatedProfile).0;
       };
@@ -156,9 +152,56 @@ actor class UsersCanister() {
     };
   };
 
-  // --- Funções Públicas (Consultas - `query`) ---
+  // --- Nova função para marcar que o primeiro login já ocorreu ---
+  public shared(msg) func markFirstLoginDone(): async UserProfile {
+    let caller = msg.caller;
+    let userProfile = await getProfile(caller);
+    if (not userProfile.firstLogin) {
+      return userProfile; // Já marcado, nada a fazer
+    };
+    let updatedProfile = {
+      id = userProfile.id;
+      username = userProfile.username;
+      bio = userProfile.bio;
+      profileImgUrl = userProfile.profileImgUrl;
+      isJournalist = userProfile.isJournalist;
+      ownedNewsletters = userProfile.ownedNewsletters;
+      subscribedNewsletters = userProfile.subscribedNewsletters;
+      firstLogin = false; // Marca como já logado
+    };
+    profiles := Trie.put(profiles, keyFromPrincipal(caller), Principal.equal, updatedProfile).0;
+    return updatedProfile;
+  };
 
-  // Obtém o perfil de um utilizador.
+  public shared(msg) func isFirstLogin(): async Bool {
+    let caller = msg.caller;
+    let key = keyFromPrincipal(caller);
+
+    switch (Trie.find(profiles, key, Principal.equal)) {
+        case (?userProfile) {
+            if (userProfile.firstLogin) {
+                let updatedProfile = {
+                    id = userProfile.id;
+                    username = userProfile.username;
+                    bio = userProfile.bio;
+                    profileImgUrl = userProfile.profileImgUrl;
+                    isJournalist = userProfile.isJournalist;
+                    ownedNewsletters = userProfile.ownedNewsletters;
+                    subscribedNewsletters = userProfile.subscribedNewsletters;
+                    firstLogin = false;
+                };
+                profiles := Trie.put(profiles, key, Principal.equal, updatedProfile).0;
+                return true;
+            } else {
+                return false;
+            };
+        };
+        case null {
+            return true;
+        };
+    };
+};
+
   public shared query func getProfile(userId: UserId): async UserProfile {
     switch (Trie.find(profiles, keyFromPrincipal(userId), Principal.equal)) {
       case (?userProfile) { return userProfile; };
@@ -166,7 +209,6 @@ actor class UsersCanister() {
     };
   };
 
-  // Verifica se um utilizador é jornalista.
   public shared query func isJournalist(userId: UserId): async Bool {
     switch (Trie.find(profiles, keyFromPrincipal(userId), Principal.equal)) {
       case (?userProfile) { return userProfile.isJournalist; };

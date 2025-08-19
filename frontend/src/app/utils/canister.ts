@@ -6,6 +6,7 @@ import { idlFactory as searchNewsId } from "../../../../src/declarations/search-
 import { idlFactory as bot_idl } from "../../../../src/declarations/bot-plan/bot-plan.did.js";
 import { idlFactory as usersIdlFactory } from "../../../../src/declarations/users/users.did.js"; 
 import { AuthClient } from "@dfinity/auth-client";
+import ids from "../../../../canister_ids.json";
 
 interface LoadingContextCallbacks {
   startLoading: (id: string) => void;
@@ -119,60 +120,50 @@ function createActorProxy(actor: any, actorName: string) {
 export function createSearchNewsActor(authClient: AuthClient | null) {
   const identity = authClient?.getIdentity();
 
-  // --- LÓGICA DE AMBIENTE REMOVIDA ---
-  // A conexão agora é fixa (hardcoded) para o ambiente local.
-  
-  // 🎯 1. Host local fixo
-  const host = "http://127.0.0.1:4943";
+  const round = ids["round-table"]?.ic;
+  const plan = ids["bot-plan"]?.ic;
+  const news = ids["search-news"]?.ic;
+  const user = ids["users"]?.ic;
+  // const post = ids["post"]?.ic;
 
-  // 🎯 2. ID do canister 'users' local fixo
-  // Lembre-se de pegar este ID do seu arquivo .dfx/local/canister_ids.json
-  const usersCanisterId = "ufxgi-4p777-77774-qaadq-cai";
-  const botCanisterId = "uxrrr-q7777-77774-qaaaq-cai";
-  const searchNewsCanisterId = "ucwa4-rx777-77774-qaada-cai";
-  const roundtableCanisterId = "ulvla-h7777-77774-qaacq-cai";
 
   const agent = new HttpAgent({
     identity,
-    host,
+    host:"https://ic0.app",
   });
 
-  // fetchRootKey é necessário para o ambiente local
-  agent.fetchRootKey().catch(err => {
-    console.warn("Unable to fetch root key. Check to ensure that your local replica is running");
-    console.error(err);
-  });
-  
-  // Cria o actor apenas para o canister 'users'
   const originalUsersActor = Actor.createActor(usersIdlFactory, {
     agent,
-    canisterId: usersCanisterId,
+    canisterId: user,
   });
 
-  // Cria o actor apenas para o canister 'bot'
-  const originalBotActor = Actor.createActor(bot_idl, {
-    agent,
-    canisterId: botCanisterId,
-  });
-
-  // Cria o actor apenas para o canister 'search news'
-  const originalSearchNewsActor = Actor.createActor(searchNewsId, {
-    agent,
-    canisterId: searchNewsCanisterId,
-  });
-
-  // Cria o actor apenas para o canister 'round table'
   const originalRoundtableActor = Actor.createActor(round_idl, {
     agent,
-    canisterId: roundtableCanisterId,
+    canisterId: round,
   });
 
-  // Retorna um objeto com os actors. Os que não estão em uso foram comentados.
+  const originalBotActor = Actor.createActor(bot_idl, {
+    agent,
+    canisterId: plan,
+  });
+
+  const originalSearchNewsActor = Actor.createActor(searchNewsId, {
+    agent,
+    canisterId: news,
+  });
+
+
+  // const postNewsActor = Actor.createActor(searchNewsId, {
+  //   agent,
+  //   canisterId: post,
+  // });
+
   return {
     roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
     botActor: createActorProxy(originalBotActor, "BotPlan"),
     searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
     usersActor: createActorProxy(originalUsersActor, "Users"),
+    // postNewsActor: createActorProxy(postNewsActor, "PostNews"),
   };
 }
 

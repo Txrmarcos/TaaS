@@ -51,27 +51,6 @@ export function useAuth() {
         const userPrincipal = identity.getPrincipal();
         setPrincipal(userPrincipal);
         setIsAuthenticated(true);
-
-        // ===== LÓGICA DE VERIFICAÇÃO INTEGRADA COM O CANISTER =====
-        try {
-          // 1. Obtém o ator de usuários a partir da função centralizada
-          const { usersActor } = createSearchNewsActor(authClient);
-
-          // 2. Tenta buscar o perfil do usuário.
-          await usersActor.getProfile(userPrincipal);
-
-          // 3. Se a linha acima NÃO gerou erro, o perfil existe.
-          console.log("Perfil encontrado no canister. Redirecionando para /chat");
-          router.push("/chat");
-
-        } catch (error) {
-          // 4. Se ocorreu um erro, muito provavelmente é porque o perfil não existe.
-          console.log("Perfil não encontrado no canister. Redirecionando para /register-profile");
-          router.push("/register-profile");
-        } finally {
-          setIsLoading(false);
-        }
-        // ==========================================================
       },
       onError: (err: any) => {
         console.error("Error during login:", err);
