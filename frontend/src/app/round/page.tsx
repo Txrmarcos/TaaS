@@ -207,8 +207,8 @@ export default function RoundtablePage() {
             </div>
 
             <Sidebar />
-            <main className="md:pl-20 lg:pl-64">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+            <main className="md:pl-20 lg:pl-72">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
                     {/* Hero Section */}
                     <div className="text-center mb-12">
                         <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#FF4D00]/80 to-[#FF007A]/80 px-4 py-2 rounded-full mb-6">

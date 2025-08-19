@@ -229,8 +229,8 @@ export default function BotTestPage() {
 
 
             {/* Layout principal corrigido para evitar conflito com a sidebar */}
-            <main className="flex flex-col flex-grow px-4 pt-32 max-w-4xl mx-auto gap-6">
-                <div className="flex flex-col w-full">
+            <main className="flex flex-col flex-grow px-4 pt-32 gap-6 ml-0 lg:ml-72">
+                <div className="w-full max-w-xl mx-auto">
                     {/* Chat Section */}
                     <div className="flex flex-col w-full">
                         <div className="bg-white/5 border-white/10 shadow-2xl backdrop-blur-xl rounded-2xl border overflow-hidden flex flex-col min-h-[700px] hover:shadow-[#FF4D00]/10 hover:shadow-2xl transition-all duration-300">
@@ -253,9 +253,9 @@ export default function BotTestPage() {
                                     <div className="flex flex-col items-center justify-center text-center py-8 space-y-6">
                                         <div className="space-y-2">
                                             <h3 className="text-lg sm:text-xl font-semibold text-white">Ready to Verify</h3>
-                                            <p className="text-xs sm:text-sm text-white/75 mt-1 max-w-md">Ask anything about news, claims, or statements to verify their truthfulness.</p>
+                                            <p className="text-xs sm:text-sm text-white/75 mt-1 w-full">Ask anything about news, claims, or statements to verify their truthfulness.</p>
                                         </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
                                             <button 
                                                 onClick={() => setPrompt("Can you verify if the recent news about the stock market crash is true?")}
                                                 className="p-3 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-all duration-200 text-left"
