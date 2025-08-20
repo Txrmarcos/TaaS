@@ -9,6 +9,7 @@ import BigNewsCard, { BigArticle } from "@/components/ui/BigNewsCard";
 import { AuthClient } from "@dfinity/auth-client";
 import { createSearchNewsActor } from "../utils/canister";
 
+// Você pode ajustar as tags se quiser variedade, mas "Highlights" é 100% seguro com o tipo Tag
 const NEWS: Array<{
   id: number;
   title: string;
@@ -18,7 +19,68 @@ const NEWS: Array<{
   likes: number;
   content?: string;
   url?: string;
-}> = [];
+}> = [
+  {
+    id: 1,
+    title: "TaaS lança protótipo com governança no ICP",
+    description:
+      "O time apresentou um protótipo auditável com governança comunitária usando canisters para plano e busca de notícias...",
+    tag: "Highlights",
+    author: "dfx-principal-aaabbbccc",
+    likes: 42,
+    content:
+      "O protótipo do TaaS integra os canisters `bot-plan` (planos e billing) e `search-news` (veredito e ranking). A governança do conhecimento é feita pelo `round-table`. Na prática, o usuário assina um plano, consome a cota e recebe um veredito auditável. Este artigo detalha as decisões de arquitetura, os fluxos de consumo e como a comunidade pode propor fontes confiáveis.",
+    url: "https://example.com/taas-prototipo",
+  },
+  {
+    id: 2,
+    title: "Integração: AuthClient + Actors sem fricção",
+    description:
+      "Guia para autenticar usuários e criar actors no front sem dores, incluindo fallback e tratamento de erros...",
+    tag: "Highlights",
+    author: "kaiane.icp",
+    likes: 18,
+    content:
+      "Para criar uma experiência fluida, o AuthClient é inicializado no client-side e injeta a identidade no HttpAgent. Com isso, os actors `users`, `bot-plan` e `search-news` ficam prontos para chamadas autenticadas. O artigo traz padrões de retry, loading states e persistência de preferências no localStorage.",
+    url: "https://example.com/authclient-actors",
+  },
+  {
+    id: 3,
+    title: "UI/UX do feed: MiniNewsCard + BigNewsCard",
+    description:
+      "Como desenhamos um feed leve, com likes persistentes no localStorage e modal de leitura detalhada...",
+    tag: "Highlights",
+    author: "marco.ui",
+    likes: 27,
+    content:
+      "A composição usa `MiniNewsCard` para listagem rápida e `BigNewsCard` para leitura focada, com suporte a like, salvar e apoiar. O estado de likes persiste no `localStorage`. Discutimos também acessibilidade, foco do teclado, animações discretas e responsividade.",
+    url: "https://example.com/ui-feed-design",
+  },
+  {
+    id: 4,
+    title: "Plans & Quotas: design do consumo por requisição",
+    description:
+      "Estratégias para controlar cota por plano, exibir mensagens claras e evitar surpresas ao usuário...",
+    tag: "Highlights",
+    author: "billing.bot",
+    likes: 33,
+    content:
+      "O `bot-plan` valida consumo antes do `search-news` processar a consulta. Em caso de estouro, o front exibe call-to-action para upgrade. Este artigo descreve estados, mensagens, e padrões para manter transparência no uso do produto.",
+    url: "https://example.com/plans-quotas",
+  },
+  {
+    id: 5,
+    title: "Guia de fontes confiáveis: curadoria comunitária",
+    description:
+      "Como a comunidade ajuda a manter a base confiável, evitando viés e incentivando diversidade de fontes...",
+    tag: "Highlights",
+    author: "round.table",
+    likes: 21,
+    content:
+      "A curadoria considera reputação, histórico e diversidade regional/ideológica. O `round-table` governa a lista de fontes e registra mudanças on-chain para auditoria. Mostramos critérios, processo de proposta e revisão.",
+    url: "https://example.com/curadoria-fontes",
+  },
+];
 
 export default function NewsFeedPage() {
   const [selectedTag, setSelectedTag] = React.useState<Tag>("Highlights");
@@ -45,21 +107,35 @@ export default function NewsFeedPage() {
 
   React.useEffect(() => {
     async function fetchNews() {
-      const authClient = await AuthClient.create();
-      const { postNewsActor } = await createSearchNewsActor(authClient);
+      // Toggle opcional para forçar mock: defina NEXT_PUBLIC_USE_MOCK=1
+      if (process.env.NEXT_PUBLIC_USE_MOCK === "1") {
+        setNewsData(NEWS);
+        return;
+      }
 
       try {
+        const authClient = await AuthClient.create();
+        const { postNewsActor } = await createSearchNewsActor(authClient);
+
         const posts = await postNewsActor.getAllPosts();
-        const formatted = posts.map((post: any, idx: number) => ({
+
+        // Se a API voltar vazia, usa mock como fallback
+        if (!posts || posts.length === 0) {
+          setNewsData(NEWS);
+          return;
+        }
+
+        const formatted = posts.map((post: any) => ({
           id: Number(post.id),
           title: post.title,
-          description: post.description.slice(0, 100) + "...",
-          tag: "Highlights", // valor fixo por enquanto
-          author: post.author.toText(),
-          likes: post.likes.length,
+          description: String(post.description || "").slice(0, 100) + "...",
+          tag: "Highlights" as Tag, // você pode mapear tags reais aqui
+          author: post.author?.toText?.() ?? "anonymous",
+          likes: Array.isArray(post.likes) ? post.likes.length : 0,
           content: post.content,
           url: "",
         }));
+
         setNewsData(formatted);
       } catch (err) {
         console.error("Erro ao buscar posts:", err);
@@ -87,6 +163,7 @@ export default function NewsFeedPage() {
     try {
       setSupportingId(id);
       await new Promise((r) => setTimeout(r, 800));
+      // aqui entraria a chamada real para apoiar
     } finally {
       setSupportingId(null);
     }
@@ -151,7 +228,7 @@ export default function NewsFeedPage() {
                 article={selected}
                 liked={likedIds.includes(selected.id)}
                 onLike={handleLike}
-                onClose={() => setSelected(null)}
+                onClose={handleClose}
                 onSave={(id) => console.log("save", id)}
                 onSupport={handleSupport}
                 supportingId={supportingId}
