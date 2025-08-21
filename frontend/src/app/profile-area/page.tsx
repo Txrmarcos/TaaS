@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
   return (
     // A classe bg-[#0B0E13] foi removida daqui
-    <div className="flex flex-col min-h-screen text-white font-sans">
+    <div className="flex flex-col min-h-screen text-white font-sans lg:pl-72">
     
       {/* --- CÓDIGO DO FUNDO ADICIONADO AQUI --- */}
       <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
