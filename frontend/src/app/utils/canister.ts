@@ -1,9 +1,13 @@
-import ids from "../../../../canister_ids.json";
+// O import do canister_ids.json não é mais necessário com o ID fixo
+// import ids from "../../../../canister_ids.json"; 
 import { HttpAgent, Actor } from "@dfinity/agent";
 import { idlFactory as round_idl } from "../../../../src/declarations/round-table/round-table.did.js";
 import { idlFactory as searchNewsId } from "../../../../src/declarations/search-news/search-news.did.js";
 import { idlFactory as bot_idl } from "../../../../src/declarations/bot-plan/bot-plan.did.js";
+import { idlFactory as usersIdlFactory } from "../../../../src/declarations/users/users.did.js";
+import { idlFactory as post_idl } from "../../../../src/declarations/posts/posts.did.js";
 import { AuthClient } from "@dfinity/auth-client";
+import ids from "../../../../canister_ids.json";
 
 interface LoadingContextCallbacks {
   startLoading: (id: string) => void;
@@ -22,6 +26,7 @@ let loadingCallbacks: LoadingContextCallbacks | null = null;
 export function setLoadingCallbacks(callbacks: LoadingContextCallbacks) {
   loadingCallbacks = callbacks;
 }
+
 
 function createActorProxy(actor: any, actorName: string) {
   return new Proxy(actor, {
@@ -113,20 +118,28 @@ function createActorProxy(actor: any, actorName: string) {
   });
 }
 
-export function createSearchNewsActor(authClient: AuthClient | null) {
- const identity = authClient?.getIdentity(); 
+export async function createSearchNewsActor(authClient: AuthClient | null) {
+  const identity = authClient?.getIdentity();
+  
   const agent = new HttpAgent({
     identity,
-    host: "https://ic0.app",
+    host:"https://ic0.app",
   });
-
-  if (process.env.DFX_NETWORK === "local") {
-    agent.fetchRootKey();
+  
+  if (process.env.NODE_ENV !== "production") {
+    await agent.fetchRootKey();
   }
-
+  
   const round = ids["round-table"]?.ic;
   const plan = ids["bot-plan"]?.ic;
   const news = ids["search-news"]?.ic;
+  const user = ids["users"]?.ic;
+  const posts = ids["posts"]?.ic;
+
+  const originalUsersActor = Actor.createActor(usersIdlFactory, {
+    agent,
+    canisterId: user,
+  });
 
   const originalRoundtableActor = Actor.createActor(round_idl, {
     agent,
@@ -143,10 +156,19 @@ export function createSearchNewsActor(authClient: AuthClient | null) {
     canisterId: news,
   });
 
+
+  const originalPostActor = Actor.createActor(post_idl, {
+    agent,
+    canisterId: posts
+  });
+
+
   return {
     roundtableActor: createActorProxy(originalRoundtableActor, "RoundTable"),
     botActor: createActorProxy(originalBotActor, "BotPlan"),
     searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
+    usersActor: createActorProxy(originalUsersActor, "Users"),
+    postNewsActor: createActorProxy(originalPostActor, "PostNews"),
   };
 }
 
@@ -218,4 +240,3 @@ export function useRequestMetrics() {
     clearMetrics: () => requestTracker.clearMetrics()
   };
 }
-

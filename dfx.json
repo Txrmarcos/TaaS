@@ -14,6 +14,19 @@
         "type": "motoko",
         "main": "backend/search-news/search-news.mo"
     },
+    "posts": {
+        "type": "motoko",
+        "main": "backend/posts/posts.mo"
+    },
+    "newsletters": {
+
+        "type": "motoko",
+        "main": "backend/newsletters/newsletters.mo"
+    },
+    "users": {
+    "type": "motoko",
+    "main": "backend/users/users.mo"
+    },
     "llm": {
         "candid": "https://github.com/dfinity/llm/releases/latest/download/llm-canister-ollama.did",
         "type": "custom",
@@ -47,4 +60,5 @@
   "local": { "bind": "127.0.0.1:4943", "type": "ephemeral" },
   "ic": { "type": "persistent" }
   }
+
 }

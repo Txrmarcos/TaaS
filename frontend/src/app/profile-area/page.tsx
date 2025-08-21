@@ -1,14 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../auth/useAuth";
-import { Navbar } from "@/components/Navbar";
+import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { ArrowRight, RefreshCw, CheckCircle, XCircle, User } from "lucide-react";
 import { HttpAgent } from "@dfinity/agent";
 import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import { useLoading } from "@/context/LoadingContext";
-import { InlineLoading } from "@/components/LoadingOverlay";
 import { createSearchNewsActor } from "../utils/canister";
 
 export interface UserStatus {
@@ -27,18 +26,34 @@ interface Toast {
 }
 
 export default function ProfilePage() {
-
-  const {authClient } = useAuth();
-  const {botActor} = createSearchNewsActor(authClient);
+  const { authClient } = useAuth();
   const { principal, logout, isLoading } = useAuth();
   const { isLoading: isGlobalLoading } = useLoading();
-  const [actor, setActor] = useState<any>(botActor);
+  
+  // Initialize actors as null and set them after component mounts
+  const [actors, setActors] = useState<any>(null);
   const [icpBalance, setIcpBalance] = useState<string | null>(null);
   const [ckBalance, setCkBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [status, setStatus] = useState<UserStatus | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [isSubscribing, setIsSubscribing] = useState<string | null>(null);
+
+  // Initialize actors when component mounts
+  useEffect(() => {
+    const initializeActors = async () => {
+      if (authClient) {
+        try {
+          const createdActors = await createSearchNewsActor(authClient);
+          setActors(createdActors);
+        } catch (error) {
+          console.error("Error initializing actors:", error);
+        }
+      }
+    };
+    
+    initializeActors();
+  }, [authClient]);
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -68,8 +83,8 @@ export default function ProfilePage() {
   };
 
   const subscribePlan = async (plan: "Standard" | "Pro" | "Premium") => {
-    if (!actor) {
-      showToast('error', 'Please login first!');
+    if (!actors?.botActor) {
+      showToast('error', 'Please wait for the system to load or try refreshing the page.');
       return;
     }
 
@@ -92,9 +107,8 @@ export default function ProfilePage() {
     }
 
     try {
-      const res = await actor.subscribe(planObj);
+      const res = await actors.botActor.subscribe(planObj);
 
-      // Check if the canister returned a structured result (Ok/Err)
       if (res && 'Ok' in res) {
         showToast('success', `${plan} plan activated successfully!`);
         await fetchStatus();
@@ -116,7 +130,6 @@ export default function ProfilePage() {
       console.error("Error subscribing to plan:", err);
       let message = "An error occurred while subscribing to the plan.";
 
-      // Parse the error message string for known canister reject messages
       const errorMessageString = String(err).toLowerCase();
       
       if (errorMessageString.includes('Saldo insuficiente') || errorMessageString.includes('⚠️  ')) {
@@ -132,8 +145,13 @@ export default function ProfilePage() {
   };
 
   const fetchStatus = async () => {
+    if (!actors?.botActor) {
+      console.warn("Bot actor not available yet");
+      return;
+    }
+
     try {
-      const res = (await botActor.get_user_status()) as any;
+      const res = await actors.botActor.get_user_status();
       console.log("User status:", res);
       if (res && res.length > 0) {
         setStatus(res[0] as UserStatus);
@@ -141,7 +159,7 @@ export default function ProfilePage() {
         setStatus(null);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching user status:", err);
     }
   };
 
@@ -159,20 +177,28 @@ export default function ProfilePage() {
   };
 
   useEffect(() => {
-    if (principal) {
+    if (principal && actors) {
       const fetchAllData = async () => {
         setIsLoadingBalance(true);
-        await Promise.all([fetchICPBalance(principal), fetchCkBTCBalance(principal), fetchStatus()]);
+        await Promise.all([
+          fetchICPBalance(principal), 
+          fetchCkBTCBalance(principal), 
+          fetchStatus()
+        ]);
         setIsLoadingBalance(false);
       };
       fetchAllData();
     }
-  }, [principal]);
+  }, [principal, actors]); // Added actors as dependency
 
   const handleRefresh = async () => {
-    if (!principal) return;
+    if (!principal || !actors) return;
     setIsLoadingBalance(true);
-    await Promise.all([fetchICPBalance(principal), fetchCkBTCBalance(principal), fetchStatus()]);
+    await Promise.all([
+      fetchICPBalance(principal), 
+      fetchCkBTCBalance(principal), 
+      fetchStatus()
+    ]);
     setIsLoadingBalance(false);
   };
 
@@ -209,9 +235,60 @@ export default function ProfilePage() {
 
   const currentPlan = status ? Object.keys(status.plan)[0] : null;
 
+  // Show loading state while actors are being initialized
+  if (!actors) {
+    return (
+      <div className="flex flex-col min-h-screen text-white font-sans lg:pl-72">
+        <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+          <div 
+              className="absolute w-full h-full top-0 left-0 bg-transparent"
+              style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                  backgroundSize: '2rem 2rem',
+                  animation: 'grid-pan 60s linear infinite',
+              }}
+          ></div>
+        </div>
+        
+        <Sidebar />
+        
+        <main className="flex flex-col flex-grow items-center justify-center px-4 pt-32 pb-20">
+          <div className="flex items-center gap-3">
+            <RefreshCw className="w-6 h-6 animate-spin text-[#FF4D00]" />
+            <p className="text-lg">Loading system components...</p>
+          </div>
+        </main>
+        
+        <Footer />
+        
+        <style jsx global>{`
+          @keyframes grid-pan {
+              0% { background-position: 0% 0%; }
+              100% { background-position: 100% 100%; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-[#0B0E13] text-white font-sans">
-      <Navbar />
+    <div className="flex flex-col min-h-screen text-white font-sans lg:pl-72">
+    
+      {/* --- CÓDIGO DO FUNDO ADICIONADO AQUI --- */}
+      <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+          <div 
+              className="absolute w-full h-full top-0 left-0 bg-transparent"
+              style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                  backgroundSize: '2rem 2rem',
+                  animation: 'grid-pan 60s linear infinite',
+              }}
+          ></div>
+      </div>
+    
+      <Sidebar />
 
       {/* Toast Notification */}
       {toast && (
@@ -454,6 +531,14 @@ export default function ProfilePage() {
       </main>
 
       <Footer />
+
+      {/* --- CÓDIGO DO CSS ADICIONADO AQUI --- */}
+      <style jsx global>{`
+        @keyframes grid-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+      `}</style>
     </div>
   );
-} 
+}
