@@ -36,6 +36,7 @@ actor class PostsCanister() {
     id: PostId;
     author: UserId;
     title: Text;
+    subtitle: Text;
     content: Text;
     imageUrl: Text;
     location: Text;
@@ -55,8 +56,7 @@ actor class PostsCanister() {
 
   // --- CONFIG (Canisters externos) ---
 
-  let usersCanisterId = Principal.fromText("aaaaa-aa"); // SUBSTITUIR PELO ID REAL
-  let taasProxyCanisterId = Principal.fromText("aaaaa-aa"); // SUBSTITUIR PELO ID REAL
+  let taasProxyCanisterId = Principal.fromText("h7vld-naaaa-aaaaf-qbgsq-cai"); // SUBSTITUIR PELO ID REAL
 
   // --- Funções auxiliares ---
 
@@ -85,7 +85,7 @@ actor class PostsCanister() {
 
 
 
-  public shared(msg) func createPost(title: Text, content: Text, imageUrl: Text, location: Text): async Post {
+  public shared(msg) func createPost(title: Text, subtitle: Text, content: Text, imageUrl: Text, location: Text): async Post {
     let caller = msg.caller;
 
     // if (not await usersCanister.isJournalist(caller)) {
@@ -97,6 +97,7 @@ actor class PostsCanister() {
       id = postId;
       author = caller;
       title = title;
+      subtitle = subtitle;
       content = content;
       imageUrl = imageUrl;
       location = location;

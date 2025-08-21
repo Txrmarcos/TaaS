@@ -61,14 +61,17 @@ export default function PublishPage() {
     // Initialize the actor when authClient is available
     useEffect(() => {
         const initializeActors = async () => {
-            if (authClient) {
+            if (authClient && isAuthenticated) {
                 try {
+                    console.log("Initializing actors...");
                     const actors = await createSearchNewsActor(authClient);
                     if (actors && actors.usersActor) {
                         setUsersActor(actors.usersActor);
+                        console.log("Users actor initialized");
                     }
                     if (actors && actors.postNewsActor) {
                         setPostsActor(actors.postNewsActor);
+                        console.log("Posts actor initialized");
                     }
                 } catch (err) {
                     console.error("Error creating actors:", err);
@@ -78,11 +81,17 @@ export default function PublishPage() {
         };
 
         initializeActors();
-    }, [authClient]);
+    }, [authClient, isAuthenticated]);
 
     useEffect(() => {
         const checkUserRole = async () => {
             if (!isAuthenticated || !authClient || !principal || !usersActor) {
+                console.log("Missing requirements for role check:", {
+                    isAuthenticated,
+                    hasAuthClient: !!authClient,
+                    hasPrincipal: !!principal,
+                    hasUsersActor: !!usersActor
+                });
                 setIsLoadingRole(false);
                 setIsJournalist(false);
                 return;
@@ -100,25 +109,30 @@ export default function PublishPage() {
                     return;
                 }
 
-                // Check if user is journalist
+                // Check if user is journalist - pass the principal directly
                 const journalistStatus = await usersActor.isJournalist(principal);
-                console.log("Journalist status:", journalistStatus);
+                console.log("Journalist status response:", journalistStatus);
                 
-                setIsJournalist(journalistStatus);
+                setIsJournalist(Boolean(journalistStatus));
                 setError(null);
                 
             } catch (err: any) {
                 console.error("Error checking journalist status:", err);
                 setIsJournalist(false);
-                setError(`Error checking journalist status: ${err.message || "Unknown error"}`);
+                // Only show error if it's not a "user not found" type error
+                if (!err.message?.includes('not found') && !err.message?.includes('does not exist')) {
+                    setError(`Error checking journalist status: ${err.message || "Unknown error"}`);
+                }
             } finally {
                 setIsLoadingRole(false);
             }
         };
 
-        if (isAuthenticated && usersActor) {
+        // Only check role when we have all required components
+        if (isAuthenticated && authClient && principal && usersActor) {
             checkUserRole();
-        } else {
+        } else if (!isAuthenticated) {
+            // If not authenticated, reset states
             setIsLoadingRole(false);
             setIsJournalist(false);
         }
@@ -150,9 +164,22 @@ export default function PublishPage() {
     }, [isJournalist]);
 
     const handlePublish = async () => {
-        if (!isJournalist) return;
-        if (!title.trim() || !content.trim()) {
+        if (!isJournalist) {
+            setMessage({ type: 'error', text: "You must be a registered journalist to publish." });
+            return;
+        }
+
+        // Validate required fields
+        const titleTrimmed = title.trim();
+        const contentTrimmed = content.trim();
+        
+        if (!titleTrimmed || !contentTrimmed) {
             setMessage({ type: 'error', text: "Title and content are required." });
+            return;
+        }
+
+        if (!postsActor) {
+            setMessage({ type: 'error', text: "Connection to network not available. Please try again." });
             return;
         }
 
@@ -160,14 +187,32 @@ export default function PublishPage() {
         setMessage(null);
         
         try {
-            const post = await postsActor.createPost(title, subtitle, content, attachment);
-            // await searchNewsActor.searchNews(prompt)
-            // logica do taas
-            //  post.id
-            //chamar canister id do taas, passar o content dps disso chamar o canister
-            // postNewsActor.updateTaaSStatus(post.id, ); (Rejected; Verified; Pending)
+            console.log("Publishing article with data:", {
+                title: titleTrimmed,
+                subtitle: subtitle.trim() || "", // Ensure subtitle is never null
+                content: contentTrimmed,
+                hasAttachment: !!attachment
+            });
+
+            // Create post with proper parameters - ensure subtitle is always a string
+            const subtitleToSend = subtitle.trim() || "";
+            
+            const post = await postsActor.createPost(
+                titleTrimmed, 
+                subtitleToSend, 
+                contentTrimmed, 
+                "",
+                ""
+            );
+            
+            console.log("Post created successfully:", post);
+            
+            // Simulate TaaS processing
             await new Promise(resolve => setTimeout(resolve, 2000));
+            
             setMessage({ type: 'success', text: "Your article was successfully published on the network!" });
+            
+            // Reset form
             setTitle("");
             setSubtitle("");
             setContent("");
@@ -176,11 +221,12 @@ export default function PublishPage() {
                 fileInputRef.current.value = "";
             }
 
+            // Add to publications list
             const newPublication: Publication = {
-                id: Date.now(),
-                title,
-                subtitle,
-                contentSnippet: content.substring(0, 150) + "...",
+                id: Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000, // Random ID for demo purposes
+                title: titleTrimmed,
+                subtitle: subtitleToSend,
+                contentSnippet: contentTrimmed.substring(0, 150) + (contentTrimmed.length > 150 ? "..." : ""),
                 publishedAt: new Date(),
                 views: 0
             };
@@ -188,7 +234,19 @@ export default function PublishPage() {
             
         } catch (err: any) {
             console.error("Error publishing article:", err);
-            setMessage({ type: 'error', text: `Error publishing article: ${err.message || "Unknown error"}` });
+            let errorMessage = "Unknown error occurred";
+            
+            if (err.message) {
+                if (err.message.includes("Invalid text argument")) {
+                    errorMessage = "Invalid input data. Please check your title and content.";
+                } else if (err.message.includes("authentication")) {
+                    errorMessage = "Authentication error. Please log in again.";
+                } else {
+                    errorMessage = err.message;
+                }
+            }
+            
+            setMessage({ type: 'error', text: `Error publishing article: ${errorMessage}` });
         } finally {
             setIsPublishing(false);
         }
@@ -203,12 +261,44 @@ export default function PublishPage() {
 
         try {
             setIsLoadingRole(true);
-            await usersActor.registerAsJournalist();
-            setIsJournalist(true);
             setError(null);
+            
+            console.log("Registering as journalist...");
+            
+            // Call the registration method
+            const result = await usersActor.registerAsJournalist();
+            console.log("Registration result:", result);
+            
+            // Recheck journalist status
+            const journalistStatus = await usersActor.isJournalist(principal);
+            console.log("New journalist status:", journalistStatus);
+            
+            setIsJournalist(Boolean(journalistStatus));
+            
+            if (journalistStatus) {
+                setMessage({ type: 'success', text: "Successfully registered as journalist!" });
+            } else {
+                setError("Registration completed but journalist status not confirmed. Please refresh the page.");
+            }
+            
         } catch (err: any) {
             console.error("Error registering as journalist:", err);
-            setError(`Error registering as journalist: ${err.message || "Unknown error"}`);
+            
+            let errorMessage = "Unknown error occurred";
+            if (err.message) {
+                if (err.message.includes("already registered")) {
+                    errorMessage = "You are already registered as a journalist.";
+                    // Check status again in case there was a state sync issue
+                    try {
+                        const journalistStatus = await usersActor.isJournalist(principal);
+                        setIsJournalist(Boolean(journalistStatus));
+                    } catch {}
+                } else {
+                    errorMessage = err.message;
+                }
+            }
+            
+            setError(`Error registering as journalist: ${errorMessage}`);
         } finally {
             setIsLoadingRole(false);
         }
@@ -225,6 +315,7 @@ export default function PublishPage() {
         return date.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
     };
 
+    // Show loading screen while checking authentication and roles
     if (isLoadingRole) {
         return (
             <div className="min-h-screen flex items-center justify-center">
