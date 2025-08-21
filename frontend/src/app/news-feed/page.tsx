@@ -6,8 +6,8 @@ import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { Newspaper } from "lucide-react";
 import BigNewsCard, { BigArticle } from "@/components/ui/BigNewsCard";
-import { AuthClient } from "@dfinity/auth-client";
 import { createSearchNewsActor } from "../utils/canister";
+import { useAuth } from "../auth/useAuth";
 
 // Você pode ajustar as tags se quiser variedade, mas "Highlights" é 100% seguro com o tipo Tag
 const NEWS: Array<{
@@ -83,68 +83,99 @@ const NEWS: Array<{
 ];
 
 export default function NewsFeedPage() {
+  const { authClient, isAuthenticated } = useAuth(); // Move useAuth para o nível do componente
   const [selectedTag, setSelectedTag] = React.useState<Tag>("Highlights");
   const [likedIds, setLikedIds] = React.useState<number[]>([]);
   const [selected, setSelected] = React.useState<BigArticle | null>(null);
   const [supportingId, setSupportingId] = React.useState<number | null>(null);
   const [newsData, setNewsData] = React.useState<typeof NEWS>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   const handleOpen = (a: BigArticle) => setSelected(a);
   const handleClose = () => setSelected(null);
 
+  // Effect for loading liked IDs from localStorage
   React.useEffect(() => {
     try {
       const saved = localStorage.getItem("likedIds");
       if (saved) setLikedIds(JSON.parse(saved));
-    } catch {}
+    } catch (error) {
+      console.error("Error loading liked IDs:", error);
+    }
   }, []);
 
+  // Effect for saving liked IDs to localStorage
   React.useEffect(() => {
     try {
       localStorage.setItem("likedIds", JSON.stringify(likedIds));
-    } catch {}
+    } catch (error) {
+      console.error("Error saving liked IDs:", error);
+    }
   }, [likedIds]);
 
+  // Effect for fetching news data
   React.useEffect(() => {
     async function fetchNews() {
+      setIsLoading(true);
+      
       // Toggle opcional para forçar mock: defina NEXT_PUBLIC_USE_MOCK=1
       if (process.env.NEXT_PUBLIC_USE_MOCK === "1") {
         setNewsData(NEWS);
+        setIsLoading(false);
         return;
       }
 
       try {
-        const authClient = await AuthClient.create();
-        const { postNewsActor } = await createSearchNewsActor(authClient);
+        // Só tenta buscar dados reais se authClient estiver disponível
+        if (!authClient) {
+          setNewsData(NEWS);
+          setIsLoading(false);
+          return;
+        }
 
+        const actors = await createSearchNewsActor(authClient);
+        
+        // Verifica se os actors foram criados corretamente
+        if (!actors || !actors.postNewsActor) {
+          console.warn("Actors not available, using mock data");
+          setNewsData(NEWS);
+          setIsLoading(false);
+          return;
+        }
+
+        const { postNewsActor } = actors;
         const posts = await postNewsActor.getAllPosts();
 
         // Se a API voltar vazia, usa mock como fallback
         if (!posts || posts.length === 0) {
+          console.info("No posts returned from API, using mock data");
           setNewsData(NEWS);
+          setIsLoading(false);
           return;
         }
 
-        const formatted = posts.map((post: any) => ({
-          id: Number(post.id),
-          title: post.title,
-          description: String(post.description || "").slice(0, 100) + "...",
+        const formatted = posts.map((post: any, index: number) => ({
+          id: Number(post.id) || index + 1,
+          title: post.title || "Untitled",
+          description: String(post.description || post.content || "No description available").slice(0, 100) + "...",
           tag: "Highlights" as Tag, // você pode mapear tags reais aqui
           author: post.author?.toText?.() ?? "anonymous",
-          likes: Array.isArray(post.likes) ? post.likes.length : 0,
-          content: post.content,
-          url: "",
+          likes: Array.isArray(post.likes) ? post.likes.length : Number(post.likes) || 0,
+          content: post.content || "Content not available",
+          url: post.url || "",
         }));
 
         setNewsData(formatted);
       } catch (err) {
         console.error("Erro ao buscar posts:", err);
         setNewsData(NEWS); // fallback
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchNews();
-  }, []);
+  }, [authClient]); // Depende apenas do authClient
 
   const filteredNews = React.useMemo(() => {
     if (selectedTag === "Highlights") {
@@ -169,6 +200,22 @@ export default function NewsFeedPage() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen bg-[#0B0E13] text-white font-sans">
+        <Sidebar />
+        <div className="flex flex-col flex-1">
+          <main className="flex flex-col flex-grow items-center justify-center px-2 py-8">
+            <div className="text-center">
+              <div className="loader mb-4"></div>
+              <h2 className="text-2xl font-bold text-white">Loading News Feed...</h2>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="flex min-h-screen bg-[#0B0E13] text-white font-sans">
       <Sidebar />

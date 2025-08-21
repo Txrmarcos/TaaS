@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/auth/useAuth"; 
+import { useAuth } from "@/context/AuthContext"; // Fixed import path
 import { Copy, Check, Loader2, User, FileText, ShieldCheck, ArrowRight } from "lucide-react";
-import { createSearchNewsActor } from "../utils/canister"; // Ajuste o caminho conforme sua estrutura
+import { createSearchNewsActor } from "../utils/canister";
 
 export default function RegisterProfilePage() {
     const router = useRouter();
-    const { principal, authClient } = useAuth();
+    const { principal, authClient, isAuthenticated, isLoading } = useAuth();
     
     const [username, setUsername] = useState("");
     const [bio, setBio] = useState("");
@@ -18,28 +18,55 @@ export default function RegisterProfilePage() {
     const [error, setError] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
     const [isReady, setIsReady] = useState(false);
+    const [actors, setActors] = useState<{usersActor: any} | null>(null);
+
+    // Initialize actors when authClient is available
+    useEffect(() => {
+        if (authClient) {
+            try {
+                const { usersActor }:any = createSearchNewsActor(authClient);
+                setActors({ usersActor });
+                console.log("Actors created successfully");
+            } catch (error) {
+                console.error("Error creating actors:", error);
+            }
+        }
+    }, [authClient]);
 
     useEffect(() => {
         const checkFirstLogin = async () => {
-            if (!principal || !authClient) {
-                console.log("Missing requirements:", { principal: !!principal, authClient: !!authClient });
+            // Wait for authentication to complete
+            if (isLoading) {
+                console.log("Authentication still loading...");
+                return;
+            }
+
+            if (!isAuthenticated || !principal || !authClient || !actors?.usersActor) {
+                console.log("Missing requirements:", { 
+                    isAuthenticated, 
+                    principal: !!principal, 
+                    authClient: !!authClient,
+                    usersActor: !!actors?.usersActor
+                });
+                
+                // If not authenticated, redirect to login
+                if (!isAuthenticated && !isLoading) {
+                    router.push("/");
+                    return;
+                }
                 return;
             }
 
             try {
-                console.log("Creating actors...");
-                const { usersActor } = createSearchNewsActor(authClient);
-                
-                // Check what methods are available (for debugging)
-                console.log("Actor created successfully");
+                console.log("Checking existing profile...");
                 
                 // Try to get existing profile first
                 try {
-                    const profile = await usersActor.getProfile(principal);
+                    const profile = await actors.usersActor.getProfile(principal);
                     console.log("Existing profile found:", profile);
                     
-                    // If profile exists and firstLogin is false, redirect to chat
-                    if (!profile.firstLogin) {
+                    // If profile exists and firstLogin is false, redirect to news feed
+                    if (profile && !profile.firstLogin) {
                         console.log("User has already completed registration, redirecting...");
                         router.push("/news-feed");
                         return;
@@ -47,7 +74,7 @@ export default function RegisterProfilePage() {
                     
                     console.log("User has profile but hasn't completed first login setup");
                 } catch (profileError) {
-                    console.log("No existing profile found - this is expected for new users");
+                    console.log("No existing profile found - this is expected for new users:", profileError);
                 }
                 
                 // Set component as ready
@@ -61,7 +88,7 @@ export default function RegisterProfilePage() {
         };
 
         checkFirstLogin();
-    }, [principal, authClient, router]);
+    }, [principal, authClient, actors, isAuthenticated, isLoading, router]);
 
     const principalText = principal ? principal.toText() : "Loading identity...";
 
@@ -87,18 +114,19 @@ export default function RegisterProfilePage() {
             setFormState('error');
             return;
         }
+
+        if (!actors?.usersActor) {
+            setError("System not ready. Please wait a moment and try again.");
+            setFormState('error');
+            return;
+        }
         
         setFormState('loading');
         setError(null);
 
         try {
-            if (!authClient) {
+            if (!authClient || !isAuthenticated) {
                 throw new Error("Authentication client not available. Please login first.");
-            }
-
-            const isAuthenticated = await authClient.isAuthenticated();
-            if (!isAuthenticated) {
-                throw new Error("Not authenticated. Please login first.");
             }
 
             console.log("Auth status:", {
@@ -110,9 +138,6 @@ export default function RegisterProfilePage() {
             // Small delay to ensure auth stability
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            console.log("Creating actors with authenticated client...");
-            const { usersActor } = createSearchNewsActor(authClient);
-            
             console.log("Calling createUser with:", {
                 username: username.trim(),
                 bio: bio.trim(),
@@ -120,7 +145,7 @@ export default function RegisterProfilePage() {
             });
             
             // Create user profile
-            const userProfile = await usersActor.createUser(
+            const userProfile = await actors.usersActor.createUser(
                 username.trim(),
                 bio.trim(),
                 profileImgUrl.trim() || ""
@@ -131,13 +156,18 @@ export default function RegisterProfilePage() {
             // Register as journalist if requested
             if (isJournalist) {
                 console.log("Registering user as journalist...");
-                await usersActor.registerAsJournalist();
-                console.log("User registered as journalist successfully");
+                try {
+                    await actors.usersActor.registerAsJournalist();
+                    console.log("User registered as journalist successfully");
+                } catch (journalistError) {
+                    console.warn("Could not register as journalist:", journalistError);
+                    // Don't fail the whole registration for this
+                }
             }
             
             // Mark first login as completed (optional, since the Motoko code handles this automatically)
             try {
-                await usersActor.markFirstLoginDone();
+                await actors.usersActor.markFirstLoginDone();
                 console.log("First login marked as completed");
             } catch (markError) {
                 console.warn("Could not mark first login as done (this might be okay):", markError);
@@ -162,12 +192,70 @@ export default function RegisterProfilePage() {
                 errorMessage = "A profile already exists for this account. Please refresh the page.";
             } else if (err.message?.includes("not authenticated") || err.message?.includes("not available")) {
                 errorMessage = "Authentication issue. Please try logging out and logging back in.";
+            } else if (err.message?.includes("username") || err.message?.includes("nome")) {
+                errorMessage = "Username is already taken. Please choose a different one.";
             }
             
             setError(errorMessage);
             setFormState('error');
         }
     };
+
+    // Show loading state while authentication is initializing
+    if (isLoading) {
+        return (
+            <>
+                <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+                    <div 
+                        className="absolute w-full h-full top-0 left-0 bg-transparent"
+                        style={{
+                            backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                            backgroundSize: '2rem 2rem',
+                            animation: 'grid-pan 60s linear infinite',
+                        }}
+                    ></div>
+                </div>
+                <main className="min-h-screen flex items-center justify-center p-4 font-sans">
+                    <div className="flex flex-col items-center space-y-4">
+                        <Loader2 className="w-8 h-8 animate-spin text-[#FF4D00]" />
+                        <p className="text-white/60">Initializing...</p>
+                    </div>
+                </main>
+            </>
+        );
+    }
+
+    // Show error if not authenticated
+    if (!isAuthenticated) {
+        return (
+            <>
+                <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+                    <div 
+                        className="absolute w-full h-full top-0 left-0 bg-transparent"
+                        style={{
+                            backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                            backgroundSize: '2rem 2rem',
+                            animation: 'grid-pan 60s linear infinite',
+                        }}
+                    ></div>
+                </div>
+                <main className="min-h-screen flex items-center justify-center p-4 font-sans">
+                    <div className="text-center space-y-4">
+                        <h2 className="text-2xl font-bold text-white">Authentication Required</h2>
+                        <p className="text-white/60">Please log in to create your profile.</p>
+                        <button 
+                            onClick={() => router.push("/")}
+                            className="bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white font-semibold py-2 px-6 rounded-lg hover:opacity-90 transition-opacity"
+                        >
+                            Go to Login
+                        </button>
+                    </div>
+                </main>
+            </>
+        );
+    }
 
     return (
         <>
@@ -298,7 +386,7 @@ export default function RegisterProfilePage() {
                         <div>
                              <button
                                 type="submit"
-                                disabled={formState === 'loading' || formState === 'success'}
+                                disabled={formState === 'loading' || formState === 'success' || !actors?.usersActor}
                                 className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white font-semibold py-3 px-4 rounded-lg hover:opacity-90 transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {formState === 'loading' && <Loader2 className="h-5 w-5 animate-spin" />}

@@ -123,18 +123,18 @@ export async function createSearchNewsActor(authClient: AuthClient | null) {
   
   const agent = new HttpAgent({
     identity,
-    host:"http://127.0.0.1:4943",
+    host:"https://ic0.app",
   });
   
   if (process.env.NODE_ENV !== "production") {
     await agent.fetchRootKey();
   }
   
-    const round = ids["round-table"]?.ic;
-    const plan = ids["bot-plan"]?.ic;
-    const news = ids["search-news"]?.ic;
-    const user = ids["users"]?.ic;
-    const posts = ids["posts"]?.ic;
+  const round = ids["round-table"]?.ic;
+  const plan = ids["bot-plan"]?.ic;
+  const news = ids["search-news"]?.ic;
+  const user = ids["users"]?.ic;
+  const posts = ids["posts"]?.ic;
 
   const originalUsersActor = Actor.createActor(usersIdlFactory, {
     agent,

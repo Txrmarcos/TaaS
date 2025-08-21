@@ -74,8 +74,6 @@ export default function FinancePage() {
 
   const [exchangeRate, setExchangeRate] = useState<number>(0.00002); // Exemplo
 
-  // Lógica de busca de saldos e outras funções...
-  // (Todo o código da lógica permanece o mesmo)
     const fetchICPBalance = async (userPrincipal: Principal) => {
     try {
       const agent = new HttpAgent({

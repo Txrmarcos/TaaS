@@ -51,15 +51,38 @@ const MOCK_PUBLICATIONS: Publication[] = [
 export default function PublishPage() {
     const { isAuthenticated, authClient, principal } = useAuth();
     const router = useRouter();
-    const { usersActor,searchNewsActor } = createSearchNewsActor(authClient);
     
     const [isJournalist, setIsJournalist] = useState(false); 
     const [isLoadingRole, setIsLoadingRole] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [usersActor, setUsersActor] = useState<any>(null);
+    const [postsActor, setPostsActor] = useState<any>(null);
+
+    // Initialize the actor when authClient is available
+    useEffect(() => {
+        const initializeActors = async () => {
+            if (authClient) {
+                try {
+                    const actors = await createSearchNewsActor(authClient);
+                    if (actors && actors.usersActor) {
+                        setUsersActor(actors.usersActor);
+                    }
+                    if (actors && actors.postNewsActor) {
+                        setPostsActor(actors.postNewsActor);
+                    }
+                } catch (err) {
+                    console.error("Error creating actors:", err);
+                    setError("Failed to initialize connection to the network.");
+                }
+            }
+        };
+
+        initializeActors();
+    }, [authClient]);
 
     useEffect(() => {
         const checkUserRole = async () => {
-            if (!isAuthenticated || !authClient || !principal) {
+            if (!isAuthenticated || !authClient || !principal || !usersActor) {
                 setIsLoadingRole(false);
                 setIsJournalist(false);
                 return;
@@ -77,29 +100,29 @@ export default function PublishPage() {
                     return;
                 }
 
-                // Cria a conexão com o canister
-
-                const isJournalist = await usersActor.isJournalist(principal);
-                console.log("Journalist status:", isJournalist);
+                // Check if user is journalist
+                const journalistStatus = await usersActor.isJournalist(principal);
+                console.log("Journalist status:", journalistStatus);
                 
-                setIsJournalist(isJournalist);
+                setIsJournalist(journalistStatus);
                 setError(null);
                 
             } catch (err: any) {
                 console.error("Error checking journalist status:", err);
                 setIsJournalist(false);
+                setError(`Error checking journalist status: ${err.message || "Unknown error"}`);
             } finally {
                 setIsLoadingRole(false);
             }
         };
 
-        if (isAuthenticated) {
+        if (isAuthenticated && usersActor) {
             checkUserRole();
         } else {
             setIsLoadingRole(false);
             setIsJournalist(false);
         }
-    }, [isAuthenticated, authClient, principal, router]);
+    }, [isAuthenticated, authClient, principal, usersActor]);
 
     const [title, setTitle] = useState("");
     const [subtitle, setSubtitle] = useState("");
@@ -137,8 +160,7 @@ export default function PublishPage() {
         setMessage(null);
         
         try {
-
-            // const post = await  postNewsActor.createPost(title, subtitle, content, attachment);
+            const post = await postsActor.createPost(title, subtitle, content, attachment);
             // await searchNewsActor.searchNews(prompt)
             // logica do taas
             //  post.id
@@ -174,7 +196,7 @@ export default function PublishPage() {
 
     // Função para tentar registrar como jornalista
     const handleRegisterAsJournalist = async () => {
-        if (!isAuthenticated || !authClient || !principal) {
+        if (!isAuthenticated || !authClient || !principal || !usersActor) {
             setError("You need to be authenticated to register as journalist.");
             return;
         }
@@ -183,6 +205,7 @@ export default function PublishPage() {
             setIsLoadingRole(true);
             await usersActor.registerAsJournalist();
             setIsJournalist(true);
+            setError(null);
         } catch (err: any) {
             console.error("Error registering as journalist:", err);
             setError(`Error registering as journalist: ${err.message || "Unknown error"}`);

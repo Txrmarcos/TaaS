@@ -4,14 +4,14 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../auth/useAuth";
 import {
     Plus, ExternalLink, ThumbsUp, ThumbsDown, Globe, Clock, CheckCircle, XCircle, Shield, Link,
-    TrendingUp, Calendar, User, GitPullRequest, Award, Search, Eye, ArrowRight, Zap, Target,
+    TrendingUp, Calendar, User, GitPullRequest, Award, Search, Eye, ArrowRight, Zap, Target, RefreshCw,
 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { Principal } from "@dfinity/principal"; 
 import { createSearchNewsActor } from "../utils/canister";
 
-// Canister data
+// Canister data types
 type RawProposal = {
     id: bigint;
     name: string;
@@ -43,27 +43,57 @@ type FormattedProposal = {
 
 export default function RoundtablePage() {
     const { principal, isAuthenticated, authClient } = useAuth();
+    
+    // Actors state
+    const [actors, setActors] = useState<any>(null);
+    
+    // Data states
     const [proposals, setProposals] = useState<FormattedProposal[]>([]); 
+    const [whitelist, setWhitelist] = useState<string[]>([]);
+    
+    // Loading states
     const [isLoadingProposals, setIsLoadingProposals] = useState(true);
+    const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Form states
     const [name, setName] = useState("");
     const [url, setUrl] = useState("");
     const [prLink, setPrLink] = useState("");
     const [desc, setDesc] = useState("");
-    const [message, setMessage] = useState("");
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [showForm, setShowForm] = useState(false);
-    const [isLoadingWhitelist, setIsLoadingWhitelist] = useState(true);
-    const [whitelist, setWhitelist] = useState<string[]>([]);
+    const [message, setMessage] = useState("");
+    
+    // Filter states
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [showFullWhitelist, setShowFullWhitelist] = useState(false);
 
-    const { roundtableActor,searchNewsActor } = createSearchNewsActor(authClient);
+    // Initialize actors when component mounts
+    useEffect(() => {
+        const initializeActors = async () => {
+            if (authClient) {
+                try {
+                    const createdActors = await createSearchNewsActor(authClient);
+                    setActors(createdActors);
+                } catch (error) {
+                    console.error("Error initializing actors:", error);
+                }
+            }
+        };
+        
+        initializeActors();
+    }, [authClient]);
     
     const fetchProposals = async () => {
+        if (!actors?.roundtableActor) {
+            console.warn("Roundtable actor not available yet");
+            return;
+        }
+
         setIsLoadingProposals(true);
         try {
-            const rawList = await roundtableActor.list_proposals() as RawProposal[];
+            const rawList = await actors.roundtableActor.list_proposals() as RawProposal[];
             
             const formattedList = rawList.map(p => ({
                 ...p,
@@ -82,19 +112,16 @@ export default function RoundtablePage() {
             setIsLoadingProposals(false);
         }
     };
-  
-     useEffect(() => {
-        const fetchData = async () => {
-            await fetchProposals();
-            await fetchWhitelist();
-        };
-        fetchData();
-    }, []);
 
     const fetchWhitelist = async () => {
+        if (!actors?.searchNewsActor) {
+            console.warn("Search news actor not available yet");
+            return;
+        }
+
         setIsLoadingWhitelist(true);
         try {
-            const domains = await searchNewsActor.getWhitelist();
+            const domains = await actors.searchNewsActor.getWhitelist();
             console.log("Whitelist fetched:", domains);
             setWhitelist(domains as string[]);
         } catch (err) {
@@ -104,8 +131,22 @@ export default function RoundtablePage() {
             setIsLoadingWhitelist(false);
         }
     };
+  
+    useEffect(() => {
+        if (actors) {
+            const fetchData = async () => {
+                await Promise.all([fetchProposals(), fetchWhitelist()]);
+            };
+            fetchData();
+        }
+    }, [actors]);
 
     const submitProposal = async () => {
+        if (!actors?.roundtableActor) {
+            setMessage("❌ Please wait for the system to load or try refreshing the page.");
+            return;
+        }
+
         if (!name.trim() || !url.trim() || !prLink.trim() || !desc.trim()) {
             setMessage("❌ Please fill in all fields");
             return;
@@ -113,12 +154,7 @@ export default function RoundtablePage() {
 
         setIsSubmitting(true);
         try {
-            await roundtableActor.propose_source(
-                name,
-                url,
-                prLink,
-                desc
-            );
+            await actors.roundtableActor.propose_source(name, url, prLink, desc);
             setMessage(`✅ Proposal submitted successfully!`);
             setName("");
             setUrl("");
@@ -135,8 +171,13 @@ export default function RoundtablePage() {
     };
 
     const vote = async (id: number, isFor: boolean) => {
+        if (!actors?.roundtableActor) {
+            setMessage("❌ Please wait for the system to load or try refreshing the page.");
+            return;
+        }
+
         try {
-            const res = await roundtableActor.vote_source(BigInt(id), isFor);
+            const res = await actors.roundtableActor.vote_source(BigInt(id), isFor);
             setMessage(res as string);
             fetchProposals();
         } catch (err) {
@@ -154,6 +195,7 @@ export default function RoundtablePage() {
         });
     };
 
+    // Calculate stats
     const stats = {
         total: proposals.length,
         approved: proposals.filter(p => 'Approved' in p.status).length,
@@ -180,6 +222,7 @@ export default function RoundtablePage() {
         return { text: "Pending", color: "text-amber-400 bg-amber-500/20 border-amber-500/30", icon: Clock };
     };
 
+    // Auto-hide messages after 5 seconds
     useEffect(() => {
         if (message) {
             const timer = setTimeout(() => {
@@ -188,6 +231,45 @@ export default function RoundtablePage() {
             return () => clearTimeout(timer);
         }
     }, [message]);
+
+    // Show loading state while actors are being initialized
+    if (!actors) {
+        return (
+            <div className="min-h-screen text-white">
+                <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+                    <div 
+                        className="absolute w-full h-full top-0 left-0 bg-transparent"
+                        style={{
+                            backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                            backgroundSize: '2rem 2rem',
+                            animation: 'grid-pan 60s linear infinite',
+                        }}
+                    ></div>
+                </div>
+
+                <Sidebar />
+                <main className="md:pl-20 lg:pl-72">
+                    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
+                        <div className="flex items-center justify-center h-64">
+                            <div className="flex items-center gap-3">
+                                <RefreshCw className="w-6 h-6 animate-spin text-[#FF4D00]" />
+                                <p className="text-lg">Loading system components...</p>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+                <Footer />
+                
+                <style jsx global>{`
+                    @keyframes grid-pan {
+                        0% { background-position: 0% 0%; }
+                        100% { background-position: 100% 100%; }
+                    }
+                `}</style>
+            </div>
+        );
+    }
     
     return (
         // A classe bg-[#0B0E13] foi removida daqui

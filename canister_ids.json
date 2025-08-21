@@ -5,6 +5,9 @@
   "frontend": {
     "ic": "5vhpn-tyaaa-aaaaf-qbija-cai"
   },
+  "posts": {
+    "ic": "tgn5p-rqaaa-aaaaf-qbrsq-cai"
+  },
   "round-table": {
     "ic": "54eer-fqaaa-aaaaf-qbiiq-cai"
   },
@@ -13,8 +16,5 @@
   },
   "users": {
     "ic": "uvn63-faaaa-aaaaf-qbrbq-cai"
-  },
-  "posts": {
-    "ic": "umunu-kh777-77774-qaaca-cai"
   }
 }

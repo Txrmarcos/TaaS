@@ -44,40 +44,63 @@ export default function BotTestPage() {
     const [verdict, setVerdict] = useState<Verdict | null>(null);
     const [loading, setLoading] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [actors, setActors] = useState<{botActor: any, searchNewsActor: any} | null>(null);
     
     const { principal, isAuthenticated, isLoading, authClient } = useAuth();
 
-    const { botActor, searchNewsActor } = createSearchNewsActor(authClient);
+    // Initialize actors when authClient is available
+    useEffect(() => {
+        const initializeActors = async () => {
+            if (authClient) {
+                try {
+                    const createdActors = await createSearchNewsActor(authClient);
+                    setActors(createdActors);
+                } catch (error) {
+                    console.error("Error initializing actors:", error);
+                }
+            }
+        };
+        
+        initializeActors();
+    }, [authClient]);
 
     useEffect(() => {
-        if (isAuthenticated && principal) {
+        if (isAuthenticated && principal && actors?.botActor) {
             fetchStatus();
         }
-    }, [isAuthenticated, principal]);
+    }, [isAuthenticated, principal, actors]);
 
     const fetchStatus = async () => {
-        if (!isAuthenticated || !principal) {
+        if (!isAuthenticated || !principal || !actors?.botActor) {
             return;
         }
         
         try {
-            const res = (await botActor.get_user_status()) as any;
-            setStatus(res[0] as UserStatus);
+            const res = await actors.botActor.get_user_status();
+            // Handle the response properly - it might be wrapped in an array or optional
+            if (res && res.length > 0) {
+                setStatus(res[0] as UserStatus);
+            } else if (res && typeof res === 'object') {
+                setStatus(res as UserStatus);
+            }
         } catch (err) {
             console.error("Error fetching status:", err);
         }
     };
 
     const handleSendPrompt = async () => {
-        if (!prompt.trim() || !isAuthenticated) return;
+        if (!prompt.trim() || !isAuthenticated || !actors?.searchNewsActor) return;
         
         try {
             setLoading(true);
             setVerdict(null);
-            const res = await searchNewsActor.searchNews(prompt);
+            const res = await actors.searchNewsActor.searchNews(prompt);
             console.log("Received verdict:", res);
             setVerdict(res as Verdict);
-            fetchStatus();
+            // Refresh status after making a request
+            if (actors?.botActor) {
+                fetchStatus();
+            }
         } catch (err) {
             console.error("Error processing prompt:", err);
             // Criar um verdict de erro em caso de falha
@@ -106,13 +129,12 @@ export default function BotTestPage() {
 
     // Função auxiliar para extrair o resultado do verdict
     const getVerdictResult = (verdict: Verdict | null): VerdictResult => {
-    if (!verdict || !verdict.result) return "Error";
-    if (verdict.result.True !== undefined) return "True";
-    if (verdict.result.False !== undefined) return "False";
-    if (verdict.result.Uncertain !== undefined) return "Uncertain";
-    return "Error";
-};
-
+        if (!verdict || !verdict.result) return "Error";
+        if (verdict.result.True !== undefined) return "True";
+        if (verdict.result.False !== undefined) return "False";
+        if (verdict.result.Uncertain !== undefined) return "Uncertain";
+        return "Error";
+    };
 
     // Função para obter o ícone baseado no resultado
     const getVerdictIcon = (result: VerdictResult) => {
@@ -127,8 +149,6 @@ export default function BotTestPage() {
                 return <AlertCircle className="w-5 h-5 text-red-500" />;
         }
     };
-
-    
 
     // Função para obter a cor do resultado
     const getVerdictColor = (result: VerdictResult) => {
@@ -217,7 +237,6 @@ export default function BotTestPage() {
     }
 
     return (
-        // A classe bg-[#0B0E13] foi removida daqui
         <div className="flex flex-col min-h-screen text-white font-sans">
             {/* --- FUNDO ADICIONADO --- */}
             <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
@@ -226,7 +245,6 @@ export default function BotTestPage() {
             </div>
 
             <Sidebar />
-
 
             {/* Layout principal corrigido para evitar conflito com a sidebar */}
             <main className="flex flex-col flex-grow px-4 pt-32 gap-6 ml-0 lg:ml-72">
@@ -303,7 +321,7 @@ export default function BotTestPage() {
 
                                     <button
                                         onClick={handleSendPrompt}
-                                        disabled={loading || !prompt.trim() || !isAuthenticated}
+                                        disabled={loading || !prompt.trim() || !isAuthenticated || !actors?.searchNewsActor}
                                         className="w-full px-6 py-4 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 hover:scale-[1.02] transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 font-semibold flex items-center justify-center space-x-3 text-sm sm:text-base"
                                     >
                                         {loading ? (
@@ -397,9 +415,40 @@ export default function BotTestPage() {
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-white/5 rounded-xl p-4 border border-white/10"><div className="flex items-center space-x-3"><div className={`w-8 h-8 ${getPlanColor(status.plan)} rounded-lg flex items-center justify-center text-sm`}>{getPlanIcon(status.plan)}</div><div><p className="text-xs text-white/50">Current Plan</p><p className="text-white font-semibold">{getPlanName(status.plan)}</p></div></div></div>
-                                    <div className="bg-white/5 rounded-xl p-4 border border-white/10"><div className="flex items-center justify-between"><p className="text-xs text-white/50">Requests Left</p><p className="text-white font-semibold text-lg">{status.requestsLeft}</p></div><div className="w-full bg-white/10 rounded-full h-2 mt-2"><div className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300" style={{ width: `${Math.min((Number(status.requestsLeft) / 500) * 100, 100)}%` }}/></div></div>
-                                    <div className="bg-white/5 rounded-xl p-4 border border-white/10"><div className="flex items-center space-x-3"><div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center"><Clock className="w-4 h-4 text-white" /></div><div><p className="text-xs text-white/50">Reset in</p><p className="text-white font-semibold">{formatResetTime(status.resetAt)}</p></div></div></div>
+                                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                        <div className="flex items-center space-x-3">
+                                            <div className={`w-8 h-8 bg-gradient-to-r ${getPlanColor(status.plan)} rounded-lg flex items-center justify-center text-sm`}>
+                                                {getPlanIcon(status.plan)}
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-white/50">Current Plan</p>
+                                                <p className="text-white font-semibold">{getPlanName(status.plan)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs text-white/50">Requests Left</p>
+                                            <p className="text-white font-semibold text-lg">{status.requestsLeft}</p>
+                                        </div>
+                                        <div className="w-full bg-white/10 rounded-full h-2 mt-2">
+                                            <div 
+                                                className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300" 
+                                                style={{ width: `${Math.min((Number(status.requestsLeft) / 500) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+                                        <div className="flex items-center space-x-3">
+                                            <div className="w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+                                                <Clock className="w-4 h-4 text-white" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-white/50">Reset in</p>
+                                                <p className="text-white font-semibold">{formatResetTime(status.resetAt)}</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
@@ -409,6 +458,14 @@ export default function BotTestPage() {
                                     <p className="text-white/80">
                                         {isAuthenticated ? "No status loaded. Click \"Refresh\"." : "Faça login para ver seu status."}
                                     </p>
+                                    {isAuthenticated && actors?.botActor && (
+                                        <button
+                                            onClick={fetchStatus}
+                                            className="ml-4 px-3 py-1 bg-white/10 rounded-lg hover:bg-white/20 transition-all duration-200 text-sm"
+                                        >
+                                            Refresh
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -421,6 +478,13 @@ export default function BotTestPage() {
                 @keyframes grid-pan {
                     0% { background-position: 0% 0%; }
                     100% { background-position: 100% 100%; }
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(10px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .animate-fadeIn {
+                    animation: fadeIn 0.5s ease-out forwards;
                 }
             `}</style>
         </div>
