@@ -71,7 +71,7 @@ actor class PostsCanister() {
 
   // Interface para o SearchNews canister
   let searchNewsActor = actor(Principal.toText(searchNewsCanisterId)) : actor {
-    searchNews: (Text) -> async {
+    callAgent: (Text) -> async {
       result: {#True; #False; #Uncertain; #Error};
       source: Text;
       hash: Text;
@@ -120,7 +120,7 @@ actor class PostsCanister() {
     try {
       Debug.print("Solicitando verificação para post " # Nat.toText(postId));
       
-      let verdictResponse = await searchNewsActor.searchNews(content);
+      let verdictResponse = await searchNewsActor.callAgent(content);
       
       let verdict: Verdict = {
         result = convertVerdictResult(verdictResponse.result);
