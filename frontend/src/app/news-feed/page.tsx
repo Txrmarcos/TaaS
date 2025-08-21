@@ -6,10 +6,11 @@ import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
 import { Newspaper } from "lucide-react";
 import BigNewsCard, { BigArticle, Comment } from "@/components/ui/BigNewsCard";
+import { TaaSVerdictEmbed, TaaSVerification, Verdict } from "@/components/ui/TaaSVerdictEmbed";
 import { createSearchNewsActor } from "../utils/canister";
 import { useAuth } from "../auth/useAuth";
 
-// Você pode ajustar as tags se quiser variedade, mas "Highlights" é 100% seguro com o tipo Tag
+// Updated NEWS interface to include TaaS fields
 const NEWS: Array<{
   id: number;
   title: string;
@@ -20,6 +21,9 @@ const NEWS: Array<{
   content?: string;
   url?: string;
   comments?: Comment[];
+  taasStatus: TaaSVerification;
+  verdict?: Verdict | null;
+  subtitle?: string;
 }> = [
   {
     id: 1,
@@ -33,6 +37,14 @@ const NEWS: Array<{
       "O protótipo do TaaS integra os canisters `bot-plan` (planos e billing) e `search-news` (veredito e ranking). A governança do conhecimento é feita pelo `round-table`. Na prática, o usuário assina um plano, consome a cota e recebe um veredito auditável. Este artigo detalha as decisões de arquitetura, os fluxos de consumo e como a comunidade pode propor fontes confiáveis.",
     url: "https://example.com/taas-prototipo",
     comments: [],
+    taasStatus: "True",
+    verdict: {
+      result: "True",
+      source: "ICP Documentation, GitHub",
+      hash: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+      timestamp: Date.now() * 1000000,
+      llm_message: "✅ Informação verificada. O TaaS é um projeto real desenvolvido no Internet Computer Protocol com governança descentralizada."
+    }
   },
   {
     id: 2,
@@ -46,6 +58,14 @@ const NEWS: Array<{
       "Para criar uma experiência fluida, o AuthClient é inicializado no client-side e injeta a identidade no HttpAgent. Com isso, os actors `users`, `bot-plan` e `search-news` ficam prontos para chamadas autenticadas. O artigo traz padrões de retry, loading states e persistência de preferências no localStorage.",
     url: "https://example.com/authclient-actors",
     comments: [],
+    taasStatus: "True",
+    verdict: {
+      result: "True",
+      source: "ICP SDK Documentation",
+      hash: "x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4",
+      timestamp: Date.now() * 1000000,
+      llm_message: "✅ Informação técnica verificada. O padrão AuthClient + HttpAgent é documentado oficialmente no SDK do ICP."
+    }
   },
   {
     id: 3,
@@ -59,9 +79,17 @@ const NEWS: Array<{
       "A composição usa `MiniNewsCard` para listagem rápida e `BigNewsCard` para leitura focada, com suporte a like, salvar e apoiar. O estado de likes persiste no `localStorage`. Discutimos também acessibilidade, foco do teclado, animações discretas e responsividade.",
     url: "https://example.com/ui-feed-design",
     comments: [],
+    taasStatus: "Uncertain",
+    verdict: {
+      result: "Uncertain",
+      source: "UI/UX Best Practices",
+      hash: "m5n6o7p8q9r0s1t2u3v4w5x6y7z8a9b0",
+      timestamp: Date.now() * 1000000,
+      llm_message: "⚠️ Informação sobre design. Práticas de UI/UX são subjetivas, mas os padrões mencionados são amplamente aceitos."
+    }
   },
   {
-    id: 4,
+    id: 5,
     title: "Plans & Quotas: design do consumo por requisição",
     description:
       "Estratégias para controlar cota por plano, exibir mensagens claras e evitar surpresas ao usuário...",
@@ -72,22 +100,12 @@ const NEWS: Array<{
       "O `bot-plan` valida consumo antes do `search-news` processar a consulta. Em caso de estouro, o front exibe call-to-action para upgrade. Este artigo descreve estados, mensagens, e padrões para manter transparência no uso do produto.",
     url: "https://example.com/plans-quotas",
     comments: [],
-  },
-  {
-    id: 5,
-    title: "Guia de fontes confiáveis: curadoria comunitária",
-    description:
-      "Como a comunidade ajuda a manter a base confiável, evitando viés e incentivando diversidade de fontes...",
-    tag: "Highlights",
-    author: "round.table",
-    likes: 21,
-    content:
-      "A curadoria considera reputação, histórico e diversidade regional/ideológica. O `round-table` governa a lista de fontes e registra mudanças on-chain para auditoria. Mostramos critérios, processo de proposta e revisão.",
-    url: "https://example.com/curadoria-fontes",
-    comments: [],
-  },
+    taasStatus: "Pending",
+    verdict: null
+  }
 ];
 
+// Helper function to safely parse backend data
 // Helper function to safely parse backend data
 function parseBackendPost(post: any, index: number): typeof NEWS[0] {
   // Safely extract comments
@@ -106,13 +124,67 @@ function parseBackendPost(post: any, index: number): typeof NEWS[0] {
     comments = [];
   }
 
+  // Safely extract TaaS fields
+  let taasStatus: TaaSVerification = "Pending";
+  let verdict: Verdict | null = null;
+
+  try {
+    // Parse taasStatus from backend variant
+    if (post.taasStatus) {
+      const statusKeys = Object.keys(post.taasStatus);
+      if (statusKeys.length > 0) {
+        taasStatus = statusKeys[0] as TaaSVerification;
+      }
+    }
+
+    // Parse verdict from backend
+    if (post.verdict && post.verdict.length > 0 && post.verdict[0]) {
+      const backendVerdict = post.verdict[0];
+      
+      // Parse result variant
+      let result: TaaSVerification = "Pending";
+      if (backendVerdict.result) {
+        const resultKeys = Object.keys(backendVerdict.result);
+        if (resultKeys.length > 0) {
+          result = resultKeys[0] as TaaSVerification;
+        }
+      }
+
+      verdict = {
+        result: result,
+        source: backendVerdict.source || "",
+        hash: backendVerdict.hash || "",
+        timestamp: backendVerdict.timestamp || Date.now() * 1000000,
+        llm_message: backendVerdict.llm_message || ""
+      };
+    }
+  } catch (err) {
+    console.warn("Error parsing TaaS data for post", post.id, err);
+    taasStatus = "Error";
+    verdict = {
+      result: "Error",
+      source: "",
+      hash: "",
+      timestamp: Date.now() * 1000000,
+      llm_message: "Erro ao processar dados de verificação"
+    };
+  }
+
   // Safely extract other fields
   const id = Number(post.id) || index + 1;
   const title = post.title || "Untitled";
-  const description = String(post.description || post.content || "No description available").slice(0, 100) + "...";
+  
+  // FIX: Use subtitle for description, fallback to content if subtitle is empty
+  const subtitle = post.subtitle || "";
+  const content = post.content || "";
+  
+  // Use subtitle as description, if subtitle is empty, use first 100 chars of content
+  const description = subtitle.trim() 
+    ? subtitle 
+    : (content ? String(content).slice(0, 100) + "..." : "No description available");
+  
   const author = post.author?.toText?.() ?? post.author ?? "anonymous";
   const likes = Array.isArray(post.likes) ? post.likes.length : Number(post.likes) || 0;
-  const content = post.content || "Content not available";
   const url = post.url || "";
 
   return {
@@ -125,6 +197,9 @@ function parseBackendPost(post: any, index: number): typeof NEWS[0] {
     content,
     url,
     comments,
+    taasStatus,
+    verdict,
+    subtitle, // Add subtitle field to the returned object
   };
 }
 
@@ -446,29 +521,32 @@ export default function NewsFeedPage() {
                 </div>
               ) : (
                 filteredNews.map((news) => (
-                  <MiniNewsCard
-                    key={news.id}
-                    title={news.title}
-                    description={news.description}
-                    tag={news.tag}
-                    author={news.author}
-                    likes={news.likes}
-                    liked={likedIds.includes(news.id)}
-                    onLike={() => handleLike(news.id)}
-                    onClick={() =>
-                      handleOpen({
-                        id: news.id,
-                        title: news.title,
-                        description: news.description,
-                        content: news.content,
-                        tag: news.tag,
-                        author: news.author,
-                        likes: news.likes,
-                        url: news.url,
-                        comments: news.comments || [],
-                      })
-                    }
-                  />
+                  <div key={news.id} className="space-y-2">
+                    <MiniNewsCard
+                      title={news.title}
+                      description={news.subtitle!!}
+                      tag={news.tag}
+                      author={news.author}
+                      likes={news.likes}
+                      liked={likedIds.includes(news.id)}
+                      onLike={() => handleLike(news.id)}
+                      onClick={() =>
+                        handleOpen({
+                          id: news.id,
+                          title: news.title,
+                          description: news.description,
+                          content: news.content,
+                          tag: news.tag,
+                          author: news.author,
+                          likes: news.likes,
+                          url: news.url,
+                          comments: news.comments || [],
+                          taasStatus: news.taasStatus,
+                          verdict: news.verdict,
+                        })
+                      }
+                    />
+                  </div>
                 ))
               )}
             </div>

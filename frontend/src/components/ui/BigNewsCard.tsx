@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Tag, TAG_BADGE_STYLES } from "./TagCarousel";
 import { X, User2, Bookmark, HandCoins, Send } from "lucide-react";
+import { TaaSVerdictEmbed, TaaSVerification, Verdict } from "./TaaSVerdictEmbed";
 import SupportModal from "./SupportModal";
 
 export type Comment = {
@@ -16,6 +17,7 @@ export type BigArticle = {
   title: string;
   description: string;
   content?: string;
+  subtitle?: string;
   tag: Tag;
   author?: string;
   likes?: number;
@@ -23,6 +25,9 @@ export type BigArticle = {
   supporters?: number;
   goal?: number;
   comments?: Comment[];
+  // TaaS fields
+  taasStatus?: TaaSVerification;
+  verdict?: Verdict | null;
 };
 
 type Props = {
@@ -46,7 +51,23 @@ export default function BigNewsCard({
   supportingId = null,
   onComment,
 }: Props) {
-  const { id, title, tag, author, likes, description, content, url, supporters, goal, comments = [] } = article;
+  const { 
+    id, 
+    title, 
+    tag, 
+    author, 
+    likes, 
+    description, 
+    content, 
+    subtitle,
+    url, 
+    supporters, 
+    goal, 
+    comments = [],
+    taasStatus = "Pending",
+    verdict = null
+  } = article;
+  
   const pill = TAG_BADGE_STYLES[tag] || "bg-white/10 text-white";
   const displayLikes = (likes ?? 0) + (liked ? 1 : 0);
 
@@ -109,6 +130,12 @@ export default function BigNewsCard({
             {/* header */}
             <div className="p-4 pb-2 relative flex-shrink-0">
               <h3 className="text-xl font-semibold text-white pr-12">{title}</h3>
+              
+              {/* ADICIONADO: Exibir subtitle se existir */}
+              {subtitle && subtitle.trim() && (
+                <p className="text-sm text-white/70 mt-2 pr-12 leading-relaxed">{subtitle}</p>
+              )}
+              
               <button
                 onClick={onClose}
                 className="absolute top-3 right-3 inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/15 transition"
@@ -116,7 +143,9 @@ export default function BigNewsCard({
               >
                 <X className="w-4 h-4" />
               </button>
-              <span className={["inline-flex mt-3 px-3 py-1 rounded-full text-xs font-medium", pill].join(" ")}>{tag}</span>
+              <div className="flex items-center gap-3 mt-3">
+                <span className={["inline-flex px-3 py-1 rounded-full text-xs font-medium", pill].join(" ")}>{tag}</span>
+              </div>
             </div>
 
             {/* body - scrollable content */}
@@ -148,6 +177,14 @@ export default function BigNewsCard({
                     </button>
                   </div>
                 ))}
+              </div>
+
+              {/* TaaS Verdict Embed - Positioned after content */}
+              <div className="mt-4">
+                <TaaSVerdictEmbed
+                  verdict={verdict}
+                  taasStatus={taasStatus}
+                />
               </div>
 
               {/* Comentários */}

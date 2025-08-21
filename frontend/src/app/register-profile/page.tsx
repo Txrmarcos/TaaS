@@ -41,28 +41,28 @@ export default function RegisterProfilePage() {
                 return;
             }
 
-            if (!isAuthenticated || !principal || !authClient || !actors?.usersActor) {
-                console.log("Missing requirements:", { 
-                    isAuthenticated, 
-                    principal: !!principal, 
-                    authClient: !!authClient,
-                    usersActor: !!actors?.usersActor
-                });
+            // if (!isAuthenticated || !principal || !authClient || !actors?.usersActor) {
+            //     console.log("Missing requirements:", { 
+            //         isAuthenticated, 
+            //         principal: !!principal, 
+            //         authClient: !!authClient,
+            //         usersActor: !!actors?.usersActor
+            //     });
                 
-                // If not authenticated, redirect to login
-                if (!isAuthenticated && !isLoading) {
-                    router.push("/");
-                    return;
-                }
-                return;
-            }
+            //     // If not authenticated, redirect to login
+            //     if (!isAuthenticated && !isLoading) {
+            //         router.push("/");
+            //         return;
+            //     }
+            //     return;
+            // }
 
             try {
                 console.log("Checking existing profile...");
                 
                 // Try to get existing profile first
                 try {
-                    const profile = await actors.usersActor.getProfile(principal);
+                    const profile = await actors!!.usersActor.getProfile(principal);
                     console.log("Existing profile found:", profile);
                     
                     // If profile exists and firstLogin is false, redirect to news feed
