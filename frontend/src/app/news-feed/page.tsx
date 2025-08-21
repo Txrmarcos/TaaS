@@ -1,15 +1,14 @@
 "use client";
 import React from "react";
-import { Tag, TAGS, TagCarousel } from "@/components/ui/TagCarousel";
+import { Tag, TagCarousel } from "@/components/ui/TagCarousel";
 import { MiniNewsCard } from "@/components/ui/MiniNewsCard";
 import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
-import { Newspaper } from "lucide-react";
+import { Newspaper, RefreshCw } from "lucide-react";
 import BigNewsCard, { BigArticle } from "@/components/ui/BigNewsCard";
 import { createSearchNewsActor } from "../utils/canister";
 import { useAuth } from "../auth/useAuth";
 
-// Você pode ajustar as tags se quiser variedade, mas "Highlights" é 100% seguro com o tipo Tag
 const NEWS: Array<{
   id: number;
   title: string;
@@ -83,7 +82,7 @@ const NEWS: Array<{
 ];
 
 export default function NewsFeedPage() {
-  const { authClient, isAuthenticated } = useAuth(); // Move useAuth para o nível do componente
+  const { authClient } = useAuth();
   const [selectedTag, setSelectedTag] = React.useState<Tag>("Highlights");
   const [likedIds, setLikedIds] = React.useState<number[]>([]);
   const [selected, setSelected] = React.useState<BigArticle | null>(null);
@@ -94,7 +93,6 @@ export default function NewsFeedPage() {
   const handleOpen = (a: BigArticle) => setSelected(a);
   const handleClose = () => setSelected(null);
 
-  // Effect for loading liked IDs from localStorage
   React.useEffect(() => {
     try {
       const saved = localStorage.getItem("likedIds");
@@ -104,7 +102,6 @@ export default function NewsFeedPage() {
     }
   }, []);
 
-  // Effect for saving liked IDs to localStorage
   React.useEffect(() => {
     try {
       localStorage.setItem("likedIds", JSON.stringify(likedIds));
@@ -113,69 +110,55 @@ export default function NewsFeedPage() {
     }
   }, [likedIds]);
 
-  // Effect for fetching news data
   React.useEffect(() => {
     async function fetchNews() {
       setIsLoading(true);
-      
-      // Toggle opcional para forçar mock: defina NEXT_PUBLIC_USE_MOCK=1
       if (process.env.NEXT_PUBLIC_USE_MOCK === "1") {
         setNewsData(NEWS);
         setIsLoading(false);
         return;
       }
-
       try {
-        // Só tenta buscar dados reais se authClient estiver disponível
         if (!authClient) {
           setNewsData(NEWS);
           setIsLoading(false);
           return;
         }
-
         const actors = await createSearchNewsActor(authClient);
-        
-        // Verifica se os actors foram criados corretamente
         if (!actors || !actors.postNewsActor) {
           console.warn("Actors not available, using mock data");
           setNewsData(NEWS);
           setIsLoading(false);
           return;
         }
-
         const { postNewsActor } = actors;
         const posts = await postNewsActor.getAllPosts();
-
-        // Se a API voltar vazia, usa mock como fallback
         if (!posts || posts.length === 0) {
           console.info("No posts returned from API, using mock data");
           setNewsData(NEWS);
           setIsLoading(false);
           return;
         }
-
         const formatted = posts.map((post: any, index: number) => ({
           id: Number(post.id) || index + 1,
           title: post.title || "Untitled",
           description: String(post.description || post.content || "No description available").slice(0, 100) + "...",
-          tag: "Highlights" as Tag, // você pode mapear tags reais aqui
+          tag: "Highlights" as Tag,
           author: post.author?.toText?.() ?? "anonymous",
           likes: Array.isArray(post.likes) ? post.likes.length : Number(post.likes) || 0,
           content: post.content || "Content not available",
           url: post.url || "",
         }));
-
         setNewsData(formatted);
       } catch (err) {
         console.error("Erro ao buscar posts:", err);
-        setNewsData(NEWS); // fallback
+        setNewsData(NEWS);
       } finally {
         setIsLoading(false);
       }
     }
-
     fetchNews();
-  }, [authClient]); // Depende apenas do authClient
+  }, [authClient]);
 
   const filteredNews = React.useMemo(() => {
     if (selectedTag === "Highlights") {
@@ -194,7 +177,6 @@ export default function NewsFeedPage() {
     try {
       setSupportingId(id);
       await new Promise((r) => setTimeout(r, 800));
-      // aqui entraria a chamada real para apoiar
     } finally {
       setSupportingId(null);
     }
@@ -202,28 +184,59 @@ export default function NewsFeedPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-[#0B0E13] text-white font-sans">
+      <div className="flex min-h-screen text-white font-sans">
+        <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+          <div 
+              className="absolute w-full h-full top-0 left-0 bg-transparent"
+              style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                  backgroundSize: '2rem 2rem',
+                  animation: 'grid-pan 60s linear infinite',
+              }}
+          ></div>
+        </div>
+        
         <Sidebar />
         <div className="flex flex-col flex-1">
           <main className="flex flex-col flex-grow items-center justify-center px-2 py-8">
-            <div className="text-center">
-              <div className="loader mb-4"></div>
-              <h2 className="text-2xl font-bold text-white">Loading News Feed...</h2>
+            <div className="flex items-center gap-3">
+              <RefreshCw className="w-6 h-6 animate-spin text-[#FF4D00]" />
+              <p className="text-lg">Loading News Feed...</p>
             </div>
           </main>
           <Footer />
         </div>
+
+        <style jsx global>{`
+          @keyframes grid-pan {
+              0% { background-position: 0% 0%; }
+              100% { background-position: 100% 100%; }
+          }
+        `}</style>
       </div>
     );
   }
+
   return (
-    <div className="flex min-h-screen bg-[#0B0E13] text-white font-sans">
+    <div className="flex min-h-screen text-white font-sans">
+      <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+          <div 
+              className="absolute w-full h-full top-0 left-0 bg-transparent"
+              style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                  backgroundSize: '2rem 2rem',
+                  animation: 'grid-pan 60s linear infinite',
+              }}
+          ></div>
+      </div>
+    
       <Sidebar />
       <div className="flex flex-col flex-1">
         <main className="flex flex-col flex-grow items-center justify-center px-2 py-8">
-          <div className="w-full max-w-2xl h-[80vh] bg-white/5 border-white/10 shadow-xl rounded-xl border flex flex-col min-h-[350px]">
-            {/* Header */}
-            <div className="p-3 border-b border-white/10 bg-gradient-to-r from-white/5 to-white/10">
+          <div className="w-full max-w-2xl h-[80vh] bg-white/5 backdrop-blur-xl border-white/10 shadow-xl rounded-xl border flex flex-col min-h-[350px]">
+            <div className="p-3 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
               <div className="flex items-center space-x-3">
                 <div className="relative w-10 h-10">
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FF007A] to-[#FF4D00] p-[2px]">
@@ -236,12 +249,10 @@ export default function NewsFeedPage() {
               </div>
             </div>
 
-            {/* Tags */}
             <div className="p-3 border-b border-white/10">
               <TagCarousel selectedTag={selectedTag} onTagClick={setSelectedTag} />
             </div>
 
-            {/* News list */}
             <div className="flex-1 p-3 space-y-3 overflow-y-auto">
               {filteredNews.map((news) => (
                 <MiniNewsCard
@@ -263,13 +274,14 @@ export default function NewsFeedPage() {
                       author: news.author,
                       likes: news.likes,
                       url: news.url,
+                      authorPrincipal: news.author,
+                      newsId: news.id
                     })
                   }
                 />
               ))}
             </div>
 
-            {/* Modal */}
             {selected && (
               <BigNewsCard
                 article={selected}
@@ -285,6 +297,13 @@ export default function NewsFeedPage() {
         </main>
         <Footer />
       </div>
+
+      <style jsx global>{`
+        @keyframes grid-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+      `}</style>
     </div>
   );
 }

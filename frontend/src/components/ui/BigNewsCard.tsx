@@ -15,6 +15,8 @@ export type BigArticle = {
   url?: string;
   supporters?: number;
   goal?: number;
+  authorPrincipal?: string; 
+  newsId?: string;
 };
 
 type Props = {
@@ -23,8 +25,6 @@ type Props = {
   onLike: (id: number) => void;
   onClose: () => void;
   onSave?: (id: number) => void;
-
-  // suporte (vem do feed)
   onSupport: (opts: { id: number; amount: number }) => Promise<void> | void;
   supportingId?: number | null;
 };
@@ -38,14 +38,14 @@ export default function BigNewsCard({
   onSupport,
   supportingId = null,
 }: Props) {
-  const { id, title, tag, author, likes, description, content, url, supporters, goal } = article;
+  // ADIÇÃO 1: Extraia o authorPrincipal aqui
+  const { id, title, tag, author, likes, description, content, url, supporters, goal, authorPrincipal, newsId } = article;
   const pill = TAG_BADGE_STYLES[tag] || "bg-white/10 text-white";
   const displayLikes = (likes ?? 0) + (liked ? 1 : 0);
 
   const [expanded, setExpanded] = React.useState(false);
   const [supportOpen, setSupportOpen] = React.useState(false);
 
-  // ESC fecha
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -138,6 +138,9 @@ export default function BigNewsCard({
       <SupportModal
         open={supportOpen}
         onClose={() => setSupportOpen(false)}
+        // ADIÇÃO 2: Passe o authorPrincipal para o modal
+        recipientPrincipal={authorPrincipal || ""}
+        newsId={newsId || ""}
         onConfirm={async (amount) => {
           await onSupport({ id, amount });
           setSupportOpen(false);
