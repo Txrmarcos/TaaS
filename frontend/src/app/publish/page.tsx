@@ -189,20 +189,37 @@ export default function PublishPage() {
         try {
             console.log("Publishing article with data:", {
                 title: titleTrimmed,
-                subtitle: subtitle.trim() || "", // Ensure subtitle is never null
+                subtitle: subtitle.trim(),
                 content: contentTrimmed,
                 hasAttachment: !!attachment
             });
 
-            // Create post with proper parameters - ensure subtitle is always a string
-            const subtitleToSend = subtitle.trim() || "";
+            // FIXED: Ensure all parameters are properly typed strings
+            // The canister expects: (title: Text, subtitle: Text, content: Text, imageUrl: Text, location: Text)
+            const subtitleToSend = subtitle.trim(); // Don't default to empty string, let it be what it is
+            const imageUrlToSend = ""; // Empty string for now
+            const locationToSend = ""; // Empty string for now
             
+            // Validate that all strings are not null/undefined before sending
+            if (typeof titleTrimmed !== 'string' || typeof subtitleToSend !== 'string' || typeof contentTrimmed !== 'string') {
+                throw new Error('Invalid input types - all fields must be strings');
+            }
+            
+            console.log("Sending parameters:", {
+                title: titleTrimmed,
+                subtitle: subtitleToSend,
+                content: contentTrimmed,
+                imageUrl: imageUrlToSend,
+                location: locationToSend
+            });
+
+            // Create post with proper parameters
             const post = await postsActor.createPost(
                 titleTrimmed, 
                 subtitleToSend, 
                 contentTrimmed, 
-                "",
-                ""
+                imageUrlToSend,
+                locationToSend
             );
             
             console.log("Post created successfully:", post);
@@ -223,7 +240,7 @@ export default function PublishPage() {
 
             // Add to publications list
             const newPublication: Publication = {
-                id: Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000, // Random ID for demo purposes
+                id: Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000,
                 title: titleTrimmed,
                 subtitle: subtitleToSend,
                 contentSnippet: contentTrimmed.substring(0, 150) + (contentTrimmed.length > 150 ? "..." : ""),
@@ -237,10 +254,12 @@ export default function PublishPage() {
             let errorMessage = "Unknown error occurred";
             
             if (err.message) {
-                if (err.message.includes("Invalid text argument")) {
-                    errorMessage = "Invalid input data. Please check your title and content.";
+                if (err.message.includes("Invalid text argument") || err.message.includes("IDL error")) {
+                    errorMessage = "Data type error. Please check your input and try again.";
                 } else if (err.message.includes("authentication")) {
                     errorMessage = "Authentication error. Please log in again.";
+                } else if (err.message.includes("IC0503")) {
+                    errorMessage = "Canister error. The service might be temporarily unavailable.";
                 } else {
                     errorMessage = err.message;
                 }
@@ -399,7 +418,7 @@ export default function PublishPage() {
                                         <label className="flex items-center text-sm font-medium text-white/70 mb-2"><FileText className="w-4 h-4 mr-2" /> Article Content</label>
                                         <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={12} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" placeholder="Write your story here... The content supports Markdown for formatting."></textarea>
                                     </div>
-                                    <div>
+                                    {/* <div>
                                         <label className="block text-sm font-medium text-white/70 mb-2">Attach Media (Image/Video)</label>
                                         <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-white/20 border-dashed rounded-xl cursor-pointer hover:border-orange-500 transition-colors" onClick={() => fileInputRef.current?.click()}>
                                             <div className="space-y-1 text-center">
@@ -409,7 +428,7 @@ export default function PublishPage() {
                                                 <input ref={fileInputRef} id="file-upload" name="file-upload" type="file" className="sr-only" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
                                             </div>
                                         </div>
-                                    </div>
+                                    </div> */}
                                 </div>
                                 <div className="mt-8">
                                     <button onClick={handlePublish} disabled={isPublishing || !isAuthenticated} className="w-full px-6 py-4 bg-gradient-to-r from-[#FF4D00] to-[#FF007A] text-white rounded-xl hover:opacity-90 transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center justify-center space-x-2">

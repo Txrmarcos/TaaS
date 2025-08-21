@@ -18,36 +18,44 @@ export interface UserStatus {
 }
 
 export default function PlansPage() {
-    const { isAuthenticated, principal, isLoading, authClient } = useAuth();
+  const { isAuthenticated, principal, isLoading, authClient } = useAuth();
+  const [actor, setActor] = useState<any>(null);
+  const [status, setStatus] = useState<UserStatus | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [icpBalance, setIcpBalance] = useState<string | null>(null);
+  const [ckBalance, setCkBalance] = useState<string | null>(null);
+  const [bitcoinAddress, setBitcoinAddress] = useState<string | null>(null);
+  const [showBitcoinDeposit, setShowBitcoinDeposit] = useState(false);
+  const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
+  const [showIcpDeposit, setShowIcpDeposit] = useState(false);
+  const [icpDepositAddress, setIcpDepositAddress] = useState<string | null>(null);
+  const router = useRouter();
 
-    const { botActor } = createSearchNewsActor(authClient);
+  // 🔹 Criar o ator de forma assíncrona depois que authClient estiver pronto
+  useEffect(() => {
+    const initActor = async () => {
+      if (authClient) {
+        const { botActor } = await createSearchNewsActor(authClient);
+        setActor(botActor);
+      }
+    };
+    initActor();
+  }, [authClient]);
 
-    const [actor, setActor] = useState<any>(botActor);
-    const [status, setStatus] = useState<UserStatus | null>(null);
-    const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-    const [icpBalance, setIcpBalance] = useState<string | null>(null);
-    const [ckBalance, setCkBalance] = useState<string | null>(null);
-    const [bitcoinAddress, setBitcoinAddress] = useState<string | null>(null);
-    const [showBitcoinDeposit, setShowBitcoinDeposit] = useState(false);
-    const [isGeneratingAddress, setIsGeneratingAddress] = useState(false);
-    const [showIcpDeposit, setShowIcpDeposit] = useState(false);
-    const [icpDepositAddress, setIcpDepositAddress] = useState<string | null>(null);
-    const router = useRouter();
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/"); // Redirect to home or login page
+    }
+  }, [isAuthenticated, isLoading, router]);
 
-    useEffect(() => {
-        if (!isLoading && !isAuthenticated) {
-            router.push("/"); // Redirect to home or login page
-        }
-    }, [isAuthenticated, isLoading, router]);
-
-    useEffect(() => {
-        if (isAuthenticated && principal) {
-            fetchStatus();
-            fetchICPBalance(principal);
-            fetchCkBTCBalance(principal);
-            generateIcpDepositAddress(principal);
-        }
-    }, [isAuthenticated, principal]);
+  useEffect(() => {
+    if (isAuthenticated && principal) {
+      fetchStatus();
+      fetchICPBalance(principal);
+      fetchCkBTCBalance(principal);
+      generateIcpDepositAddress(principal);
+    }
+  }, [isAuthenticated, principal, actor]);
 
     // Função para gerar endereço ICP
     const generateIcpDepositAddress = (userPrincipal: Principal) => {
@@ -177,7 +185,7 @@ export default function PlansPage() {
 
     const fetchStatus = async () => {
         try {
-            const res = (await botActor.get_user_status()) as any;
+            const res = (await actor.get_user_status()) as any;
             console.log("User status:", res);
             if (res) {
                 setStatus(res[0] as UserStatus);

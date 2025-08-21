@@ -21,8 +21,9 @@ actor class PostsCanister() {
 
   public type TaaSVerification = {
     #Pending;
-    #Verified;
-    #Rejected;
+    #True;
+    #False;
+    #Uncertain;
   };
 
   public type Comment = {
@@ -207,7 +208,7 @@ actor class PostsCanister() {
     let allPosts = Iter.toArray(Trie.iter(posts));
     let verifiedPosts = Array.filter<Post>(
       Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post }),
-      func(post: Post): Bool { post.taasStatus == #Verified }
+      func(post: Post): Bool { post.taasStatus != #Pending }
     );
     
     return Array.sort<Post>(
