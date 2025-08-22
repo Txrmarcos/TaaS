@@ -17,5 +17,5 @@
       "extensions": ["dfinity-foundation.vscode-motoko"]
     }
   },
-  "postCreateCommand": "sh -ci \"$(curl -fsSL https://sdk.dfinity.org/install.sh)\" -- -v 0.28.0"
+  "postCreateCommand": "dfxvm install 0.28.0 && dfxvm default 0.28.0"
 }
