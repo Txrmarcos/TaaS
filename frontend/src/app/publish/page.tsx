@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "../auth/useAuth"; // Adjust the path if necessary
-import { Sidebar } from "@/components/Sidebar"; // Adjust the path if necessary
-import { Footer } from "@/components/Footer"; // Adjust the path if necessary
-import { createSearchNewsActor } from "../utils/canister"; // Ajuste o caminho conforme sua estrutura
+import { useAuth } from "@/context/AuthContext"; 
+import { Sidebar } from "@/components/Sidebar"; 
+import { Footer } from "@/components/Footer"; 
+import { createSearchNewsActor } from "../utils/canister";
 import {
     FilePlus, Send, History, Image as ImageIcon, Video, FileText, Heading1, Heading2, Trash2, Eye, Loader2, Award, ArrowRight
 } from "lucide-react";
@@ -69,8 +69,8 @@ export default function PublishPage() {
                         setUsersActor(actors.usersActor);
                         console.log("Users actor initialized");
                     }
-                    if (actors && actors.postNewsActor) {
-                        setPostsActor(actors.postNewsActor);
+                    if (actors && actors.postsActor) {
+                        setPostsActor(actors.postsActor);
                         console.log("Posts actor initialized");
                     }
                 } catch (err) {

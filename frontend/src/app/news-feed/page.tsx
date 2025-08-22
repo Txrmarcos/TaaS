@@ -8,7 +8,7 @@ import { Newspaper } from "lucide-react";
 import BigNewsCard, { BigArticle, Comment } from "@/components/ui/BigNewsCard";
 import { TaaSVerdictEmbed, TaaSVerification, Verdict } from "@/components/ui/TaaSVerdictEmbed";
 import { createSearchNewsActor } from "../utils/canister";
-import { useAuth } from "../auth/useAuth";
+import { useAuth } from "@/context/AuthContext";
 
 // Updated NEWS interface to include TaaS fields
 const NEWS: Array<{
@@ -249,8 +249,8 @@ export default function NewsFeedPage() {
       );
 
       // Call the backend
-      const { postNewsActor } = await createSearchNewsActor(authClient);
-      await postNewsActor.likePost(id);
+      const { postsActor } = await createSearchNewsActor(authClient);
+      await postsActor.likePost(id);
 
       // Optionally refetch in background to sync with backend
       setTimeout(() => {
@@ -314,10 +314,10 @@ export default function NewsFeedPage() {
       }
 
       setError(null);
-      const { postNewsActor } = await createSearchNewsActor(authClient);
+      const { postsActor } = await createSearchNewsActor(authClient);
       
       // Call the backend
-      await postNewsActor.addComment(BigInt(id), text.trim());
+      await postsActor.addComment(BigInt(id), text.trim());
 
       // Update local state immediately for better UX
       const newComment: Comment = {
@@ -367,14 +367,14 @@ export default function NewsFeedPage() {
 
       const actors = await createSearchNewsActor(authClient);
       
-      if (!actors?.postNewsActor) {
+      if (!actors?.postsActor) {
         console.warn("Actors not available, using mock data");
         setNewsData(NEWS);
         return;
       }
 
-      const { postNewsActor } = actors;
-      const posts = await postNewsActor.getAllPosts();
+      const { postsActor } = actors;
+      const posts = await postsActor.getAllPosts();
 
       if (!posts || posts.length === 0) {
         console.info("No posts returned from API, using mock data");

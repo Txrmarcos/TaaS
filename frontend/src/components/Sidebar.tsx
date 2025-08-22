@@ -15,7 +15,7 @@ import {
     Box,           // Ícone para Canister
     Newspaper      // Ícone para Dashboard
 } from "lucide-react";
-import { useAuth } from "frontend/src/app/auth/useAuth";
+import { useAuth } from "../app/auth/useAuth";
 import { useWalletBalance } from "../hooks/useWalletBalance";
 import ids from "../../../canister_ids.json";
 
