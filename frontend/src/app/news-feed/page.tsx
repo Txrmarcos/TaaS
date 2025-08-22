@@ -517,7 +517,7 @@ export default function NewsFeedPage() {
               {filteredNews.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-white/60">
                   <Newspaper className="w-12 h-12 mb-4 opacity-50" />
-                  <p>Nenhuma notícia encontrada</p>
+                  <p>No news found</p>
                 </div>
               ) : (
                 filteredNews.map((news) => (
