@@ -72,7 +72,8 @@ function createActorProxy(actor: any, actorName: string) {
                   duration: `${duration.toFixed(2)}ms`,
                   timestamp: new Date().toISOString(),
                   success: true,
-                  dataSize: safeStringify(data).length
+                  dataSize: data ? safeStringify(data).length : 0
+
                 });
                 
                 return data;
@@ -168,7 +169,7 @@ export async function createSearchNewsActor(authClient: AuthClient | null) {
     botActor: createActorProxy(originalBotActor, "BotPlan"),
     searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
     usersActor: createActorProxy(originalUsersActor, "Users"),
-    postNewsActor: createActorProxy(originalPostActor, "PostNews"),
+    postsActor: createActorProxy(originalPostActor, "Posts"),
   };
 }
 

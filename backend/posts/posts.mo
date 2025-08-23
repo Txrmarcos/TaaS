@@ -1,4 +1,3 @@
-
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import List "mo:base/List";
@@ -21,8 +20,19 @@ actor class PostsCanister() {
 
   public type TaaSVerification = {
     #Pending;
-    #Verified;
-    #Rejected;
+    #True;
+    #False;
+    #Uncertain;
+    #Error;
+  };
+
+  // Tipo para o veredito completo do SearchNews
+  public type Verdict = {
+    result: TaaSVerification;
+    source: Text;
+    hash: Text;
+    timestamp: Time.Time;
+    llm_message: Text;
   };
 
   public type Comment = {
@@ -36,6 +46,7 @@ actor class PostsCanister() {
     id: PostId;
     author: UserId;
     title: Text;
+    subtitle: Text;
     content: Text;
     imageUrl: Text;
     location: Text;
@@ -45,6 +56,7 @@ actor class PostsCanister() {
     comments: [Comment];
     repostedFrom: ?PostId;
     taasStatus: TaaSVerification;
+    verdict: ?Verdict; // Novo campo para armazenar o veredito completo
   };
 
   // --- ESTADO ESTÁVEL ---
@@ -55,8 +67,18 @@ actor class PostsCanister() {
 
   // --- CONFIG (Canisters externos) ---
 
-  let usersCanisterId = Principal.fromText("aaaaa-aa"); // SUBSTITUIR PELO ID REAL
-  let taasProxyCanisterId = Principal.fromText("aaaaa-aa"); // SUBSTITUIR PELO ID REAL
+  let searchNewsCanisterId = Principal.fromText("h7vld-naaaa-aaaaf-qbgsq-cai"); // SUBSTITUIR PELO ID REAL
+
+  // Interface para o SearchNews canister
+  let searchNewsActor = actor(Principal.toText(searchNewsCanisterId)) : actor {
+    callAgent: (Text) -> async {
+      result: {#True; #False; #Uncertain; #Error};
+      source: Text;
+      hash: Text;
+      timestamp: Time.Time;
+      llm_message: Text;
+    };
+  };
 
   // --- Funções auxiliares ---
 
@@ -83,20 +105,73 @@ actor class PostsCanister() {
     }
   };
 
+  // Função para converter o resultado do SearchNews para TaaSVerification
+  func convertVerdictResult(result: {#True; #False; #Uncertain; #Error}): TaaSVerification {
+    switch (result) {
+      case (#True) { #True };
+      case (#False) { #False };
+      case (#Uncertain) { #Uncertain };
+      case (#Error) { #Error };
+    }
+  };
 
+  // Função para solicitar verificação
+  func requestVerification(postId: PostId, content: Text): async () {
+    try {
+      Debug.print("Solicitando verificação para post " # Nat.toText(postId));
+      
+      let verdictResponse = await searchNewsActor.callAgent(content);
+      
+      let verdict: Verdict = {
+        result = convertVerdictResult(verdictResponse.result);
+        source = verdictResponse.source;
+        hash = verdictResponse.hash;
+        timestamp = verdictResponse.timestamp;
+        llm_message = verdictResponse.llm_message;
+      };
 
-  public shared(msg) func createPost(title: Text, content: Text, imageUrl: Text, location: Text): async Post {
+      // Atualizar o post com o veredito
+      let post = getPostById(postId);
+      let updatedPost = { 
+        post with 
+        taasStatus = verdict.result; 
+        verdict = ?verdict;
+      };
+      
+      posts := Trie.put(posts, keyFromNat(postId), Nat.equal, updatedPost).0;
+      
+      Debug.print("Verificação concluída para post " # Nat.toText(postId) # " com resultado: " # debug_show(verdict.result));
+      
+    } catch (error) {
+
+      let errorVerdict: Verdict = {
+        result = #Error;
+        source = "";
+        hash = "";
+        timestamp = Time.now();
+        llm_message = "Erro ao processar verificação: ";
+      };
+
+      let post = getPostById(postId);
+      let updatedPost = { 
+        post with 
+        taasStatus = #Error; 
+        verdict = ?errorVerdict;
+      };
+      
+      posts := Trie.put(posts, keyFromNat(postId), Nat.equal, updatedPost).0;
+    };
+  };
+
+  public shared(msg) func createPost(title: Text, subtitle: Text, content: Text, imageUrl: Text, location: Text): async Post {
     let caller = msg.caller;
-
-    // if (not await usersCanister.isJournalist(caller)) {
-    //   trap("Apenas jornalistas podem publicar notícias.");
-    // };
 
     let postId = nextPostId;
     let newPost: Post = {
       id = postId;
       author = caller;
       title = title;
+      subtitle = subtitle;
       content = content;
       imageUrl = imageUrl;
       location = location;
@@ -106,12 +181,14 @@ actor class PostsCanister() {
       comments = [];
       repostedFrom = null;
       taasStatus = #Pending;
+      verdict = null; // Inicialmente null
     };
 
     posts := Trie.put(posts, keyFromNat(postId), Nat.equal, newPost).0;
     nextPostId += 1;
 
-    // await taasProxyCanister.requestVerification(postId, content);
+    // Solicitar verificação de forma assíncrona
+    ignore requestVerification(postId, content);
 
     return newPost;
   };
@@ -151,36 +228,39 @@ actor class PostsCanister() {
     posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
   };
 
-  public shared(msg) func updateTaaSStatus(id: PostId, status: TaaSVerification): async () {
-    if (msg.caller != taasProxyCanisterId) {
-      Debug.trap("Apenas o TaaSProxyCanister pode atualizar o estado de verificação.");
-    };
-
+  // Função para forçar re-verificação de um post
+  public shared(msg) func reVerifyPost(id: PostId): async () {
     let post = getPostById(id);
-    let updatedPost = { post with taasStatus = status };
+    
+    // Resetar status para pending
+    let updatedPost = { 
+      post with 
+      taasStatus = #Pending; 
+      verdict = null;
+    };
     posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
+    
+    // Solicitar nova verificação
+    ignore requestVerification(id, post.content);
   };
 
   public query func getAllPosts(): async [Post] {
-  let allPosts = Iter.toArray(Trie.iter(posts));
-  let onlyPosts = Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post });
+    let allPosts = Iter.toArray(Trie.iter(posts));
+    let onlyPosts = Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post });
 
-  return Array.sort<Post>(
-    onlyPosts,
-    func(a, b) {
-      Int.compare(b.timestamp, a.timestamp)
-    }
-  );
-};
+    return Array.sort<Post>(
+      onlyPosts,
+      func(a, b) {
+        Int.compare(b.timestamp, a.timestamp)
+      }
+    );
+  };
 
   // --- FUNÇÕES QUERY ---
 
   public shared query func getPost(id: PostId): async Post {
     return getPostById(id);
   };
-
-
-
 
   public shared query func getPostsByAuthor(author: UserId): async [Post] {
     let allPosts = Iter.toArray(Trie.iter(posts));
@@ -192,7 +272,6 @@ actor class PostsCanister() {
     return Array.sort<Post>(
       authorPosts,
       func(a, b) {
-        // CORREÇÃO: Compara diretamente os timestamps como Ints
         Int.compare(b.timestamp, a.timestamp)
       }
     );
@@ -206,13 +285,30 @@ actor class PostsCanister() {
     let allPosts = Iter.toArray(Trie.iter(posts));
     let verifiedPosts = Array.filter<Post>(
       Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post }),
-      func(post: Post): Bool { post.taasStatus == #Verified }
+      func(post: Post): Bool { 
+        post.taasStatus == #True or post.taasStatus == #False or post.taasStatus == #Uncertain 
+      }
     );
     
     return Array.sort<Post>(
       verifiedPosts,
       func(a, b) {
-        // CORREÇÃO: Compara diretamente os timestamps como Ints
+        Int.compare(b.timestamp, a.timestamp)
+      }
+    );
+  };
+
+  // Nova função para obter posts por status de verificação
+  public shared query func getPostsByVerificationStatus(status: TaaSVerification): async [Post] {
+    let allPosts = Iter.toArray(Trie.iter(posts));
+    let filteredPosts = Array.filter<Post>(
+      Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post }),
+      func(post: Post): Bool { post.taasStatus == status }
+    );
+    
+    return Array.sort<Post>(
+      filteredPosts,
+      func(a, b) {
         Int.compare(b.timestamp, a.timestamp)
       }
     );

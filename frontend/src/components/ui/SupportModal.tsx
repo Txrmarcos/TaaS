@@ -89,6 +89,9 @@ type Props = {
   url?: string;
   onSupportSuccess?: (amount: number, txId: any) => void;
   onSupportError?: (error: string) => void;
+  id?: string | number; 
+  onConfirm?: (amount: number) => Promise<void>;
+  processing?: boolean;
 };
 
 export default function SupportModal({

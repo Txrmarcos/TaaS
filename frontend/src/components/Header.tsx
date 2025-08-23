@@ -77,7 +77,6 @@ export const Header = () => {
                     {/* Botão de Login/Logout */}
                     {isAuthenticated && principal ? (
                         <div className="flex items-center gap-2 ml-4">
-                            <span className="text-xs text-white/70 font-mono truncate max-w-[120px]">{principal.toText()}</span>
                             <button
                                 onClick={logout}
                                 disabled={isLoading}
