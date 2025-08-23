@@ -1,45 +1,127 @@
 "use client";
 import React from "react";
-import { X, HandCoins, ExternalLink } from "lucide-react";
+import { X, HandCoins, ExternalLink, CheckCircle, AlertCircle } from "lucide-react";
+import { HttpAgent, Actor } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
+
+// --- MOCKS E IDs ---
+const mockIdentity = Ed25519KeyIdentity.generate();
+const mockUserPrincipal = mockIdentity.getPrincipal().toText();
+const CKBTC_LEDGER_ID = "mxzaz-hqaaa-aaaar-qaada-cai";
+
+// ETAPA 1: CRIAR UMA FUNÇÃO AUXILIAR PARA O JSON.stringify
+// Esta função ensina o JSON a converter BigInt para string.
+function jsonReplacer(key: string, value: any) {
+  if (typeof value === 'bigint') {
+    return value.toString();
+  }
+  return value;
+}
+
+// --- IDL FACTORY PARA O LEDGER CKBTC ---
+const ckbtcIdlFactory = ({ IDL }) => {
+  const Account = IDL.Record({
+    'owner': IDL.Principal,
+    'subaccount': IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+
+  return IDL.Service({
+    'icrc1_transfer': IDL.Func(
+      [IDL.Record({ 
+        'to': Account,
+        'amount': IDL.Nat, 
+        'fee': IDL.Opt(IDL.Nat), 
+        'memo': IDL.Opt(IDL.Vec(IDL.Nat8)), 
+        'from_subaccount': IDL.Opt(IDL.Vec(IDL.Nat8)), 
+        'created_at_time': IDL.Opt(IDL.Nat64) 
+      })], 
+      [IDL.Variant({ 'Ok': IDL.Nat, 'Err': IDL.Variant({
+        'GenericError': IDL.Record({'message': IDL.Text, 'error_code': IDL.Nat}),
+        'TemporarilyUnavailable': IDL.Null,
+        'BadBurn': IDL.Record({'min_burn_amount': IDL.Nat}),
+        'Duplicate': IDL.Record({'duplicate_of': IDL.Nat}),
+        'BadFee': IDL.Record({'expected_fee': IDL.Nat}),
+        'CreatedInFuture': IDL.Record({'ledger_time': IDL.Nat64}),
+        'TooOld': IDL.Null,
+        'InsufficientFunds': IDL.Record({'balance': IDL.Nat}),
+      }) })], 
+      []
+    )
+  });
+};
+
+// --- FUNÇÃO DE TRANSFERÊNCIA CKBTC ---
+async function transferCkBTC(userIdentity: any, toPrincipal: string, amountE8s: bigint) {
+  const agent = new HttpAgent({ host: "https://icp0.io", identity: userIdentity });
+  if (process.env.NODE_ENV !== "production") {
+    await agent.fetchRootKey().catch(console.warn);
+  }
+  
+  const ledger = Actor.createActor(ckbtcIdlFactory, { agent, canisterId: CKBTC_LEDGER_ID });
+  
+  return await ledger.icrc1_transfer({ 
+    to: {
+      owner: Principal.fromText(toPrincipal),
+      subaccount: [],
+    }, 
+    amount: amountE8s, 
+    fee: [], 
+    memo: [], 
+    from_subaccount: [], 
+    created_at_time: [] 
+  });
+}
+
+// --- COMPONENTE ---
+type TransactionStatus = 'idle' | 'processing' | 'success' | 'error';
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  onConfirm: (amount: number) => Promise<void> | void;
-
-  // UI/behavior
-  quickAmounts?: number[];       // ex.: [2,5,10]
-  defaultAmount?: number;        // ex.: 5
-  processing?: boolean;          // loading state
-
-  // Info (opcional)
-  supporters?: number;           // total backers
-  goal?: number;                 // target (progresso)
-  url?: string;                  // link original (opcional)
+  recipientPrincipal: string;
+  userIdentity?: any;
+  userPrincipalId?: string;
+  quickAmounts?: number[];
+  defaultAmount?: number;
+  supporters?: number;
+  goal?: number;
+  url?: string;
+  onSupportSuccess?: (amount: number, txId: any) => void;
+  onSupportError?: (error: string) => void;
+  id?: string | number; 
+  onConfirm?: (amount: number) => Promise<void>;
+  processing?: boolean;
 };
 
 export default function SupportModal({
   open,
   onClose,
-  onConfirm,
+  recipientPrincipal,
+  userIdentity = mockIdentity,
+  userPrincipalId = mockUserPrincipal,
   quickAmounts = [2, 5, 10],
   defaultAmount = 5,
-  processing = false,
   supporters = 0,
   goal = 0,
   url,
+  onSupportSuccess,
+  onSupportError,
 }: Props) {
   const [amount, setAmount] = React.useState<number>(defaultAmount);
   const [custom, setCustom] = React.useState<string>("");
+  const [status, setStatus] = React.useState<TransactionStatus>('idle');
+  const [errorMessage, setErrorMessage] = React.useState<string>("");
 
   React.useEffect(() => {
     if (!open) {
       setAmount(defaultAmount);
       setCustom("");
+      setStatus('idle');
+      setErrorMessage("");
     }
   }, [open, defaultAmount]);
 
-  // ESC fecha
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -49,124 +131,205 @@ export default function SupportModal({
 
   if (!open) return null;
 
-  const chosen =
-    custom.trim() !== "" ? Math.max(1, Number(custom.trim())) : amount;
-
-  const progress =
-    goal > 0 ? Math.min(100, Math.round(((supporters ?? 0) / goal) * 100)) : 0;
-
+  const chosen = custom.trim() !== "" ? Math.max(1, Number(custom.trim())) : amount;
+  const progress = goal > 0 ? Math.min(100, Math.round(((supporters ?? 0) / goal) * 100)) : 0;
   const brandGradient = "bg-gradient-to-r from-[#FF007A] to-[#FF4D00] text-white";
+
+  const usdToCkBTC = (usdAmount: number): bigint => {
+    const ckBtcPrice = 68000;
+    const ckBtcAmount = usdAmount / ckBtcPrice;
+    return BigInt(Math.floor(ckBtcAmount * 100_000_000));
+  };
+
+  const handleSupport = async () => {
+    if (!userIdentity || !recipientPrincipal) {
+      setErrorMessage("Required information is missing (user or recipient).");
+      setStatus('error');
+      return;
+    }
+
+    setStatus('processing');
+    setErrorMessage("");
+
+    try {
+      const amountE8s = usdToCkBTC(chosen);
+      if (amountE8s <= 1000n) {
+        throw new Error("Amount is too small for a ckBTC transfer.");
+      }
+
+      console.log(`Attempting to transfer ${amountE8s} e8s to ${recipientPrincipal}`);
+      const transferResult = await transferCkBTC(userIdentity, recipientPrincipal, amountE8s);
+      
+      if ('Err' in transferResult) {
+        const errorKey = Object.keys(transferResult.Err)[0];
+        const errorDetails = transferResult.Err[errorKey];
+
+        // ETAPA 2: USAR A FUNÇÃO AUXILIAR AQUI
+        const errorDetailsString = JSON.stringify(errorDetails, jsonReplacer);
+        
+        throw new Error(`ckBTC Transfer Failed: ${errorKey} - ${errorDetailsString}`);
+      }
+      
+      const ckbtcTxId = transferResult.Ok;
+      console.log(`ckBTC Transfer Successful! TxId: ${ckbtcTxId}`);
+
+      setStatus('success');
+      onSupportSuccess?.(chosen, ckbtcTxId);
+      
+      setTimeout(() => {
+        onClose();
+      }, 2500);
+
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "An unexpected error occurred.";
+      setErrorMessage(errorMsg);
+      setStatus('error');
+      onSupportError?.(errorMsg);
+    }
+  };
+
+  const renderContent = () => {
+    if (status === 'success') {
+      return (
+        <div className="px-4 pb-4 text-center space-y-4">
+          <div className="flex justify-center">
+            <CheckCircle className="w-16 h-16 text-green-400" />
+          </div>
+          <div>
+            <h4 className="text-lg font-semibold text-white mb-2">Support Sent!</h4>
+            <p className="text-sm text-white/80">
+              Your ${chosen} support has been successfully transferred.
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (status === 'error') {
+      return (
+        <div className="px-4 pb-4 space-y-4">
+          <div className="flex items-center justify-center gap-2 text-red-400">
+            <AlertCircle className="w-5 h-5" />
+            <span className="text-sm font-medium">Transaction Failed</span>
+          </div>
+          <p className="text-sm text-white/70 text-center break-words">{errorMessage}</p>
+          <button
+            onClick={() => setStatus('idle')}
+            className="w-full px-4 py-2 rounded-full bg-white/10 text-white text-sm hover:bg-white/15 transition"
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="px-4 pb-4 space-y-4">
+        {goal > 0 && (
+          <div>
+            <div className="flex items-center justify-between text-xs text-white/60 mb-1">
+              <span>{supporters ?? 0} supporters</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-[#FF007A] to-[#FF4D00]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="text-sm text-white/80">
+          Choose an amount or enter a custom value:
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {quickAmounts.map((q) => (
+            <button
+              key={q}
+              onClick={() => { setAmount(q); setCustom(""); }}
+              disabled={status === 'processing'}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${amount === q && custom === "" ? brandGradient : "bg-white/10 text-white/80 hover:bg-white/15"} ${status === 'processing' ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              ${q}
+            </button>
+          ))}
+
+          <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1.5">
+            <span className="text-xs text-white/60">$</span>
+            <input
+              inputMode="numeric"
+              pattern="[0-9]*"
+              placeholder="Custom"
+              value={custom}
+              onChange={(e) => setCustom(e.target.value.replace(/[^\d]/g, ""))}
+              disabled={status === 'processing'}
+              className="w-20 bg-transparent outline-none text-xs text-white placeholder-white/40 disabled:opacity-50"
+            />
+          </div>
+        </div>
+
+        {userPrincipalId && (
+          <div className="text-xs text-white/50 bg-white/5 rounded-lg p-2">
+            <div>Authenticated: {userPrincipalId.slice(0, 8)}...{userPrincipalId.slice(-8)}</div>
+            <div className="mt-1">≈ {(Number(usdToCkBTC(chosen)) / 100_000_000).toFixed(6)} ckBTC</div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-2">
+          {url ? (
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white underline underline-offset-2"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              Read original
+            </a>
+          ) : <span />}
+
+          <button
+            onClick={handleSupport}
+            disabled={status === 'processing' || !userIdentity}
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm transition active:scale-95 ${brandGradient} ${status === 'processing' || !userIdentity ? "opacity-70 cursor-not-allowed" : ""}`}
+          >
+            <HandCoins className="w-4 h-4" />
+            {status === 'processing' ? "Processing…" : !userIdentity ? "Please Login" : `Support $${chosen}`}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* overlay */}
       <button
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         aria-label="Close"
         onClick={onClose}
+        disabled={status === 'processing'}
       />
 
-      {/* container */}
       <div className="relative w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <div className="rounded-[22px] p-[2px] bg-gradient-to-br from-[#FF007A] to-[#FF4D00]">
           <div className="rounded-[20px] bg-[#0B0E13] border border-white/10 shadow-2xl">
-            {/* header */}
             <div className="p-4 pb-3 relative">
-              <h3 className="text-lg font-semibold text-white pr-10">Support this article</h3>
+              <h3 className="text-lg font-semibold text-white pr-10">
+                {status === 'success' ? 'Support Sent!' : 'Support this article'}
+              </h3>
               <button
                 onClick={onClose}
-                className="absolute top-3 right-3 inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/15 transition"
+                disabled={status === 'processing'}
+                className="absolute top-3 right-3 inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-white hover:bg-white/15 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 aria-label="Close"
                 title="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            {/* body */}
-            <div className="px-4 pb-4 space-y-4">
-              {/* progress (opcional) */}
-              {goal > 0 && (
-                <div>
-                  <div className="flex items-center justify-between text-xs text-white/60 mb-1">
-                    <span>{supporters ?? 0} supporters</span>
-                    <span>{progress}%</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#FF007A] to-[#FF4D00]"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="text-sm text-white/80">
-                Choose an amount or enter a custom value:
-              </div>
-
-              {/* quick amounts */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {quickAmounts.map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => {
-                      setAmount(q);
-                      setCustom("");
-                    }}
-                    className={[
-                      "px-3 py-1.5 rounded-full text-xs font-medium transition",
-                      amount === q && custom === ""
-                        ? brandGradient
-                        : "bg-white/10 text-white/80 hover:bg-white/15",
-                    ].join(" ")}
-                  >
-                    ${q}
-                  </button>
-                ))}
-
-                {/* custom */}
-                <div className="flex items-center gap-1 bg-white/10 rounded-full px-2 py-1.5">
-                  <span className="text-xs text-white/60">$</span>
-                  <input
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    placeholder="Custom"
-                    value={custom}
-                    onChange={(e) => setCustom(e.target.value.replace(/[^\d]/g, ""))}
-                    className="w-20 bg-transparent outline-none text-xs text-white placeholder-white/40"
-                  />
-                </div>
-              </div>
-
-              {/* footer */}
-              <div className="flex items-center justify-between">
-                {url ? (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white underline underline-offset-2"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Read original
-                  </a>
-                ) : <span />}
-
-                <button
-                  onClick={() => onConfirm(chosen)}
-                  disabled={processing}
-                  className={[
-                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium shadow-sm transition active:scale-95",
-                    brandGradient,
-                    processing ? "opacity-70 cursor-wait" : "",
-                  ].join(" ")}
-                >
-                  <HandCoins className="w-4 h-4" />
-                  {processing ? "Processing…" : `Support $${chosen}`}
-                </button>
-              </div>
-            </div>
+            {renderContent()}
           </div>
         </div>
       </div>

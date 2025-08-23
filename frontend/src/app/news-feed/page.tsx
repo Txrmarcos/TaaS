@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import { Tag, TAGS, TagCarousel } from "@/components/ui/TagCarousel";
+import { Tag, TagCarousel } from "@/components/ui/TagCarousel";
 import { MiniNewsCard } from "@/components/ui/MiniNewsCard";
 import { Sidebar } from "@/components/Sidebar";
 import { Footer } from "@/components/Footer";
-import { Newspaper } from "lucide-react";
+import { Newspaper, RefreshCw } from "lucide-react";
 import BigNewsCard, { BigArticle, Comment } from "@/components/ui/BigNewsCard";
 import { TaaSVerdictEmbed, TaaSVerification, Verdict } from "@/components/ui/TaaSVerdictEmbed";
 import { createSearchNewsActor } from "../utils/canister";
@@ -402,7 +402,6 @@ export default function NewsFeedPage() {
     }
   }, []);
 
-  // Effect for saving liked IDs to localStorage
   React.useEffect(() => {
     try {
       localStorage.setItem("likedIds", JSON.stringify(likedIds));
@@ -411,7 +410,6 @@ export default function NewsFeedPage() {
     }
   }, [likedIds]);
 
-  // Effect for fetching news data
   React.useEffect(() => {
     async function loadNews() {
       setIsLoading(true);
@@ -450,29 +448,59 @@ export default function NewsFeedPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-[#0B0E13] text-white font-sans">
+      <div className="flex min-h-screen text-white font-sans">
+        <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+          <div 
+              className="absolute w-full h-full top-0 left-0 bg-transparent"
+              style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                  backgroundSize: '2rem 2rem',
+                  animation: 'grid-pan 60s linear infinite',
+              }}
+          ></div>
+        </div>
+        
         <Sidebar />
         <div className="flex flex-col flex-1">
           <main className="flex flex-col flex-grow items-center justify-center px-2 py-8">
-            <div className="text-center">
-              <div className="loader mb-4"></div>
-              <h2 className="text-2xl font-bold text-white">Loading News Feed...</h2>
+            <div className="flex items-center gap-3">
+              <RefreshCw className="w-6 h-6 animate-spin text-[#FF4D00]" />
+              <p className="text-lg">Loading News Feed...</p>
             </div>
           </main>
           <Footer />
         </div>
+
+        <style jsx global>{`
+          @keyframes grid-pan {
+              0% { background-position: 0% 0%; }
+              100% { background-position: 100% 100%; }
+          }
+        `}</style>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen bg-[#0B0E13] text-white font-sans">
+    <div className="flex min-h-screen text-white font-sans">
+      <div className="fixed top-0 left-0 w-full h-full bg-[#0B0E13] -z-10 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_rgba(255,77,0,0.1)_0,_transparent_50%)]"></div>
+          <div 
+              className="absolute w-full h-full top-0 left-0 bg-transparent"
+              style={{
+                  backgroundImage: `linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)`,
+                  backgroundSize: '2rem 2rem',
+                  animation: 'grid-pan 60s linear infinite',
+              }}
+          ></div>
+      </div>
+    
       <Sidebar />
       <div className="flex flex-col flex-1">
         <main className="flex flex-col flex-grow items-center justify-center px-2 py-8">
-          <div className="w-full max-w-2xl h-[80vh] bg-white/5 border-white/10 shadow-xl rounded-xl border flex flex-col min-h-[350px]">
-            {/* Header */}
-            <div className="p-3 border-b border-white/10 bg-gradient-to-r from-white/5 to-white/10">
+          <div className="w-full max-w-2xl h-[80vh] bg-white/5 backdrop-blur-xl border-white/10 shadow-xl rounded-xl border flex flex-col min-h-[350px]">
+            <div className="p-3 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
               <div className="flex items-center space-x-3">
                 <div className="relative w-10 h-10">
                   <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#FF007A] to-[#FF4D00] p-[2px]">
@@ -512,7 +540,6 @@ export default function NewsFeedPage() {
               <TagCarousel selectedTag={selectedTag} onTagClick={setSelectedTag} />
             </div>
 
-            {/* News list */}
             <div className="flex-1 p-3 space-y-3 overflow-y-auto">
               {filteredNews.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-white/60">
@@ -551,7 +578,6 @@ export default function NewsFeedPage() {
               )}
             </div>
 
-            {/* Modal */}
             {selected && (
               <BigNewsCard
                 article={selected}
@@ -568,6 +594,13 @@ export default function NewsFeedPage() {
         </main>
         <Footer />
       </div>
+
+      <style jsx global>{`
+        @keyframes grid-pan {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+      `}</style>
     </div>
   );
 }

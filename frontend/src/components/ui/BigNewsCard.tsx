@@ -310,6 +310,9 @@ export default function BigNewsCard({
       <SupportModal
         open={supportOpen}
         onClose={() => setSupportOpen(false)}
+        // ADIÇÃO 2: Passe o authorPrincipal para o modal
+        recipientPrincipal={author || ""}
+        id={id || ""}
         onConfirm={async (amount) => {
           await onSupport({ id, amount });
           setSupportOpen(false);
