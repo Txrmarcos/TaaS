@@ -241,7 +241,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
                 className="w-full bg-gradient-to-r from-[#FF007A] to-[#FF4D00] text-white 
                          font-semibold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity"
               >
-                Fechar
+                Close
               </button>
             </div>
           </div>
