@@ -127,7 +127,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
       {/* Expanded modal/overlay */}
       {isExpanded && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1A1D23] border border-white/10 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-[#1A1D23] border border-white/10 rounded-lg max-w-md w-full max-h-[70vh] overflow-y-auto">
             {/* Header */}
             <div className={`${config.bgColor} ${config.borderColor} border-b p-4`}>
               <div className="flex items-center justify-between">
