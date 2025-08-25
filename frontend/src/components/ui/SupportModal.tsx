@@ -19,6 +19,46 @@ function jsonReplacer(key: string, value: any) {
   return value;
 }
 
+function formatCkBTC(v: number) {
+  if (!Number.isFinite(v)) return "—";
+  // mostra 6 casas, cai pra notação científica se for muito pequeno
+  return v < 0.000001 ? v.toExponential(2) : v.toFixed(6);
+}
+
+function CopyPrincipalBtn({ principal }: { principal: string }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(principal);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
+  return (
+    <button
+      onClick={copy}
+      className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 transition"
+      title="Copy principal"
+      aria-live="polite"
+    >
+      {copied ? (
+        // Check
+        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-emerald-400" fill="currentColor">
+          <path d="M9 16.17l-3.88-3.88L4 13.41 9 18.41 20.59 6.83 19.17 5.41z"/>
+        </svg>
+      ) : (
+        // Copy
+        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white/70" fill="currentColor">
+          <path d="M16 1H4c-1.1 0-2 .9-2 2v12h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+        </svg>
+      )}
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
+
 // --- IDL FACTORY PARA O LEDGER CKBTC ---
 const ckbtcIdlFactory = ({ IDL }) => {
   const Account = IDL.Record({
@@ -271,9 +311,47 @@ export default function SupportModal({
         </div>
 
         {userPrincipalId && (
-          <div className="text-xs text-white/50 bg-white/5 rounded-lg p-2">
-            <div>Authenticated: {userPrincipalId.slice(0, 8)}...{userPrincipalId.slice(-8)}</div>
-            <div className="mt-1">≈ {(Number(usdToCkBTC(chosen)) / 100_000_000).toFixed(6)} ckBTC</div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {/* Card: Autenticação */}
+            <section className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {/* ShieldCheck */}
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-emerald-400" fill="currentColor">
+                    <path d="M12 2l7 4v6c0 5-3.5 9-7 10-3.5-1-7-5-7-10V6l7-4zm0 2.2L7 6.5v5.4c0 3.9 2.7 7.3 5 8.3 2.3-1 5-4.4 5-8.3V6.5l-5-2.3z"/><path d="M10.5 12.8l-1.7-1.7-1.1 1.1 2.8 2.8 5-5-1.1-1.1z"/>
+                  </svg>
+                  <span className="text-xs font-semibold text-white/80">Authenticated</span>
+                </div>
+
+                {/* Copiar principal */}
+                <CopyPrincipalBtn principal={userPrincipalId} />
+              </div>
+
+              <p className="mt-1 font-mono text-xs text-white/70 break-all">
+                {userPrincipalId.slice(0, 8)}...{userPrincipalId.slice(-8)}
+              </p>
+            </section>
+
+            {/* Card: Conversão para ckBTC */}
+            <section className="rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="flex items-center gap-2">
+                {/* Coins */}
+                <svg viewBox="0 0 24 24" className="w-4 h-4 text-amber-400" fill="currentColor">
+                  <path d="M12 2C7.58 2 4 3.79 4 6s3.58 4 8 4 8-1.79 8-4-3.58-4-8-4zm0 6c-3.31 0-6-.9-6-2s2.69-2 6-2 6 .9 6 2-2.69 2-6 2z"/><path d="M4 10v4c0 2.21 3.58 4 8 4s8-1.79 8-4v-4c-1.74 1.51-5.01 2-8 2s-6.26-.49-8-2zm0 6v2c0 2.21 3.58 4 8 4s8-1.79 8-4v-2c-1.74 1.51-5.01 2-8 2s-6.26-.49-8-2z"/>
+                </svg>
+                <span className="text-xs font-semibold text-white/80">Conversion</span>
+              </div>
+
+              <p className="mt-1 text-sm text-white/90">
+                ${chosen}
+                <span className="mx-1 text-white/50">≈</span>
+                {formatCkBTC(Number(usdToCkBTC(chosen)) / 100_000_000)} ckBTC
+              </p>
+
+              <p className="text-[11px] text-white/50 mt-1">
+                Network fees not included.
+              </p>
+            </section>
           </div>
         )}
 

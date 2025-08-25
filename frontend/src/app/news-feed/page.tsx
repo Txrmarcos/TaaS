@@ -26,84 +26,84 @@ const NEWS: Array<{
   subtitle?: string;
 }> = [
   {
-    id: 1,
-    title: "TaaS lança protótipo com governança no ICP",
-    description:
-      "O time apresentou um protótipo auditável com governança comunitária usando canisters para plano e busca de notícias...",
-    tag: "Highlights",
-    author: "dfx-principal-aaabbbccc",
-    likes: 42,
-    content:
-      "O protótipo do TaaS integra os canisters `bot-plan` (planos e billing) e `search-news` (veredito e ranking). A governança do conhecimento é feita pelo `round-table`. Na prática, o usuário assina um plano, consome a cota e recebe um veredito auditável. Este artigo detalha as decisões de arquitetura, os fluxos de consumo e como a comunidade pode propor fontes confiáveis.",
-    url: "https://example.com/taas-prototipo",
-    comments: [],
-    taasStatus: "True",
-    verdict: {
-      result: "True",
-      source: "ICP Documentation, GitHub",
-      hash: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
-      timestamp: Date.now() * 1000000,
-      llm_message: "✅ Informação verificada. O TaaS é um projeto real desenvolvido no Internet Computer Protocol com governança descentralizada."
+    "id": 1,
+    "title": "TaaS launches prototype with governance on ICP",
+    "description":
+      "The team presented an auditable prototype with community governance using canisters for planning and news search...",
+    "tag": "Highlights",
+    "author": "dfx-principal-aaabbbccc",
+    "likes": 42,
+    "content":
+      "The TaaS prototype integrates the `bot-plan` canister (plans and billing) and the `search-news` canister (verdict and ranking). Knowledge governance is handled by the `round-table`. In practice, the user subscribes to a plan, consumes the quota, and receives an auditable verdict. This article details the architecture decisions, consumption flows, and how the community can propose reliable sources.",
+    "url": "https://example.com/taas-prototipo",
+    "comments": [],
+    "taasStatus": "True",
+    "verdict": {
+      "result": "True",
+      "source": "ICP Documentation, GitHub",
+      "hash": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+      "timestamp": Date.now() * 1000000,
+      "llm_message": "✅ Verified information. TaaS is a real project developed on the Internet Computer Protocol with decentralized governance."
     }
   },
   {
-    id: 2,
-    title: "Integração: AuthClient + Actors sem fricção",
-    description:
-      "Guia para autenticar usuários e criar actors no front sem dores, incluindo fallback e tratamento de erros...",
-    tag: "Highlights",
-    author: "kaiane.icp",
-    likes: 18,
-    content:
-      "Para criar uma experiência fluida, o AuthClient é inicializado no client-side e injeta a identidade no HttpAgent. Com isso, os actors `users`, `bot-plan` e `search-news` ficam prontos para chamadas autenticadas. O artigo traz padrões de retry, loading states e persistência de preferências no localStorage.",
-    url: "https://example.com/authclient-actors",
-    comments: [],
-    taasStatus: "True",
-    verdict: {
-      result: "True",
-      source: "ICP SDK Documentation",
-      hash: "x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4",
-      timestamp: Date.now() * 1000000,
-      llm_message: "✅ Informação técnica verificada. O padrão AuthClient + HttpAgent é documentado oficialmente no SDK do ICP."
+    "id": 2,
+    "title": "Integration: AuthClient + Actors without friction",
+    "description":
+      "Guide to authenticate users and create actors on the front end seamlessly, including fallback and error handling...",
+    "tag": "Highlights",
+    "author": "kaiane.icp",
+    "likes": 18,
+    "content":
+      "To create a smooth experience, the AuthClient is initialized on the client side and injects the identity into the HttpAgent. With this, the `users`, `bot-plan`, and `search-news` actors are ready for authenticated calls. The article covers retry patterns, loading states, and preference persistence in localStorage.",
+    "url": "https://example.com/authclient-actors",
+    "comments": [],
+    "taasStatus": "True",
+    "verdict": {
+      "result": "True",
+      "source": "ICP SDK Documentation",
+      "hash": "x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4",
+      "timestamp": Date.now() * 1000000,
+      "llm_message": "✅ Technical information verified. The AuthClient + HttpAgent pattern is officially documented in the ICP SDK."
     }
   },
   {
-    id: 3,
-    title: "UI/UX do feed: MiniNewsCard + BigNewsCard",
-    description:
-      "Como desenhamos um feed leve, com likes persistentes no localStorage e modal de leitura detalhada...",
-    tag: "Highlights",
-    author: "marco.ui",
-    likes: 27,
-    content:
-      "A composição usa `MiniNewsCard` para listagem rápida e `BigNewsCard` para leitura focada, com suporte a like, salvar e apoiar. O estado de likes persiste no `localStorage`. Discutimos também acessibilidade, foco do teclado, animações discretas e responsividade.",
-    url: "https://example.com/ui-feed-design",
-    comments: [],
-    taasStatus: "Uncertain",
-    verdict: {
-      result: "Uncertain",
-      source: "UI/UX Best Practices",
-      hash: "m5n6o7p8q9r0s1t2u3v4w5x6y7z8a9b0",
-      timestamp: Date.now() * 1000000,
-      llm_message: "⚠️ Informação sobre design. Práticas de UI/UX são subjetivas, mas os padrões mencionados são amplamente aceitos."
+    "id": 3,
+    "title": "Feed UI/UX: MiniNewsCard + BigNewsCard",
+    "description":
+      "How we designed a lightweight feed, with likes persisted in localStorage and detailed reading modal...",
+    "tag": "Highlights",
+    "author": "marco.ui",
+    "likes": 27,
+    "content":
+      "The composition uses `MiniNewsCard` for quick listing and `BigNewsCard` for focused reading, with support for like, save, and support. Like state persists in `localStorage`. We also discuss accessibility, keyboard focus, subtle animations, and responsiveness.",
+    "url": "https://example.com/ui-feed-design",
+    "comments": [],
+    "taasStatus": "Uncertain",
+    "verdict": {
+      "result": "Uncertain",
+      "source": "UI/UX Best Practices",
+      "hash": "m5n6o7p8q9r0s1t2u3v4w5x6y7z8a9b0",
+      "timestamp": Date.now() * 1000000,
+      "llm_message": "⚠️ Design-related information. UI/UX practices are subjective, but the mentioned patterns are widely accepted."
     }
   },
   {
-    id: 5,
-    title: "Plans & Quotas: design do consumo por requisição",
-    description:
-      "Estratégias para controlar cota por plano, exibir mensagens claras e evitar surpresas ao usuário...",
-    tag: "Highlights",
-    author: "billing.bot",
-    likes: 33,
-    content:
-      "O `bot-plan` valida consumo antes do `search-news` processar a consulta. Em caso de estouro, o front exibe call-to-action para upgrade. Este artigo descreve estados, mensagens, e padrões para manter transparência no uso do produto.",
-    url: "https://example.com/plans-quotas",
-    comments: [],
-    taasStatus: "Pending",
-    verdict: null
+    "id": 5,
+    "title": "Plans & Quotas: per-request consumption design",
+    "description":
+      "Strategies to control quota per plan, display clear messages, and avoid user surprises...",
+    "tag": "Highlights",
+    "author": "billing.bot",
+    "likes": 33,
+    "content":
+      "The `bot-plan` validates consumption before `search-news` processes the query. In case of overuse, the front end displays a call-to-action for upgrade. This article describes states, messages, and patterns to maintain transparency in product usage.",
+    "url": "https://example.com/plans-quotas",
+    "comments": [],
+    "taasStatus": "Pending",
+    "verdict": null
   }
-];
+]
 
 // Helper function to safely parse backend data
 // Helper function to safely parse backend data
@@ -219,8 +219,8 @@ export default function NewsFeedPage() {
   const handleLike = async (id: number) => {
     try {
       if (!authClient || !isAuthenticated) {
-        console.warn("Precisa estar autenticado para dar like");
-        setError("Você precisa estar autenticado para dar like");
+        console.warn("You must be logged in to like.");
+        setError("You must be logged in to like.");
         return;
       }
 
@@ -303,8 +303,8 @@ export default function NewsFeedPage() {
   const handleComment = async (id: number, text: string) => {
     try {
       if (!authClient || !isAuthenticated) {
-        console.warn("Precisa estar autenticado para comentar");
-        setError("Você precisa estar autenticado para comentar");
+        console.warn("You must be logged in to comment.");
+        setError("You must be logged in to comment.");
         return;
       }
 
@@ -349,8 +349,8 @@ export default function NewsFeedPage() {
       }, 1000);
 
     } catch (err: any) {
-      console.error("Erro ao comentar:", err);
-      setError(`Erro ao comentar: ${err?.message || 'Erro desconhecido'}`);
+      console.error("Error when commenting:", err);
+      setError(`Error when commenting: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -386,8 +386,8 @@ export default function NewsFeedPage() {
       setNewsData(formatted);
 
     } catch (err: any) {
-      console.error("Erro ao buscar posts:", err);
-      setError(`Erro ao carregar notícias: ${err?.message || 'Erro desconhecido'}`);
+      console.error("Error when fetching posts:", err);
+      setError(`Error when loading news: ${err?.message || 'Unknown error'}`);
       setNewsData(NEWS); // fallback to mock data
     }
   };
@@ -439,8 +439,8 @@ export default function NewsFeedPage() {
       console.log(`Supporting post ${id} with amount ${amount}`);
       
     } catch (err: any) {
-      console.error("Erro ao apoiar:", err);
-      setError(`Erro ao apoiar: ${err?.message || 'Erro desconhecido'}`);
+      console.error("Error when supporting:", err);
+      setError(`Error when supporting: ${err?.message || 'Unknown error'}`);
     } finally {
       setSupportingId(null);
     }
@@ -521,7 +521,7 @@ export default function NewsFeedPage() {
                   onClick={() => setError(null)}
                   className="text-red-400 hover:text-red-300 text-xs underline mt-1"
                 >
-                  Fechar
+                  Close
                 </button>
               </div>
             )}
@@ -530,7 +530,7 @@ export default function NewsFeedPage() {
             {!isAuthenticated && (
               <div className="mx-3 mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                 <p className="text-yellow-300 text-sm">
-                  Você precisa estar autenticado para interagir com as notícias.
+                  You must be logged in to interact with the news.
                 </p>
               </div>
             )}

@@ -27,7 +27,7 @@ export const MiniNewsCard: React.FC<MiniNewsCardProps> = ({
   likes,
 }) => {
   const style = TAG_BADGE_STYLES[tag] || "bg-gray-200 text-gray-800";
-  const displayLikes = (likes ?? 0) + (liked ? 1 : 0);
+  const displayLikes = likes ?? 0;
 
   return (
     <div

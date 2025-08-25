@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Tag, TAG_BADGE_STYLES } from "./TagCarousel";
-import { X, User2, Bookmark, HandCoins, Send } from "lucide-react";
+import { X, User2, Bookmark, HandCoins, Send, ChevronDown } from "lucide-react";
 import { TaaSVerdictEmbed, TaaSVerification, Verdict } from "./TaaSVerdictEmbed";
 import SupportModal from "./SupportModal";
 
@@ -69,7 +69,7 @@ export default function BigNewsCard({
   } = article;
   
   const pill = TAG_BADGE_STYLES[tag] || "bg-white/10 text-white";
-  const displayLikes = (likes ?? 0) + (liked ? 1 : 0);
+  const displayLikes = likes ?? 0;
 
   const [expanded, setExpanded] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
@@ -95,13 +95,12 @@ export default function BigNewsCard({
       // O estado será atualizado pelo componente pai
     } catch (error) {
       console.error("Error submitting comment:", error);
-      // Pode mostrar uma mensagem de erro específica aqui se necessário
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleCommentSubmit();
@@ -164,7 +163,7 @@ export default function BigNewsCard({
                     onClick={() => setExpanded(true)} 
                     className="mt-2 inline-flex items-center gap-1 text-xs text-white/70 underline underline-offset-2 hover:text-white transition"
                   >
-                    Ler mais
+                    Read more
                   </button>
                 ) : (
                   <div className="space-y-3">
@@ -173,7 +172,7 @@ export default function BigNewsCard({
                       onClick={() => setExpanded(false)} 
                       className="inline-flex items-center gap-1 text-xs text-white/70 underline underline-offset-2 hover:text-white transition"
                     >
-                      Ler menos
+                      Read less
                     </button>
                   </div>
                 ))}
@@ -187,68 +186,72 @@ export default function BigNewsCard({
                 />
               </div>
 
-              {/* Comentários */}
+              {/* Comentários (agora dentro de dropdown) */}
               {onComment && (
-                <div className="mt-6 space-y-3">
-                  <h4 className="text-sm font-semibold text-white/80 flex items-center gap-2">
-                    Comentários
-                    <span className="text-white/60 text-xs">({comments.length})</span>
-                  </h4>
-                  
-                  {/* Lista de comentários */}
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {comments.length > 0 ? (
-                      comments.map((comment) => (
-                        <div key={comment.id} className="bg-white/5 p-3 rounded-lg text-sm border border-white/10">
-                          <div className="flex items-start justify-between gap-2 mb-1">
-                            <span className="font-semibold text-white/90 text-xs truncate">
-                              {comment.author}
-                            </span>
-                            <span className="text-white/50 text-xs flex-shrink-0">
-                              {formatTimestamp(comment.timestamp)}
-                            </span>
+                <details className="group mt-6 rounded-xl border border-white/10 bg-white/5 mb-2">
+                  <summary className="flex items-center justify-between cursor-pointer select-none list-none p-3 sm:p-4">
+                    <span className="text-sm font-semibold text-white/80">
+                      Comments <span className="text-white/60 text-xs ml-1">({comments.length})</span>
+                    </span>
+                    <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+                  </summary>
+
+                  <div className="px-3 sm:px-4 pb-4 pt-0">
+                    {/* Lista de comentários */}
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {comments.length > 0 ? (
+                        comments.map((comment) => (
+                          <div key={comment.id} className="bg-white/5 p-3 rounded-lg text-sm border border-white/10">
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <span className="font-semibold text-white/90 text-xs truncate">
+                                {comment.author}
+                              </span>
+                              <span className="text-white/50 text-xs flex-shrink-0">
+                                {formatTimestamp(comment.timestamp)}
+                              </span>
+                            </div>
+                            <p className="text-white/80 break-words">{comment.text}</p>
                           </div>
-                          <p className="text-white/80 break-words">{comment.text}</p>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-white/50 text-sm">Be the first to comment!</p>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4">
-                        <p className="text-white/50 text-sm">Seja o primeiro a comentar!</p>
+                      )}
+                    </div>
+                    
+                    {/* Input de comentário */}
+                    <div className="space-y-2 mt-3">
+                      <textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Write a comment..."
+                        className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white placeholder-white/50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition"
+                        rows={2}
+                        maxLength={500}
+                        disabled={isSubmittingComment}
+                      />
+                      <div className="flex justify-between items-center">
+                        <span className="text-white/40 text-xs">
+                          {newComment.length}/500 • Enter to send
+                        </span>
+                        <button
+                          onClick={handleCommentSubmit}
+                          disabled={!newComment.trim() || isSubmittingComment}
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-pink-600 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-pink-700 transition active:scale-95 mb-2"
+                        >
+                          {isSubmittingComment ? (
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <Send className="w-4 h-4" />
+                          )}
+                          Send
+                        </button>
                       </div>
-                    )}
-                  </div>
-                  
-                  {/* Input de comentário */}
-                  <div className="space-y-2">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Escreva um comentário..."
-                      className="w-full bg-white/10 border border-white/20 rounded-lg p-3 text-white placeholder-white/50 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition"
-                      rows={2}
-                      maxLength={500}
-                      disabled={isSubmittingComment}
-                    />
-                    <div className="flex justify-between items-center">
-                      <span className="text-white/40 text-xs">
-                        {newComment.length}/500 • Enter para enviar
-                      </span>
-                      <button
-                        onClick={handleCommentSubmit}
-                        disabled={!newComment.trim() || isSubmittingComment}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-pink-600 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-pink-700 transition active:scale-95"
-                      >
-                        {isSubmittingComment ? (
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
-                        Enviar
-                      </button>
                     </div>
                   </div>
-                </div>
+                </details>
               )}
             </div>
 
@@ -263,7 +266,7 @@ export default function BigNewsCard({
                     liked ? "bg-rose-500/15 text-rose-300" : "bg-white/5 text-white/80 hover:bg-white/10",
                   ].join(" ")}
                   aria-pressed={liked}
-                  title={liked ? "Remover like" : "Dar like"}
+                  title={liked ? "Remove like" : "Like"}
                 >
                   <svg viewBox="0 0 24 24" className={`w-4 h-4 ${liked ? "fill-rose-500 text-rose-500" : "text-rose-400"}`}>
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
@@ -277,7 +280,7 @@ export default function BigNewsCard({
                   title="Salvar artigo"
                 >
                   <Bookmark className="w-4 h-4" />
-                  Salvar
+                  Save
                 </button>
               </div>
 
@@ -293,12 +296,12 @@ export default function BigNewsCard({
                 {supportingId === id ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Apoiando...
+                    Supporting...
                   </>
                 ) : (
                   <>
                     <HandCoins className="w-4 h-4" />
-                    Apoiar
+                    Support
                   </>
                 )}
               </button>
