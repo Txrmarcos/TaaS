@@ -25,40 +25,40 @@ const statusConfig = {
     color: 'text-yellow-400',
     bgColor: 'bg-yellow-500/10',
     borderColor: 'border-yellow-500/20',
-    label: 'Verificação Pendente',
-    description: 'O conteúdo está sendo analisado pelo TaaS...'
+    label: 'Pending Verification',
+    description: 'The content is being analyzed by TaaS...'
   },
   True: {
     icon: CheckCircle,
     color: 'text-green-400',
     bgColor: 'bg-green-500/10',
     borderColor: 'border-green-500/20',
-    label: 'Informação Verificada',
-    description: 'O conteúdo foi verificado e considerado verdadeiro'
+    label: 'Verified Information',
+    description: 'The content has been verified and found to be true'
   },
   False: {
     icon: XCircle,
     color: 'text-red-400',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/20',
-    label: 'Informação Refutada',
-    description: 'O conteúdo foi analisado e considerado falso'
+    label: 'Refuted Information',
+    description: 'The content has been analyzed and found to be false'
   },
   Uncertain: {
     icon: AlertTriangle,
     color: 'text-orange-400',
     bgColor: 'bg-orange-500/10',
     borderColor: 'border-orange-500/20',
-    label: 'Informação Incerta',
-    description: 'Não foi possível verificar completamente o conteúdo'
+    label: 'Uncertain Information',
+    description: 'It was not possible to fully verify the content'
   },
   Error: {
     icon: XCircle,
     color: 'text-red-400',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/20',
-    label: 'Erro na Verificação',
-    description: 'Ocorreu um erro durante a verificação'
+    label: 'Error in Verification',
+    description: 'An error occurred during verification'
   }
 };
 
@@ -83,7 +83,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
         minute: '2-digit'
       });
     } catch {
-      return 'Data inválida';
+      return 'Invalid date';
     }
   };
 
@@ -127,7 +127,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
       {/* Expanded modal/overlay */}
       {isExpanded && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1A1D23] border border-white/10 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+          <div className="bg-[#1A1D23] border border-white/10 rounded-lg max-w-md w-full max-h-[70vh] overflow-y-auto">
             {/* Header */}
             <div className={`${config.bgColor} ${config.borderColor} border-b p-4`}>
               <div className="flex items-center justify-between">
@@ -140,7 +140,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
                       {config.label}
                     </h3>
                     <p className="text-sm text-white/70">
-                      Verificação TaaS (Truth as a Service)
+                      TaaS Verification
                     </p>
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
             <div className="p-6 space-y-4">
               {/* Status */}
               <div>
-                <h4 className="text-white font-semibold mb-2">Status da Verificação</h4>
+                <h4 className="text-white font-semibold mb-2">Verification Status</h4>
                 <div className={`${config.bgColor} ${config.borderColor} border rounded-lg p-3`}>
                   <div className="flex items-center space-x-2">
                     <IconComponent className={`w-4 h-4 ${config.color}`} />
@@ -174,7 +174,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
               {/* Message from LLM */}
               {verdict?.llm_message && (
                 <div>
-                  <h4 className="text-white font-semibold mb-2">Análise Detalhada</h4>
+                  <h4 className="text-white font-semibold mb-2">Detailed Analysis</h4>
                   <div className="bg-white/5 border border-white/10 rounded-lg p-4">
                     <p className="text-white/90 leading-relaxed">
                       {verdict.llm_message}
@@ -186,7 +186,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
               {/* Technical Details */}
               {verdict && (
                 <div>
-                  <h4 className="text-white font-semibold mb-2">Detalhes Técnicos</h4>
+                  <h4 className="text-white font-semibold mb-2">Technical Details</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between py-2 border-b border-white/5">
                       <span className="text-white/60">Timestamp:</span>
@@ -197,7 +197,7 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
                     
                     {verdict.source && (
                       <div className="flex justify-between py-2 border-b border-white/5">
-                        <span className="text-white/60">Fonte:</span>
+                        <span className="text-white/60">Source:</span>
                         <span className="text-white/90 max-w-[200px] truncate">
                           {verdict.source}
                         </span>
@@ -222,12 +222,12 @@ export function TaaSVerdictEmbed({ verdict, taasStatus, className = '' }: TaaSVe
                   <Shield className="w-5 h-5 text-blue-400 mt-0.5" />
                   <div>
                     <h5 className="text-blue-400 font-semibold mb-1">
-                      Sobre o TaaS
+                      About TaaS
                     </h5>
                     <p className="text-sm text-white/70 leading-relaxed">
-                      O Truth as a Service é um sistema de verificação de informações que utiliza 
-                      inteligência artificial e fontes confiáveis para analisar a veracidade do 
-                      conteúdo. Os resultados são registrados on-chain para auditoria e transparência.
+                      Truth as a Service is an information verification system that uses
+                      artificial intelligence and trusted sources to analyze the veracity of
+                      content. The results are recorded on-chain for auditing and transparency.
                     </p>
                   </div>
                 </div>
@@ -276,56 +276,56 @@ export interface NewsWithVerdict {
 export function TaaSVerdictExample() {
   const examples: Array<{ status: TaaSVerification; verdict: Verdict }> = [
     {
-      status: 'True',
-      verdict: {
-        result: 'True',
-        source: 'Reuters, BBC News, G1',
-        hash: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6',
-        timestamp: Date.now() * 1000000,
-        llm_message: '✅ A informação foi verificada e confirmada por múltiplas fontes confiáveis. Os dados apresentados são consistentes com relatórios oficiais.'
+      "status": "True",
+      "verdict": {
+        "result": "True",
+        "source": "Reuters, BBC News, G1",
+        "hash": "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+        "timestamp": Date.now() * 1000000,
+        "llm_message": "✅ The information has been verified and confirmed by multiple reliable sources. The data presented is consistent with official reports."
       }
     },
     {
-      status: 'False',
-      verdict: {
-        result: 'False',
-        source: 'Fact-Check Brasil, Aos Fatos',
-        hash: 'x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4',
-        timestamp: Date.now() * 1000000,
-        llm_message: '❌ A informação foi analisada e identificada como falsa. Não há evidências que sustentem as alegações apresentadas.'
+      "status": "False",
+      "verdict": {
+        "result": "False",
+        "source": "Fact-Check Brazil, Aos Fatos",
+        "hash": "x9y8z7w6v5u4t3s2r1q0p9o8n7m6l5k4",
+        "timestamp": Date.now() * 1000000,
+        "llm_message": "❌ The information has been analyzed and identified as false. There is no evidence to support the claims presented."
       }
     },
     {
-      status: 'Uncertain',
-      verdict: {
-        result: 'Uncertain',
-        source: 'Multiple sources',
-        hash: 'm5n6o7p8q9r0s1t2u3v4w5x6y7z8a9b0',
-        timestamp: Date.now() * 1000000,
-        llm_message: '⚠️ As informações disponíveis são conflitantes ou insuficientes para uma verificação definitiva. Recomenda-se cautela.'
+      "status": "Uncertain",
+      "verdict": {
+        "result": "Uncertain",
+        "source": "Multiple sources",
+        "hash": "m5n6o7p8q9r0s1t2u3v4w5x6y7z8a9b0",
+        "timestamp": Date.now() * 1000000,
+        "llm_message": "⚠️ The available information is conflicting or insufficient for a definitive verification. Caution is advised."
       }
     },
     {
-      status: 'Pending',
-      verdict: {
-        result: 'Pending',
-        source: '',
-        hash: '',
-        timestamp: Date.now() * 1000000,
-        llm_message: '⏳ A verificação está em andamento. Por favor, aguarde enquanto analisamos o conteúdo.'
+      "status": "Pending",
+      "verdict": {
+        "result": "Pending",
+        "source": "",
+        "hash": "",
+        "timestamp": Date.now() * 1000000,
+        "llm_message": "⏳ Verification is in progress. Please wait while we analyze the content."
       }
     },
     {
-      status: 'Error',
-      verdict: {
-        result: 'Error',
-        source: '',
-        hash: '',
-        timestamp: Date.now() * 1000000,
-        llm_message: '❌ You have reached the limit of your plan or do not have an active plan.'
+      "status": "Error",
+      "verdict": {
+        "result": "Error",
+        "source": "",
+        "hash": "",
+        "timestamp": Date.now() * 1000000,
+        "llm_message": "❌ You have reached the limit of your plan or do not have an active plan."
       }
     }
-  ];
+  ]
 
   return (
     <div className="min-h-screen bg-[#0B0E13] p-6">

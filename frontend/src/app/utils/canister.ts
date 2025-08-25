@@ -169,7 +169,7 @@ export async function createSearchNewsActor(authClient: AuthClient | null) {
     botActor: createActorProxy(originalBotActor, "BotPlan"),
     searchNewsActor: createActorProxy(originalSearchNewsActor, "SearchNews"),
     usersActor: createActorProxy(originalUsersActor, "Users"),
-    postNewsActor: createActorProxy(originalPostActor, "PostNews"),
+    postsActor: createActorProxy(originalPostActor, "Posts"),
   };
 }
 
