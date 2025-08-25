@@ -219,8 +219,8 @@ export default function NewsFeedPage() {
   const handleLike = async (id: number) => {
     try {
       if (!authClient || !isAuthenticated) {
-        console.warn("Precisa estar autenticado para dar like");
-        setError("Você precisa estar autenticado para dar like");
+        console.warn("You must be logged in to like.");
+        setError("You must be logged in to like.");
         return;
       }
 
@@ -303,8 +303,8 @@ export default function NewsFeedPage() {
   const handleComment = async (id: number, text: string) => {
     try {
       if (!authClient || !isAuthenticated) {
-        console.warn("Precisa estar autenticado para comentar");
-        setError("Você precisa estar autenticado para comentar");
+        console.warn("You must be logged in to comment.");
+        setError("You must be logged in to comment.");
         return;
       }
 
@@ -349,8 +349,8 @@ export default function NewsFeedPage() {
       }, 1000);
 
     } catch (err: any) {
-      console.error("Erro ao comentar:", err);
-      setError(`Erro ao comentar: ${err?.message || 'Erro desconhecido'}`);
+      console.error("Error when commenting:", err);
+      setError(`Error when commenting: ${err?.message || 'Unknown error'}`);
     }
   };
 
@@ -386,8 +386,8 @@ export default function NewsFeedPage() {
       setNewsData(formatted);
 
     } catch (err: any) {
-      console.error("Erro ao buscar posts:", err);
-      setError(`Erro ao carregar notícias: ${err?.message || 'Erro desconhecido'}`);
+      console.error("Error when fetching posts:", err);
+      setError(`Error when loading news: ${err?.message || 'Unknown error'}`);
       setNewsData(NEWS); // fallback to mock data
     }
   };
@@ -439,8 +439,8 @@ export default function NewsFeedPage() {
       console.log(`Supporting post ${id} with amount ${amount}`);
       
     } catch (err: any) {
-      console.error("Erro ao apoiar:", err);
-      setError(`Erro ao apoiar: ${err?.message || 'Erro desconhecido'}`);
+      console.error("Error when supporting:", err);
+      setError(`Error when supporting: ${err?.message || 'Unknown error'}`);
     } finally {
       setSupportingId(null);
     }
@@ -521,7 +521,7 @@ export default function NewsFeedPage() {
                   onClick={() => setError(null)}
                   className="text-red-400 hover:text-red-300 text-xs underline mt-1"
                 >
-                  Fechar
+                  Close
                 </button>
               </div>
             )}
@@ -530,7 +530,7 @@ export default function NewsFeedPage() {
             {!isAuthenticated && (
               <div className="mx-3 mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                 <p className="text-yellow-300 text-sm">
-                  Você precisa estar autenticado para interagir com as notícias.
+                  You must be logged in to interact with the news.
                 </p>
               </div>
             )}
