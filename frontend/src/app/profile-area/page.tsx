@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Sidebar } from "@/components/Sidebar";
+import PostCard from "@/components/ui/PerfilPostCard";
 import { Footer } from "@/components/Footer";
 import { ArrowRight, RefreshCw, CheckCircle, XCircle, User } from "lucide-react";
 import { HttpAgent } from "@dfinity/agent";
@@ -9,6 +10,7 @@ import { AccountIdentifier, LedgerCanister } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import { useLoading } from "@/context/LoadingContext";
 import { createSearchNewsActor } from "../utils/canister";
+import BigNewsCard, { BigArticle } from "@/components/ui/BigNewsCard";
 
 // ===================== Tipos e helpers =====================
 export interface UserStatus {
@@ -37,10 +39,17 @@ interface UserProfile {
   role: Role;           // derivado de isJournalist
 }
 
+// Alinhado ao schema do posts.mo
 interface PostItem {
   id: number;
   title: string;
-  created_at?: number;
+  description: string;     // mini (subtitle ou content)
+  content: string;         // conteúdo completo
+  likesCount: number;      // length de likes
+  timestamp?: number;      // nanos (Time.Time)
+  imageUrl?: string;
+  location?: string;
+  authorId?: string;
 }
 
 const roleFromBool = (isJournalist?: boolean): Role =>
@@ -48,6 +57,9 @@ const roleFromBool = (isJournalist?: boolean): Role =>
 
 const defaultUsernameFromPrincipal = (p: Principal) =>
   `user_${p.toText().slice(0, 8)}`;
+
+const safeStringify = (obj: any) =>
+  JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2);
 
 // ===================== Componente =====================
 export default function ProfilePage() {
@@ -70,13 +82,46 @@ export default function ProfilePage() {
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
+  // BigNewsCard
+  const [selected, setSelected] = useState<BigArticle | null>(null);
+  const [likedIds, setLikedIds] = useState<string[]>([]);
+  const listRef = useRef<HTMLDivElement | null>(null);
+
+  const openFromPost = (post: PostItem) => {
+    const article: BigArticle = {
+      id: post.id,
+      title: post.title,
+      description: post.description ?? "",
+      content: post.content ?? "",
+      tag: "Highlights",                               // ajuste se tiver
+      author: profile?.username || "You",           // ou puxe do canister
+      likes: post.likesCount ?? 0,
+      url: post.imageUrl,                           // se BigNewsCard usa imagem
+      comments: [],                                 // mapeie se tiver
+      taasStatus: undefined,                        // traga se precisar
+      verdict: undefined,
+    };
+    setSelected(article);
+  };
+  const closeBig = () => setSelected(null);
+  const handleLike = (id: string) => {
+    setLikedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+    // TODO: integrar com postsActor (toggleLike) se existir
+  };
+  const handleSupport = (id: string) => {
+    // TODO: abrir modal de suporte/tip se existir
+    console.log("support post:", id);
+  };
+
   // ===================== Inicialização de Actors =====================
   useEffect(() => {
     const initializeActors = async () => {
       if (authClient) {
         try {
           const createdActors = await createSearchNewsActor(authClient);
-        setActors(createdActors);
+          setActors(createdActors);
         } catch (error) {
           console.error("Error initializing actors:", error);
         }
@@ -94,7 +139,6 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     if (!actors?.usersActor || !principal) return;
     try {
-      // users.mo: getProfile(userId: Principal) -> UserProfile (trap se não existir)
       const res = await actors.usersActor.getProfile(principal);
       const mapped: UserProfile = {
         id: res?.id ? String(res.id) : undefined,
@@ -106,7 +150,6 @@ export default function ProfilePage() {
       };
       setProfile(mapped);
     } catch (err) {
-      // se perfil não existe (trap), crie um com defaults
       console.warn("getProfile falhou; tentando createUser:", err);
       try {
         const created = await actors.usersActor.createUser(
@@ -133,21 +176,30 @@ export default function ProfilePage() {
   const fetchMyPosts = async () => {
     if (!actors?.postsActor || !principal) return;
     setIsLoadingPosts(true);
-    console.log("🔍 fetchMyPosts acionado com principal:", principal);
     try {
       const list = await actors.postsActor.getPostsByAuthor(principal);
-      console.log("🧾 Posts recebidos:", list);
 
-      setMyPosts(
-        (list || []).map((p: any) => {
-          console.log("📌 Comparando autor do post:", p.author?.toText?.());
-          return {
-            id: Number(p.id ?? p.postId ?? 0),
-            title: String(p.title ?? p.headline ?? ""),
-            created_at: Number(p.timestamp ?? p.created_at ?? 0),
-          };
-        })
-      );
+      if (Array.isArray(list) && list.length) {
+        console.log("🧾 Exemplo de post (bruto):\n", safeStringify(list[0]));
+      }
+
+      const norm: PostItem[] = (list || []).map((p: any, idx: number) => ({
+        id:
+          (typeof p.id === "bigint" ? p.id.toString() : p.id) ??
+          (typeof p.postId === "bigint" ? p.postId.toString() : p.postId) ??
+          idx,
+        title: String(p.title ?? ""),
+        description: String(p.subtitle ?? p.content ?? ""), // mini descrição
+        content: String(p.content ?? ""),                   // conteúdo completo
+        likesCount: Array.isArray(p.likes) ? p.likes.length : 0,
+        timestamp: p.timestamp ? Number(p.timestamp) : undefined,
+        imageUrl: p.imageUrl ? String(p.imageUrl) : undefined,
+        location: p.location ? String(p.location) : undefined,
+        authorId:
+          (p.author && typeof p.author.toText === "function") ? p.author.toText() : undefined,
+      }));
+
+      setMyPosts(norm);
     } catch (err) {
       console.error("getPostsByAuthor error:", err);
       showToast("error", "Erro ao carregar suas notícias.");
@@ -160,7 +212,6 @@ export default function ProfilePage() {
     if (!actors?.usersActor) return;
     setIsUpdatingRole(true);
     try {
-      // users.mo: registerAsJournalist() -> UserProfile atualizado
       const res = await actors.usersActor.registerAsJournalist();
       const mapped: UserProfile = {
         id: res?.id ? String(res.id) : undefined,
@@ -311,14 +362,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!profile) return;
 
-    console.log("👤 Perfil carregado:", profile);
-    console.log("🎭 Role:", profile.role);
-
     if (profile.role === "Journalist") {
-      console.log("✅ Sou jornalista! Chamando fetchMyPosts()");
       fetchMyPosts();
-    } else {
-      console.warn("⚠️ Não sou jornalista, não vou buscar posts.");
     }
   }, [profile]);
 
@@ -470,7 +515,7 @@ export default function ProfilePage() {
                 disabled={isLoadingBalance || isGlobalLoading}
                 className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition disabled:opacity-50"
               >
-                <RefreshCw className={`w-4 h-4 ${isLoadingBalance ? "animate-spin" : ""}`} />
+                <RefreshCw className={`'w-4 h-4 ${isLoadingBalance ? "animate-spin" : ""}`} />
                 {isLoadingBalance ? "Refreshing..." : "Refresh"}
               </button>
             </div>
@@ -599,39 +644,35 @@ export default function ProfilePage() {
 
           {/* === Jornalista: lista de notícias === */}
           {profile?.role === "Journalist" && (
-            <div className="mt-12">
+            <section className="mt-12">
               <h2 className="text-2xl font-bold mb-4">Your published news</h2>
 
               {isLoadingPosts ? (
                 <div className="text-white/70">Loading your news...</div>
+              ) : myPosts.length === 0 ? (
+                <div className="text-white/70">You haven't published any news yet.</div>
               ) : (
-                <>
-                  {myPosts.length === 0 ? (
-                    <div className="text-white/70">
-                      You haven't published any news yet.
+                <div
+                  ref={listRef}
+                  className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  style={{ scrollBehavior: "smooth" }}
+                >
+                  {myPosts.map((post) => (
+                    <div key={post.id} className="snap-start">
+                      <PostCard
+                        id={post.id}
+                        title={post.title}
+                        description={post.description}
+                        likes={post.likesCount}
+                        className="w-40 h-40"
+                        onEdit={() => openFromPost(post)} // abre o BigNewsCard ao clicar no lápis
+                      />
                     </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {myPosts.map((post) => (
-                        <div
-                          key={post.id}
-                          className="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-4"
-                        >
-                          <div className="min-w-0">
-                            <p className="font-semibold truncate">{post.title}</p>
-                            <p className="text-sm text-white/50">
-                              {new Date(Number(post.created_at) / 1_000_000).toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
+                  ))}
+                </div>
               )}
-            </div>
+            </section>
           )}
-
 
           {/* === Não-jornalista: CTA === */}
           {profile && profile.role !== "Journalist" && (
@@ -724,6 +765,27 @@ export default function ProfilePage() {
           )}
         </div>
       </main>
+
+      {/* Modal BigNewsCard */}
+      {selected && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-4xl">
+            <button
+              className="absolute -top-10 right-0 text-white/80 hover:text-white"
+              onClick={closeBig}
+            >
+              Close
+            </button>
+            <BigNewsCard
+              article={selected}
+              liked={likedIds.includes(String(selected.id))}
+              onLike={() => handleLike(String(selected.id))}
+              onSupport={() => handleSupport(String(selected.id))}
+              onClose={closeBig}
+            />
+          </div>
+        </div>
+      )}
 
       <Footer />
 
