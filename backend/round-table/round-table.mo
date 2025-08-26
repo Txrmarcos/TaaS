@@ -103,7 +103,6 @@ actor RoundtableCanister {
     };
   };
 
-  // Lógica de avaliação de propostas expiradas (30 dias)
   public func atualizarPropostas() : async [Text] {
     let now = Time.now();
     var logs: [Text] = [];

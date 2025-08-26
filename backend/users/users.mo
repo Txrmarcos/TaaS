@@ -1,8 +1,3 @@
-// UsersCanister.mo
-// Este canister é responsável por gerir perfis de utilizadores, incluindo o seu estado
-// como jornalista e as suas subscrições de newsletters.
-// Refatorado para usar Trie para armazenamento estável.
-
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import Nat32 "mo:base/Nat32";
@@ -11,7 +6,6 @@ import Debug "mo:base/Debug";
 
 actor class UsersCanister() {
 
-  // --- TIPOS DEFINIDOS LOCALMENTE ---
   
   public type NewsletterId = Nat;
   public type UserId = Principal;
@@ -24,19 +18,16 @@ actor class UsersCanister() {
     isJournalist: Bool;
     ownedNewsletters: [NewsletterId];
     subscribedNewsletters: [NewsletterId];
-    firstLogin: Bool; // Novo campo para identificar o primeiro login
+    firstLogin: Bool; 
   };
 
-  // --- ESTADO ESTÁVEL ---
   stable var profiles: Trie.Trie<UserId, UserProfile> = Trie.empty();
 
-  // --- Funções Auxiliares ---
   
   func keyFromPrincipal(p: Principal): Trie.Key<Principal> {
     { key = p; hash = Principal.hash(p) }
   };
 
-  // --- Funções Públicas (Atualizações - `update`) ---
 
   public shared(msg) func createUser(username: Text, bio: Text, profileImgUrl: Text): async UserProfile {
     let caller = msg.caller;
@@ -54,7 +45,7 @@ actor class UsersCanister() {
       isJournalist = false;
       ownedNewsletters = [];
       subscribedNewsletters = [];
-      firstLogin = true; // Inicialmente true
+      firstLogin = true;
     };
 
     profiles := Trie.put(profiles, key, Principal.equal, newUserProfile).0;
@@ -73,7 +64,7 @@ actor class UsersCanister() {
       isJournalist = userProfile.isJournalist;
       ownedNewsletters = userProfile.ownedNewsletters;
       subscribedNewsletters = userProfile.subscribedNewsletters;
-      firstLogin = userProfile.firstLogin; // Mantemos o valor atual
+      firstLogin = userProfile.firstLogin; 
     };
 
     profiles := Trie.put(profiles, keyFromPrincipal(caller), Principal.equal, updatedProfile).0;
@@ -152,12 +143,11 @@ actor class UsersCanister() {
     };
   };
 
-  // --- Nova função para marcar que o primeiro login já ocorreu ---
   public shared(msg) func markFirstLoginDone(): async UserProfile {
     let caller = msg.caller;
     let userProfile = await getProfile(caller);
     if (not userProfile.firstLogin) {
-      return userProfile; // Já marcado, nada a fazer
+      return userProfile;
     };
     let updatedProfile = {
       id = userProfile.id;
@@ -167,7 +157,7 @@ actor class UsersCanister() {
       isJournalist = userProfile.isJournalist;
       ownedNewsletters = userProfile.ownedNewsletters;
       subscribedNewsletters = userProfile.subscribedNewsletters;
-      firstLogin = false; // Marca como já logado
+      firstLogin = false;
     };
     profiles := Trie.put(profiles, keyFromPrincipal(caller), Principal.equal, updatedProfile).0;
     return updatedProfile;
