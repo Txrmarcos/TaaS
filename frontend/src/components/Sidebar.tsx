@@ -41,6 +41,8 @@ const canisterIds = [
     { name: "Bot-Plan", id: ids["bot-plan"].ic },
     { name: "Round-Table", id: ids["round-table"].ic },
     { name: "Search-News", id: ids["search-news"].ic },
+    { name: "Publish-News", id: ids["posts"].ic },
+    { name: "Users", id: ids["users"].ic },
 ];
 
 export const Sidebar = () => {

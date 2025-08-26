@@ -60,7 +60,7 @@ function CopyPrincipalBtn({ principal }: { principal: string }) {
 }
 
 // --- IDL FACTORY PARA O LEDGER CKBTC ---
-const ckbtcIdlFactory = ({ IDL }) => {
+const ckbtcIdlFactory = ({ IDL }: { IDL: any }) => {
   const Account = IDL.Record({
     'owner': IDL.Principal,
     'subaccount': IDL.Opt(IDL.Vec(IDL.Nat8)),
@@ -193,12 +193,12 @@ export default function SupportModal({
 
     try {
       const amountE8s = usdToCkBTC(chosen);
-      if (amountE8s <= 1000n) {
+      if (amountE8s <= 1000 ) {
         throw new Error("Amount is too small for a ckBTC transfer.");
       }
 
       console.log(`Attempting to transfer ${amountE8s} e8s to ${recipientPrincipal}`);
-      const transferResult = await transferCkBTC(userIdentity, recipientPrincipal, amountE8s);
+      const transferResult: any = await transferCkBTC(userIdentity, recipientPrincipal, amountE8s);
       
       if ('Err' in transferResult) {
         const errorKey = Object.keys(transferResult.Err)[0];
