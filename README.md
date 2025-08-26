@@ -12,7 +12,7 @@
 It allows journalists to publish news directly on the blockchain, ensuring their content is secure and censorship-resistant. By utilizing AI-driven fact-checking, TaaS aggregates trusted sources and community input, processing information through LLMs to validate accuracy. The platform then stores the final verdicts on-chain, providing a transparent and immutable record of truth.
 
 <p align="center">
-  <img src="images/dApp-taas.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+  <img src="images/taas.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
 It's designed to combat misinformation by creating a transparent, community-driven system for verifying claims and storing tamper-proof verdicts.
