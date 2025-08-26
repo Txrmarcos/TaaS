@@ -1,8 +1,8 @@
 # Truth-as-a-Service | TaaS
 
 <p align="center">
-  <img src="images/ic-icon.svg" alt="ICP Icon" height="48" style="vertical-align:middle; margin-right:16px;">
-  <img src="images/taas-icon.png" alt="TaaS Icon" height="70" style="vertical-align:middle;">
+  <img src="../images/ic-icon.svg" alt="ICP Icon" height="48" style="vertical-align:middle; margin-right:16px;">
+  <img src="../images/taas-icon.png" alt="TaaS Icon" height="70" style="vertical-align:middle;">
 </p>
 
 ## Project Summary
@@ -12,7 +12,7 @@
 It accepts user claims, sources information from the web, processes reasoning through LLMs *(AI Track)*, aggregates community input, and stores tamper-proof verdicts.
 
 <p align="center">
-  <img src="images/dApp-taas.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+  <img src="../images/dApp-taas.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
 It's designed to combat misinformation by creating a transparent, community-driven system for verifying claims and storing tamper-proof verdicts.
@@ -212,7 +212,7 @@ TaaS (Truth-as-a-Service) receives user claims, fetches information from web dat
 The architecture is modular, where each logical component is a canister (smart contract) on the ICP network, promoting scalability and interoperability.
 
 <p align="center">
-  <img src="images/taas-arch.png" alt="TaaS" />
+  <img src="../images/taas-arch.png" alt="TaaS" />
 </p>
 
 ### 2.1 Search News
@@ -220,7 +220,7 @@ The architecture is modular, where each logical component is a canister (smart c
 The ``search-news`` canister is the central orchestrator of the verification process. Its main responsibilities are:
 
 <p align="center">
-  <img src="images/search-news.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+  <img src="../images/search-news.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
 -   **Receive Queries:** Acts as the entry point for claims (prompts) submitted by users or other dApps.
@@ -236,7 +236,7 @@ The ``search-news`` canister is the central orchestrator of the verification pro
 The ``round-table`` is the canister responsible for the decentralized governance of information sources. Its function is to ensure that the TaaS knowledge base is reliable and curated by the community.
 
 <p align="center">
-  <img src="images/round-table.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+  <img src="../images/round-table.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
 -   **Source Governance:** Community members can create proposals and conduct voting (Proposals and Voting) to add or remove data sources (news sites, APIs, etc.).
@@ -248,7 +248,7 @@ The ``round-table`` is the canister responsible for the decentralized governance
 The ``bot-plan`` is the canister that manages user subscriptions, plans, and access to TaaS services.
 
 <p align="center">
-  <img src="images/bot-plan.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+  <img src="../images/bot-plan.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
 -   **Plan Management:** Upon logging in, the user is assigned a default plan (Standard). They can interact with the ``bot-plan`` to upgrade to higher-tier plans (Pro, Premium), which offer more requests or features.
@@ -392,7 +392,7 @@ This graph shows the total revenue and total costs as the user base grows. The i
 *Y-Axis:* Monthly Amount (USD)
 
 <p align="center">
-  <img src="images/fin-graph.png" alt="TaaS" />
+  <img src="../images/fin-graph.png" alt="TaaS" />
 </p>
 
 *Data Table:*

@@ -7,12 +7,12 @@
 
 ## Project Summary
 
-[TaaS](https://5vhpn-tyaaa-aaaaf-qbija-cai.icp0.io/) is a decentralized protocol built on the [Internet Computer Protocol (ICP)](https://internetcomputer.org/) that provides fast, auditable fact verification on-chain.
+[TaaS](https://5vhpn-tyaaa-aaaaf-qbija-cai.icp0.io/) is a decentralized news platform built on the [Internet Computer Protocol (ICP)](https://internetcomputer.org/) that provides security, accuracy, freedom of expression and finantial support on-chain.
 
-It accepts user claims, sources information from the web, processes reasoning through LLMs *(AI Track)*, aggregates community input, and stores tamper-proof verdicts.
+It allows journalists to publish news directly on the blockchain, ensuring their content is secure and censorship-resistant. By utilizing AI-driven fact-checking, TaaS aggregates trusted sources and community input, processing information through LLMs to validate accuracy. The platform then stores the final verdicts on-chain, providing a transparent and immutable record of truth.
 
 <p align="center">
-  <img src="images/dApp-taas.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+  <img src="images/taas.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
 It's designed to combat misinformation by creating a transparent, community-driven system for verifying claims and storing tamper-proof verdicts.
@@ -32,7 +32,7 @@ It's designed to combat misinformation by creating a transparent, community-driv
 - [1. Business Vision](#1-business-vision)
   - [1.1 TaaS as a Trusted News Platform](#11-taas-as-a-trusted-news-platform)
   - [1.2 Empowering Journalists and Freedom of Expression](#12-empowering-journalists-and-freedom-of-expression)
-  - [1.3 Core Pillars: Security, Accuracy, Expression, and Support](#13-core-pillars-security-accuracy-expression-and-support)
+  - [1.3 Core Pillars](#13-core-pillars)
   - [1.4 Brazil: National Context and Opportunities](#14-brazil-national-context-and-opportunities)
   - [1.5 Mission and Long-Term Vision](#15-mission-and-long-term-vision)
 - [2. Architecture Overview](#2-architecture-overview)
@@ -41,18 +41,14 @@ It's designed to combat misinformation by creating a transparent, community-driv
   - [2.3 Search News](#23-search-news)
   - [2.4 Round Table](#24-round-table)
   - [2.5 Bot Plan](#25-bot-plan)
-- [ 3. The Journey of a Query](#3-the-journey-of-a-query)
-  - [3.1 User Interaction and Access Management](#31-user-interaction-and-access-management)
-  - [3.2 The Core Verification Process (Core Loop)](#32-the-core-verification-process-core-loop)
-  - [3.3 The Hybrid Bridge: Web3 to Web2 Interaction](#33-the-hybrid-bridge-web3-to-web2-interaction-ipv6--ipv4-proxy)
-- [4. Financial Analysis](#4-financial-analysis)
-  - [4.1 Subscription Plans](#41-subscription-plans)
-  - [4.2. Core Financial Assumptions](#42-core-financial-assumptions)
-  - [4.3 Per-User Profitability Analysis](#43-per-user-profitability-analysis)
-  - [4.4 Sustainability Model: Subsidizing the Network](#44-sustainability-model-subsidizing-the-network)
-  - [4.5 Case Study: Path to Profitability](#45-case-study-path-to-profitability)
-  - [4.6 Data for Visualization](#46-data-for-visualization)
-  - [4.7 Finantial Conclusion](#47-finantial-conclusion)
+- [3. Financial Analysis](#3-financial-analysis)
+  - [3.1 Subscription Plans](#31-subscription-plans)
+  - [3.2. Core Financial Assumptions](#32-core-financial-assumptions)
+  - [3.3 Per-User Profitability Analysis](#33-per-user-profitability-analysis)
+  - [3.4 Sustainability Model: Subsidizing the Network](#34-sustainability-model-subsidizing-the-network)
+  - [3.5 Case Study: Path to Profitability](#35-case-study-path-to-profitability)
+  - [3.6 Data for Visualization](#36-data-for-visualization)
+  - [3.7 Finantial Conclusion](#37-finantial-conclusion)
 
 ## 0. Get Started
 Follow these steps to set up and run the TaaS project on Internet Computer Protocol (ICP).
@@ -162,51 +158,94 @@ After successfully running the project:
 4. Consider contributing to the project development
 
 ## 1. Business Vision
-Truth-as-a-Service (TaaS) acts as a decentralized, auditable fact-checking engine that removes uncertainty around data veracity. It offers near-instant verification of factual claims using only audited, trusted sources and stores its results immutably on-chain. This makes TaaS an invaluable middleware service for applications needing trustworthy, verifiable data.
+Truth-as-a-Service (TaaS) is a decentralized platform that empowers journalists to publish verified, fact-checked news directly on the blockchain. By providing real-time verification of claims through trusted, audited sources, TaaS removes uncertainty around data accuracy. The platform stores all results immutably on-chain, creating a transparent and permanent record. This offers journalists a secure and censorship-resistant environment to publish their work while providing businesses and applications with a reliable, auditable data source for decision-making.
 
-### 1.1 Leveraging TaaS in the ICP Ecosystem
+<p align="center">
+  <img src="images/taas-news.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
 
->How dApps Benefit from TaaS?
+### 1.1 TaaS as a Trusted News Platform
+TaaS (Truth as a Service) is designed to create a decentralized, secure, and censorship-resistant news platform. At its core, TaaS aims to offer an ecosystem where journalists can publish their content directly onto the blockchain without the fear of being censored or silenced by centralized entities. TaaS' platform supports the free flow of truthful information, creating a sanctuary for journalists to express themselves while ensuring that readers can access unfiltered news. It’s not just a social network but a platform dedicated to on-chain freedom of expression, where the community governs and ensures that information remains untampered with.
 
-Any decentralized application (dApp) operating on the Internet Computer (ICP) can seamlessly incorporate TaaS to:
+The TaaS platform works by utilizing the power of blockchain to make news publishing and consumption more transparent and reliable. By decentralizing the ecosystem, TaaS ensures that no central authority can block or alter the information, allowing for a truly open flow of news.
 
-1. **Validate User-Generated Claims**
+#### Key Features:
 
-   * Social platforms, content aggregators, or Q\&A forums can use TaaS to verify factual claims made by users in real-time.
+* **Decentralized Publishing:** Journalists can publish directly onto the blockchain, ensuring their content is secure and censorship-resistant.
+* **Censorship-Resistant:** No central entity can block, alter, or delete content, allowing for true freedom of expression.
+* **On-Chain Freedom of Expression:** A platform where journalists and readers interact without interference, with all information publicly available and transparent.
+* **Immutable Records:** All published content is stored permanently and transparently on the blockchain, providing a tamper-proof history.
+* **Community Governance:** The platform is governed by the community, where decisions about trusted sources and content validation are made through democratic processes.
+* **Transparent and Verifiable:** Provides readers with access to unfiltered, trustworthy news while ensuring the information is verified and authentic.
 
-2. **Power Smart Contracts with Truth Signals**
+### 1.2 Empowering Journalists and Freedom of Expression
 
-   * DeFi protocols, DAOs, and prediction markets can make automated decisions (e.g., releasing funds or executing votes) based on on-chain TaaS verdicts.
+TaaS (Truth as a Service) empowers journalists by providing a decentralized platform where they can publish freely, without fear of censorship or retribution. In an increasingly repressive world, the ability to speak and share the truth without fear of violence, imprisonment, or death is invaluable. TaaS guarantees this freedom of expression, while also ensuring that the information journalists publish is verified and accurate, offering a balanced ecosystem for truth-telling.
 
-3. **Enhance Reputation Systems**
+In many countries, however, journalists face extreme challenges when trying to report the truth. Government censorship, tyranny, and dictatorship severely limit freedom of expression and the dissemination of information. These oppressive forces don't just censor the news—they threaten the very lives of journalists. For example:
 
-   * Platforms with rating, trust, or identity systems can integrate TaaS to ensure users aren’t rewarded for misinformation.
+* [**Jamala Khashoggi’s Case (2018):**](https://www.bbc.com/news/world-europe-45812399) A tragic and well-known example of the dire consequences faced by journalists occurred when **Jamala Khashoggi**, a journalist for *The Washington Post* and a vocal critic of Saudi Crown Prince Mohammed bin Salman, was killed. Khashoggi’s criticism of authoritarian power resulted in his assassination, highlighting the lethal consequences of speaking out in an oppressive regime. Documents later revealed that Prince bin Salman viewed Khashoggi as a threat to his reign and even sanctioned violent actions to silence him.
 
-4. **Enable Trustable ESG or Compliance Reporting**
+* [**Equatorial Guinea Internet Shutdown (2020):**](https://www.theguardian.com/technology/2025/mar/09/internet-shutdowns-record-high-africa-2024-access-weaponised) More recently, in **Equatorial Guinea**, the government shut down the internet to prevent the spread of information about human rights abuses during peaceful protests. These protests were sparked by environmental damage caused by explosions linked to a Moroccan infrastructure company, SOMAGEC. The government’s response, an internet shutdown, left citizens unable to document and share the truth about what was happening on the ground. It’s a reminder that even in an age of connectivity, governments can wield the power to silence their people and control information flow.
 
-   * Enterprises building ESG dashboards or compliance-focused dApps can use TaaS to back reports with verified public data.
+* **Global Journalist Threats:** In addition to the dangers posed by censorship, **62 journalists** were reported killed in 2020 alone, and over  **1,200 media professionals** lost their lives in the same way, according to [UNESCO](https://www.unesco.org/en/threats-freedom-press-violence-disinformation-censorship). These statistics highlight a growing trend of violence and intimidation faced by journalists globally.
 
-### 1.2 Integration Simplicity
-The current TaaS backend is designed for streamlined integration:
+In a world where censorship and repression are daily realities, the need for platforms like TaaS is more urgent than ever. TaaS ensures that journalists not only have the freedom to publish without fear but also the responsibility of accuracy, empowering them to report the truth while protecting their voices.
 
-* **Points of Truth**: dApps query the `bot-plan` for subscription and `search-news`canister for factual verifications.
-* **Auditability by Design**: Every verdict includes hash, timestamp, and source metadata, allowing dApps to offer users proof of integrity.
+#### 1.2.1 Accuracy of Speech
 
-### 1.3 Agent-to-Agent Model
-TaaS enables an "agent communicating with agent" paradigm, where:
+While TaaS upholds freedom of speech, it also places a strong emphasis on the accuracy of information. To ensure that the content published is factual and reliable, TaaS implements a comprehensive verification process for every claim submitted by journalists. This process combines community-curated sources with AI-driven reasoning to validate claims, providing a transparent and immutable record on the blockchain.
 
-* Apps don’t rely on centralized APIs
-* Data authenticity is provable and independent
-* Decisions across multiple dApps can coordinate based on shared, trustless facts
+<p align="center">
+  <img src="images/verified.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
 
-### 1.4 Shape future in a trustless, scalable way
-By integrating TaaS, developers reduce misinformation risks, enhance automation with verified data, and differentiate their products with built-in credibility. TaaS is positioned to become a core verification primitive within the ICP ecosystem.
+The process describes the step-by-step process that ensures each piece of information remains accurate while empowering journalists to publish without fear of censorship:
 
-In a decentralized world, trust must be programmable. TaaS (Trust as a Service) brings a truth layer to ICP, allowing applications to be built on verified and auditable information.
+* **User Interaction:** The verification process begins when the user logs in and submits their news via the FrontEnd.
+* **Verification Process:** The news is sent to the `search-news` canister for verification. The canister searches for similar content on Web2 platforms to compare with the published news, using AI-driven analysis to cross-reference it with trusted sources from the community.
+* **Fact-Checking:** The system interprets the information by comparing the news to similar articles. Based on this, it classifies the news as True, False, or Uncertain if no relevant content is found.
+* **Final Verdict:** The result, or verdict, is sent back to the FrontEnd, providing the user with a verified, accurate response.
 
-This trust network is organic, as users themselves feed it with new proposals, and the community democratically judges which sources are reliable. Imagine a scenario where the global community chooses the most trustworthy sources to generate a verdict on an LLM's answers. This is how we are building a network with organic, decentralized, and democratic growth.
+This process ensures that, while journalists have full freedom to express their views, the information they publish is subject to rigorous validation, maintaining a trustworthy and reliable news platform.
 
-The modular and low-friction integration model of TaaS ensures that any dApp—from finance and governance to content—can incorporate this truth as a service.
+### 1.3 Core Pillars
+
+<p align="center">
+  <img src="images/pilars.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
+
+The platform operates on four core pillars that ensure its effectiveness in promoting and safeguarding truth:
+
+* **Security:** The use of blockchain ensures that all data is secure, immutable, and resistant to tampering. Journalists and readers alike are assured that the content published on TaaS cannot be deleted or altered by any centralized authority.
+
+* **Accuracy:** TaaS incorporates an on-chain verification system that ensures the authenticity of news. Each article goes through a rigorous cross-checking process using trusted news sources and AI-driven fact-checking, providing readers with transparent information on the trustworthiness of the content.
+
+* **Freedom of Expression:** The platform guarantees freedom of speach by enabling journalists to publish their content without any fear of censorship or repression. This empowers journalists worldwide to share vital information that might otherwise be suppressed.
+
+* **Finantial Support:** Readers have the ability to directly support journalists through donations, which provides a sustainable model for independent journalism. This support fosters a community-driven approach to journalism, where readers help ensure that quality, unbiased reporting continues to thrive.
+
+### 1.4 Brazil: National Context and Opportunities
+
+<p align="center">
+  <img src="images/brazil.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
+
+Brazil, with its history of political instability and censorship, provides a unique backdrop for the launch of TaaS. The country’s judicial system has previously ordered the blocking of social media accounts, threatening the freedom of information. In such an environment, TaaS represents a crucial innovation by enabling decentralized, censorship-resistant news. By leveraging TaaS, Brazilian journalists can circumvent traditional barriers, ensuring that their content is not suppressed by governmental or corporate interests.
+
+A recent example of this issue occurred when **Alexandre de Moraes**, the Minister of the Brazilian Supreme Court, [ordered the blocking of X accounts and profiles that violated the law](https://www.theguardian.com/technology/2024/sep/19/brazil-twitter-ban-fine-musk-alexandre-de-moraes). This order imposed a hefty fine of **R\$50,000 per day** if not complied with and threatened to arrest the person in charge of the platform’s office in Brazil. Such actions highlight the increasing control over information and the risks faced by journalists and users when expressing dissenting opinions or reporting freely. In such a scenario, TaaS offers a solution by allowing content to be published in a secure and censorship-resistant environment, without fear of government overreach.
+
+Moreover, Brazil’s diverse and vibrant media landscape presents a significant opportunity for TaaS to grow and provide value. As Brazil continues to face challenges around freedom of expression and media independence, TaaS can become a key platform for securing journalists' rights and ensuring the public’s access to the truth. By enabling decentralized news, TaaS helps protect journalists from oppressive actions and provides a safe space for them to share information without the risk of censorship or punitive measures.
+
+### 1.5 Mission and Long-Term Vision
+
+<p align="center">
+  <img src="images/freedom.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
+
+TaaS’s mission is to break the chains of censorship and provide a platform that guarantees total freedom of expression. It envisions a future where journalists worldwide can operate freely, without fear of repression, and where readers have unfettered access to accurate, unbiased news. TaaS strives to create an ecosystem where truth is verified and accessible, where journalists can monetize their work without dependence on advertisers or political influence, and where readers can support and contribute directly to the journalism they value.
+
+Long-term, TaaS aims to become a global platform that transcends national borders, reaching every corner of the world where freedom of expression is under threat. By building an open, transparent, and decentralized infrastructure, TaaS is poised to revolutionize the media landscape and provide a lasting solution to the global issue of censorship.
 
 ## 2. Architecture Overview
 
@@ -312,46 +351,7 @@ The ``bot-plan`` is the canister that manages user subscriptions, plans, and acc
 -   **Usage Validation:** When ``search-news`` receives a request, it queries the bot-plan to validate the user's usage quota (do you have requests left?). The ``bot-plan`` then authorizes or denies the process continuation based on the active plan and consumption to date.
 -   **Payment Integration:** The system uses the on-chain Ledger so that users can convert ICP tokens to ``ckBTC`` (a "wrapped" Bitcoin on the ICP network), which is the currency used for payment and plan exchanges within the application.
 
-## 3. The Journey of a Query
-
-The flow below describes the step-by-step interaction between the components.
-
-### 3.1 User Interaction and Access Management
-
-The flow begins with the User, who interacts with the platform via the FrontEnd.
-
--   **Authentication and Plans:** The user logs in and is assigned a Standard plan by default. They can interact with the bot-plan canister to manage their subscription.
--   **Fund Management:** Through the on-chain Ledger, the user can convert *ICP* tokens to *ckBTC* (a "wrapped" Bitcoin on the ICP network), which is used for in-app payments.
-
-### 3.2 The Core Verification Process (Core Loop)
-
-The user submits a claim ("prompt") through the FrontEnd to ``search-news``, which orchestrates the verification.
-
--   **Usage Control (``bot-plan`` ↔ ``search-news``):**
-    -   Before processing, ``search-news`` asks ``bot-plan``: do you have requests left?.
-    -   The ``bot-plan`` validates the usage quota, authorizing or denying continuation.
--   **Source Curation (Round-Table → ``search-news``):**
-    -   ``search-news`` fetches the list of community-approved sources (onchain-Truth) from the Round-Table.
-    -   This ensures the knowledge base is decentralized and trustworthy.
--   **Analysis and Reasoning (``search-news`` ↔ LLM):**
-    -   With the approved sources, ``search-news`` prepares the context and sends it to the LLM canister.
-    -   The LLM processes the information and synthesizes a logical conclusion.
--   **Verdict Delivery (``search-news`` → FrontEnd):**
-    -   ``search-news`` consolidates the final result and sends it back to the FrontEnd as a Verdict.
-
-### 3.3 The Hybrid Bridge: Web3 to Web2 Interaction (IPv6 → IPv4 Proxy)
-
-A crucial part of the architecture is how TaaS, running in a Web3 environment, accesses Web2 data.
-
--   **The Challenge:** The ICP network natively operates on the IPv6 protocol. However, most news sources on the internet still operate on IPv4.
--   **The Solution:** To overcome this limitation, the search-news canister uses a proxy.
-    1.  It sends an IPv6 request to a *Proxy* running in a Web2 environment (an AWS Lambda function).
-    2.  The Proxy translates and executes an IPv4 request to the target news site (e.g., newsapi.org).
-    3.  After collecting and parsing the information, the Proxy sends a notice back to search-news with the data.
-
-This hybrid approach allows the on-chain system to safely and efficiently utilize the vast range of information available on the traditional web.
-
-# 4. Financial Analysis
+## 3. Financial Analysis
 
 The analysis covers the project's revenue streams, cost structure, and the key metrics for achieving profitability and long-term sustainability.
 
@@ -359,7 +359,7 @@ The TaaS model is a "Freemium" service, featuring a free "Standard" plan support
 
 The model is designed to be highly sustainable, with each paying user generating sufficient profit to cover their own operational costs and subsidize a significant number of free users, enabling scalable network growth.
 
-## 4.1 Subscription Plans
+## 3.1 Subscription Plans
 
 | Plan     | Price (USD) | Requests per Day | Key Features                                    | Target Audience        |
 |----------|-------------|------------------|-------------------------------------------------|------------------------|
@@ -371,7 +371,7 @@ The model is designed to be highly sustainable, with each paying user generating
 
 **ICP Price (Assumption):** For context, we assume an ICP price of $10.00 USD. This value is used for illustrative purposes regarding cycle costs, but all calculations are kept in USD for stability.
 
-## 4.2. Core Financial Assumptions
+## 3.2. Core Financial Assumptions
 
 ### Operational Cost Structure
 
@@ -392,17 +392,17 @@ The TaaS platform operates with three main canisters, each contributing to the o
 - **Allocation:** 50% of subscription revenue is allocated to the cycles wallet for operational costs
 - **Remaining 50%** is considered Gross Profit before other business expenses
 
-## 4.3 Per-User Profitability Analysis
+## 3.3 Per-User Profitability Analysis
 
 This analysis determines the profitability of each paying subscriber, assuming they use their maximum daily request limit over a 30-day month.
 
-### 4.3.1 Standard Plan (Cost Center)
+### 3.3.1 Standard Plan (Cost Center)
 - **Monthly Revenue:** $0
 - **Max Monthly Requests:** 5 requests/day × 30 days = 150 requests
 - **Max Monthly Cost:** 150 requests × $0.00055/request = $0.0825
 - **Net Result:** A cost of $0.0825 per user per month
 
-### 4.3.2 Pro Plan (Profit Center)
+### 3.3.2 Pro Plan (Profit Center)
 - **Monthly Revenue:** $19.99
 - **Cycle Allocation (50%):** $9.995
 - **Max Monthly Requests:** 50 requests/day × 30 days = 1,500 requests
@@ -411,7 +411,7 @@ This analysis determines the profitability of each paying subscriber, assuming t
 
 **Analysis:** Highly profitable. The allocated $9.995 in cycles easily covers the maximum possible cost of $0.825.
 
-### 4.3.3 Premium Plan (Profit Center)
+### 3.3.3 Premium Plan (Profit Center)
 - **Monthly Revenue:** $99.99
 - **Cycle Allocation (50%):** $49.995
 - **Max Monthly Requests:** 500 requests/day × 30 days = 15,000 requests
@@ -420,7 +420,7 @@ This analysis determines the profitability of each paying subscriber, assuming t
 
 **Analysis:** Extremely profitable. A single Premium user generates a significant surplus.
 
-## 4.4 Sustainability Model: Subsidizing the Network
+## 3.4 Sustainability Model: Subsidizing the Network
 
 The key to sustainability is understanding how many free users each paying user can support.
 
@@ -434,7 +434,7 @@ The key to sustainability is understanding how many free users each paying user 
 
 This demonstrates a robust model where a small percentage of paying users can sustain a very large base of free users.
 
-## 4.5 Canister Infrastructure Scaling
+## 3.5 Canister Infrastructure Scaling
 
 ### Monthly Canister Operational Costs (Estimated)
 - **UsersCanister:** $50 (profile storage, user management)
@@ -455,7 +455,7 @@ With the typical freemium distribution (90% Standard, 8% Pro, 2% Premium):
 
 **Break-Even Point:** The infrastructure costs are covered from the very first paying users, making the model extremely sustainable from a technical infrastructure perspective.
 
-## 4.6 Data for Visualization
+## 3.6 Data for Visualization
 
 ### Graph 1: Revenue vs Infrastructure Costs
 This graph shows the total revenue and infrastructure costs as the user base grows.
@@ -476,7 +476,7 @@ This graph shows the total revenue and infrastructure costs as the user base gro
   <img src="images/graph.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
-## 4.7 Financial Conclusion
+## 3.7 Financial Conclusion
 
 The financial model for TaaS is demonstrably robust and commercially viable. The analysis reveals several key strategic insights:
 
