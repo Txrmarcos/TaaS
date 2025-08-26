@@ -164,6 +164,10 @@ After successfully running the project:
 ## 1. Business Vision
 Truth-as-a-Service (TaaS) is a decentralized platform that empowers journalists to publish verified, fact-checked news directly on the blockchain. By providing real-time verification of claims through trusted, audited sources, TaaS removes uncertainty around data accuracy. The platform stores all results immutably on-chain, creating a transparent and permanent record. This offers journalists a secure and censorship-resistant environment to publish their work while providing businesses and applications with a reliable, auditable data source for decision-making.
 
+<p align="center">
+  <img src="images/taas-news.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
+
 ### 1.1 TaaS as a Trusted News Platform
 TaaS (Truth as a Service) is designed to create a decentralized, secure, and censorship-resistant news platform. At its core, TaaS aims to offer an ecosystem where journalists can publish their content directly onto the blockchain without the fear of being censored or silenced by centralized entities. TaaS' platform supports the free flow of truthful information, creating a sanctuary for journalists to express themselves while ensuring that readers can access unfiltered news. It’s not just a social network but a platform dedicated to on-chain freedom of expression, where the community governs and ensures that information remains untampered with.
 
@@ -196,6 +200,10 @@ In a world where censorship and repression are daily realities, the need for pla
 
 While TaaS upholds freedom of speech, it also places a strong emphasis on the accuracy of information. To ensure that the content published is factual and reliable, TaaS implements a comprehensive verification process for every claim submitted by journalists. This process combines community-curated sources with AI-driven reasoning to validate claims, providing a transparent and immutable record on the blockchain.
 
+<p align="center">
+  <img src="images/verified.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
+
 The process describes the step-by-step process that ensures each piece of information remains accurate while empowering journalists to publish without fear of censorship:
 
 * **User Interaction:** The verification process begins when the user logs in and submits their news via the FrontEnd.
@@ -207,7 +215,9 @@ This process ensures that, while journalists have full freedom to express their 
 
 ### 1.3 Core Pillars
 
-[imagem dos pilares]
+<p align="center">
+  <img src="images/pilars.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
 
 The platform operates on four core pillars that ensure its effectiveness in promoting and safeguarding truth:
 
@@ -221,6 +231,10 @@ The platform operates on four core pillars that ensure its effectiveness in prom
 
 ### 1.4 Brazil: National Context and Opportunities
 
+<p align="center">
+  <img src="images/brazil.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
+
 Brazil, with its history of political instability and censorship, provides a unique backdrop for the launch of TaaS. The country’s judicial system has previously ordered the blocking of social media accounts, threatening the freedom of information. In such an environment, TaaS represents a crucial innovation by enabling decentralized, censorship-resistant news. By leveraging TaaS, Brazilian journalists can circumvent traditional barriers, ensuring that their content is not suppressed by governmental or corporate interests.
 
 A recent example of this issue occurred when **Alexandre de Moraes**, the Minister of the Brazilian Supreme Court, [ordered the blocking of X accounts and profiles that violated the law](https://www.theguardian.com/technology/2024/sep/19/brazil-twitter-ban-fine-musk-alexandre-de-moraes). This order imposed a hefty fine of **R\$50,000 per day** if not complied with and threatened to arrest the person in charge of the platform’s office in Brazil. Such actions highlight the increasing control over information and the risks faced by journalists and users when expressing dissenting opinions or reporting freely. In such a scenario, TaaS offers a solution by allowing content to be published in a secure and censorship-resistant environment, without fear of government overreach.
@@ -228,6 +242,10 @@ A recent example of this issue occurred when **Alexandre de Moraes**, the Minist
 Moreover, Brazil’s diverse and vibrant media landscape presents a significant opportunity for TaaS to grow and provide value. As Brazil continues to face challenges around freedom of expression and media independence, TaaS can become a key platform for securing journalists' rights and ensuring the public’s access to the truth. By enabling decentralized news, TaaS helps protect journalists from oppressive actions and provides a safe space for them to share information without the risk of censorship or punitive measures.
 
 ### 1.5 Mission and Long-Term Vision
+
+<p align="center">
+  <img src="images/freedom.png" alt="TaaS" height="300" style="border-radius:16px;"/>
+</p>
 
 TaaS’s mission is to break the chains of censorship and provide a platform that guarantees total freedom of expression. It envisions a future where journalists worldwide can operate freely, without fear of repression, and where readers have unfettered access to accurate, unbiased news. TaaS strives to create an ecosystem where truth is verified and accessible, where journalists can monetize their work without dependence on advertisers or political influence, and where readers can support and contribute directly to the journalism they value.
 
