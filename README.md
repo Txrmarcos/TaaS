@@ -351,7 +351,7 @@ The ``bot-plan`` is the canister that manages user subscriptions, plans, and acc
 -   **Usage Validation:** When ``search-news`` receives a request, it queries the bot-plan to validate the user's usage quota (do you have requests left?). The ``bot-plan`` then authorizes or denies the process continuation based on the active plan and consumption to date.
 -   **Payment Integration:** The system uses the on-chain Ledger so that users can convert ICP tokens to ``ckBTC`` (a "wrapped" Bitcoin on the ICP network), which is the currency used for payment and plan exchanges within the application.
 
-## 4. Financial Analysis
+## 3. Financial Analysis
 
 The analysis covers the project's revenue streams, cost structure, and the key metrics for achieving profitability and long-term sustainability.
 
@@ -359,7 +359,7 @@ The TaaS model is a "Freemium" service, featuring a free "Standard" plan support
 
 The model is designed to be highly sustainable, with each paying user generating sufficient profit to cover their own operational costs and subsidize a significant number of free users, enabling scalable network growth.
 
-## 4.1 Subscription Plans
+## 3.1 Subscription Plans
 
 | Plan     | Price (USD) | Requests per Day | Key Features                                    | Target Audience        |
 |----------|-------------|------------------|-------------------------------------------------|------------------------|
@@ -371,7 +371,7 @@ The model is designed to be highly sustainable, with each paying user generating
 
 **ICP Price (Assumption):** For context, we assume an ICP price of $10.00 USD. This value is used for illustrative purposes regarding cycle costs, but all calculations are kept in USD for stability.
 
-## 4.2. Core Financial Assumptions
+## 3.2. Core Financial Assumptions
 
 ### Operational Cost Structure
 
@@ -392,17 +392,17 @@ The TaaS platform operates with three main canisters, each contributing to the o
 - **Allocation:** 50% of subscription revenue is allocated to the cycles wallet for operational costs
 - **Remaining 50%** is considered Gross Profit before other business expenses
 
-## 4.3 Per-User Profitability Analysis
+## 3.3 Per-User Profitability Analysis
 
 This analysis determines the profitability of each paying subscriber, assuming they use their maximum daily request limit over a 30-day month.
 
-### 4.3.1 Standard Plan (Cost Center)
+### 3.3.1 Standard Plan (Cost Center)
 - **Monthly Revenue:** $0
 - **Max Monthly Requests:** 5 requests/day × 30 days = 150 requests
 - **Max Monthly Cost:** 150 requests × $0.00055/request = $0.0825
 - **Net Result:** A cost of $0.0825 per user per month
 
-### 4.3.2 Pro Plan (Profit Center)
+### 3.3.2 Pro Plan (Profit Center)
 - **Monthly Revenue:** $19.99
 - **Cycle Allocation (50%):** $9.995
 - **Max Monthly Requests:** 50 requests/day × 30 days = 1,500 requests
@@ -411,7 +411,7 @@ This analysis determines the profitability of each paying subscriber, assuming t
 
 **Analysis:** Highly profitable. The allocated $9.995 in cycles easily covers the maximum possible cost of $0.825.
 
-### 4.3.3 Premium Plan (Profit Center)
+### 3.3.3 Premium Plan (Profit Center)
 - **Monthly Revenue:** $99.99
 - **Cycle Allocation (50%):** $49.995
 - **Max Monthly Requests:** 500 requests/day × 30 days = 15,000 requests
@@ -420,7 +420,7 @@ This analysis determines the profitability of each paying subscriber, assuming t
 
 **Analysis:** Extremely profitable. A single Premium user generates a significant surplus.
 
-## 4.4 Sustainability Model: Subsidizing the Network
+## 3.4 Sustainability Model: Subsidizing the Network
 
 The key to sustainability is understanding how many free users each paying user can support.
 
@@ -434,7 +434,7 @@ The key to sustainability is understanding how many free users each paying user 
 
 This demonstrates a robust model where a small percentage of paying users can sustain a very large base of free users.
 
-## 4.5 Canister Infrastructure Scaling
+## 3.5 Canister Infrastructure Scaling
 
 ### Monthly Canister Operational Costs (Estimated)
 - **UsersCanister:** $50 (profile storage, user management)
@@ -455,7 +455,7 @@ With the typical freemium distribution (90% Standard, 8% Pro, 2% Premium):
 
 **Break-Even Point:** The infrastructure costs are covered from the very first paying users, making the model extremely sustainable from a technical infrastructure perspective.
 
-## 4.6 Data for Visualization
+## 3.6 Data for Visualization
 
 ### Graph 1: Revenue vs Infrastructure Costs
 This graph shows the total revenue and infrastructure costs as the user base grows.
@@ -476,7 +476,7 @@ This graph shows the total revenue and infrastructure costs as the user base gro
   <img src="images/graph.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
-## 4.7 Financial Conclusion
+## 3.7 Financial Conclusion
 
 The financial model for TaaS is demonstrably robust and commercially viable. The analysis reveals several key strategic insights:
 
