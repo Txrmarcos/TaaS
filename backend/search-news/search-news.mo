@@ -13,7 +13,6 @@ import _Sha256 "mo:sha2/Sha256";
 
 actor SearchNews {
 
-  // --- Verdict Types and Logic ---
 
   public type VerdictResult = { #True; #False; #Uncertain; #Error };
   
@@ -25,7 +24,6 @@ actor SearchNews {
     llm_message: Text;
   };
 
-  // Convert a byte array to a hexadecimal string representation
   func toHex(bytes: [_Nat8.Nat8]) : Text {
     Array.foldLeft<_Nat8.Nat8, Text>(
       bytes,
@@ -36,14 +34,12 @@ actor SearchNews {
     )
   };
 
-  // Calculate the SHA-256 hash of a given text input
   func calculateHash(input: Text): Text {
     let blob = Text.encodeUtf8(input);
     let hashBlob = _Sha256.fromBlob(#sha256, blob);
     return toHex(Blob.toArray(hashBlob));
   };
 
-  // --- Persistent Storage ---
   
   stable var lastRequestTime : Int = 0;
   stable var storedVerdicts : [(Text, Verdict)] = [];
@@ -219,7 +215,6 @@ actor SearchNews {
             
             Debug.print("📦 Created verdict object: " # debug_show(verdict));
             
-            // Store the verdict
             storedVerdicts := Array.append(storedVerdicts, [(hash, verdict)]);
             Debug.print("✅ Verdict stored with hash: " # hash);
             Debug.print("📊 Total verdicts stored: " # debug_show(storedVerdicts.size()));
@@ -372,7 +367,7 @@ actor SearchNews {
       };
     };
     Debug.print("❌ No verdict found for hash: " # hash);
-    return null; // Not found
+    return null;
   };
 
   public query func getAllVerdicts() : async [(Text, Verdict)] {

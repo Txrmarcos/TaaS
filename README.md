@@ -36,11 +36,11 @@ It's designed to combat misinformation by creating a transparent, community-driv
   - [1.4 Brazil: National Context and Opportunities](#14-brazil-national-context-and-opportunities)
   - [1.5 Mission and Long-Term Vision](#15-mission-and-long-term-vision)
 - [2. Architecture Overview](#2-architecture-overview)
-  - [2.1 Search News](#21-search-news)
-  - [2.2 Round Table](#21-search-news)
-  - [2.3 Bot Plan](#23-round-table)
-  - [2.4 Publish News]()
-  - [2.5 Users]()
+  - [2.1 User](#21-users-canister)
+  - [2.2 Posts](#22-posts-canister)
+  - [2.3 Search News](#23-search-news)
+  - [2.4 Round Table](#24-round-table)
+  - [2.5 Bot Plan](#25-bot-plan)
 - [ 3. The Journey of a Query](#3-the-journey-of-a-query)
   - [3.1 User Interaction and Access Management](#31-user-interaction-and-access-management)
   - [3.2 The Core Verification Process (Core Loop)](#32-the-core-verification-process-core-loop)
@@ -253,15 +253,69 @@ Long-term, TaaS aims to become a global platform that transcends national border
 
 ## 2. Architecture Overview
 
-TaaS (Truth-as-a-Service) receives user claims, fetches information from web data sources, processes reasoning through Language Models (LLMs), aggregates community input, and stores tamper-proof final verdicts.
 
-The architecture is modular, where each logical component is a canister (smart contract) on the ICP network, promoting scalability and interoperability.
+TaaS has evolved from a simple fact-checking system into a complete decentralized news platform built on the Internet Computer Protocol (ICP). The platform provides a secure environment for journalists with freedom of expression limitations, offering security, voice, and resources through blockchain technology.
+Key Features:
+
+**Journalist Protection**: Decentralized environment that protects identity and ensures freedom of expression
+Automatic Verification: TaaS integration for real-time content verification of published articles
+Community Governance: Democratic system for information source curation
+Decentralized Monetization: Subscription system using cryptocurrencies
+Censorship Resistance: Decentralized infrastructure that prevents blocking and censorship
+
+2. Platform Architecture
+The architecture consists of 5 main canisters, each responsible for a specific platform functionality:
+
 
 <p align="center">
   <img src="images/taas-arch.png" alt="TaaS" />
 </p>
 
-### 2.1 Search News
+### 2.1 Users Canister - Profile Management
+
+The users-canister is responsible for complete user management on the platform, including journalists and readers.
+
+<p align="center">
+  <img src="images/users-canister.png" alt="Users Canister" height="300" style="border-radius:16px;"/>
+</p>
+
+**Main Features**:
+
+Profile Creation: Registration of new users with basic information (username, bio, profile picture)
+Journalist Registration: Special system for journalist accreditation on the platform
+Newsletter Management: Control of created newsletters and user subscriptions
+Decentralized Authentication: Use of Principal IDs for unique and secure identification
+First Access Control: System for onboarding new users
+
+**User Types**:
+
+Readers: Can read, comment, like posts and subscribe to newsletters
+Journalists: In addition to reader functionalities, can create posts, newsletters and publish verified content
+
+### 2.2 Posts Canister - Publishing System
+The posts-canister manages all editorial content on the platform, including posts, comments and the integrated verification system.
+<p align="center">
+  <img src="images/posts-canister.png" alt="Posts Canister" height="300" style="border-radius:16px;"/>
+</p>
+
+**Main Features**:
+
+**Post Creation**: Journalists can publish complete articles with title, subtitle, content, images and location
+Interaction System: Likes, dislikes and comments for community engagement
+Automatic Verification: TaaS integration for automatic content verification at publication time
+Verification Filters: View posts by verification status (True, False, Uncertain, Pending)
+Temporal Ordering: Posts organized chronologically to show the latest news
+Re-verification: Ability to request new verification of already published content
+
+TaaS Verification States:
+
+##### Pending: `Verification in progress`
+##### True: `Content verified as true`
+##### False: `Content identified as false`
+##### Uncertain: `Inconclusive verification`
+##### Error: `Error in verification process`
+
+### 2.3 Search News
 
 The ``search-news`` canister is the central orchestrator of the verification process. Its main responsibilities are:
 
@@ -277,7 +331,7 @@ The ``search-news`` canister is the central orchestrator of the verification pro
 -   **Verdict Delivery:** Consolidates the result from the LLM analysis and sends it back to the FrontEnd or the requesting dApp as a final and auditable Verdict.
 -   **Truth Oracle:** Being modular, any dApp can call search-news directly to integrate a fact-checking system, positioning TaaS as a trust infrastructure layer for Web3.
 
-### 2.2 Round Table
+### 2.4 Round Table
 
 The ``round-table`` is the canister responsible for the decentralized governance of information sources. Its function is to ensure that the TaaS knowledge base is reliable and curated by the community.
 
@@ -289,7 +343,7 @@ The ``round-table`` is the canister responsible for the decentralized governance
 -   **On-chain Registry:** Once a source is democratically approved, it is registered on-chain in a transparent and immutable manner.
 -   **Provision of Trusted Sources:** The canister provides the list of approved sources (onchain-Truth) to the search-news canister, ensuring that only data from validated sources are used in the verification process.
 
-### 2.3 Bot Plan
+### 2.5 Bot Plan
 
 The ``bot-plan`` is the canister that manages user subscriptions, plans, and access to TaaS services.
 
@@ -305,124 +359,151 @@ The ``bot-plan`` is the canister that manages user subscriptions, plans, and acc
 
 The analysis covers the project's revenue streams, cost structure, and the key metrics for achieving profitability and long-term sustainability.
 
-The TaaS model is a "Freemium" service, featuring a free "Standard" plan supported by paid "Pro" and "Premium" subscribers. Revenue is generated from subscriptions, while the primary operational cost stems from the on-chain HTTP requests required for fact-checking, which consume cycles on the Internet Computer.
+The TaaS model is a "Freemium" service, featuring a free "Standard" plan supported by paid "Pro" and "Premium" subscribers. Revenue is generated from subscriptions, while the primary operational costs stem from the on-chain HTTP requests required for fact-checking and canister operations, which consume cycles on the Internet Computer.
 
 The model is designed to be highly sustainable, with each paying user generating sufficient profit to cover their own operational costs and subsidize a significant number of free users, enabling scalable network growth.
 
-### 4.1 Subscription Plans
+## 4.1 Subscription Plans
 
-| Plan | Price (USD) | Requests per Day | Key Features | Target Audience |
-| :--- | :--- | :--- | :--- | :--- |
-| *Standard* | *Free* | 5 | Basic fact-checking, Access to verified news | General Users, Students |
-| *Pro* | *$19.99* | 50 | Advanced fact-checking, Trend analysis, Detailed reports | Professionals, dApps |
-| *Premium* | *$99.99* | 500 | Full access, Custom API, 24/7 support, Custom analysis | Enterprises, Media Orgs |
+| Plan     | Price (USD) | Requests per Day | Key Features                                    | Target Audience        |
+|----------|-------------|------------------|-------------------------------------------------|------------------------|
+| Standard | Free        | 5                | Basic fact-checking, Access to verified news   | General Users, Students|
+| Pro      | $19.99      | 50               | Advanced fact-checking, Trend analysis, Detailed reports | Professionals, dApps   |
+| Premium  | $99.99      | 500              | Full access, Custom API, 24/7 support, Custom analysis | Enterprises, Media Orgs |
 
-- **Payment:** Users pay for plans using ckBTC (a "wrapped" Bitcoin on ICP) or other integrated payment methods, with prices denominated in USD.
-- **ICP Price (Assumption):** For context, we assume an ICP price of *$10.00 USD*. This value is used for illustrative purposes regarding cycle costs, but all calculations are kept in USD for stability.
+**Payment:** Users pay for plans using ckBTC (a "wrapped" Bitcoin on ICP) or other integrated payment methods, with prices denominated in USD.
 
-### 4.2. Core Financial Assumptions
+**ICP Price (Assumption):** For context, we assume an ICP price of $10.00 USD. This value is used for illustrative purposes regarding cycle costs, but all calculations are kept in USD for stability.
 
-- *Cost per Request:* The cost of an on-chain HTTP request (outcall) to the IPv4 proxy.
-  - *Cost:* *$0.0005 USD* per request.
-- *Revenue Allocation:* To ensure canisters remain funded, a portion of the revenue is immediately converted to cycles.
-  - *Allocation:* *50% of subscription revenue* is allocated to the cycles wallet for operational costs. The remaining 50% is considered Gross Profit before other business expenses (salaries, marketing, etc.).
+## 4.2. Core Financial Assumptions
+
+### Operational Cost Structure
+
+The TaaS platform operates with three main canisters, each contributing to the overall operational costs:
+
+**Cost Components per Verification Request:**
+- **HTTP Request (fact-checking):** $0.0005 USD per request to external APIs
+- **Data Storage Operations:** $0.0001 USD per post storage and retrieval
+- **Transaction Processing:** $0.00005 USD per internal transaction (likes, comments, user operations)
+- **Total Cost per Verified Post:** $0.00055 USD
+
+**Canister Infrastructure Costs:**
+- **UsersCanister:** Handles user profiles, journalist registration, newsletter subscriptions
+- **PostsCanister:** Manages posts, comments, likes/dislikes, and verification results
+- **SearchNewsCanister:** Processes fact-checking requests and external API calls
+
+**Revenue Allocation:** To ensure canisters remain funded, a portion of the revenue is immediately converted to cycles.
+- **Allocation:** 50% of subscription revenue is allocated to the cycles wallet for operational costs
+- **Remaining 50%** is considered Gross Profit before other business expenses
 
 ## 4.3 Per-User Profitability Analysis
 
 This analysis determines the profitability of each paying subscriber, assuming they use their maximum daily request limit over a 30-day month.
 
 ### 4.3.1 Standard Plan (Cost Center)
-- *Monthly Revenue:* $0
-- *Max Monthly Requests:* 5 requests/day * 30 days = 150 requests
-- *Max Monthly Cost:* 150 requests * $0.0005/request = *$0.075*
-- *Net Result:* A cost of *$0.075 per user per month*.
+- **Monthly Revenue:** $0
+- **Max Monthly Requests:** 5 requests/day × 30 days = 150 requests
+- **Max Monthly Cost:** 150 requests × $0.00055/request = $0.0825
+- **Net Result:** A cost of $0.0825 per user per month
 
 ### 4.3.2 Pro Plan (Profit Center)
-- *Monthly Revenue:* $19.99
-- *Cycle Allocation (50%):* $9.995
-- *Max Monthly Requests:* 50 requests/day * 30 days = 1,500 requests
-- *Max Monthly Cost:* 1,500 requests * $0.0005/request = *$0.75*
-- *Gross Profit (after request costs):* $19.99 (Revenue) - $0.75 (Cost) = *$19.24*
-- *Analysis:* Highly profitable. The allocated $9.995 in cycles easily covers the maximum possible cost of $0.75.
+- **Monthly Revenue:** $19.99
+- **Cycle Allocation (50%):** $9.995
+- **Max Monthly Requests:** 50 requests/day × 30 days = 1,500 requests
+- **Max Monthly Cost:** 1,500 requests × $0.00055/request = $0.825
+- **Gross Profit (after request costs):** $19.99 (Revenue) - $0.825 (Cost) = $19.165
+
+**Analysis:** Highly profitable. The allocated $9.995 in cycles easily covers the maximum possible cost of $0.825.
 
 ### 4.3.3 Premium Plan (Profit Center)
-- *Monthly Revenue:* $99.99
-- *Cycle Allocation (50%):* $49.995
-- *Max Monthly Requests:* 500 requests/day * 30 days = 15,000 requests
-- *Max Monthly Cost:* 15,000 requests * $0.0005/request = *$7.50*
-- *Gross Profit (after request costs):* $99.99 (Revenue) - $7.50 (Cost) = *$92.49*
-- *Analysis:* Extremely profitable. A single Premium user generates a significant surplus.
+- **Monthly Revenue:** $99.99
+- **Cycle Allocation (50%):** $49.995
+- **Max Monthly Requests:** 500 requests/day × 30 days = 15,000 requests
+- **Max Monthly Cost:** 15,000 requests × $0.00055/request = $8.25
+- **Gross Profit (after request costs):** $99.99 (Revenue) - $8.25 (Cost) = $91.74
+
+**Analysis:** Extremely profitable. A single Premium user generates a significant surplus.
 
 ## 4.4 Sustainability Model: Subsidizing the Network
 
 The key to sustainability is understanding how many free users each paying user can support.
 
-- *Cost to support 1 Standard User:* *$0.075 per month*.
-- *Gross Profit from 1 Pro User:* *$19.24 per month*.
-- *Gross Profit from 1 Premium User:* *$92.49 per month*.
+- **Cost to support 1 Standard User:** $0.0825 per month
+- **Gross Profit from 1 Pro User:** $19.165 per month
+- **Gross Profit from 1 Premium User:** $91.74 per month
 
 ### Sustainability Ratio:
-- *Pro User:* $19.24 / $0.075 ≈ *1 Pro user can support the request costs of ~256 Standard users.*
-- *Premium User:* $92.49 / $0.075 ≈ *1 Premium user can support the request costs of ~1,233 Standard users.*
+- **Pro User:** $19.165 / $0.0825 ≈ 1 Pro user can support the request costs of ~232 Standard users
+- **Premium User:** $91.74 / $0.0825 ≈ 1 Premium user can support the request costs of ~1,112 Standard users
 
 This demonstrates a robust model where a small percentage of paying users can sustain a very large base of free users.
 
-## 4.5 Case Study: Path to Profitability
+## 4.5 Canister Infrastructure Scaling
 
-Let's model the business with fixed operational costs (salaries, marketing, etc.) to find the break-even point.
+### Monthly Canister Operational Costs (Estimated)
+- **UsersCanister:** $50 (profile storage, user management)
+- **PostsCanister:** $150 (post storage, comments, interactions)
+- **SearchNewsCanister:** $100 (verification processing, API calls)
+- **Total Infrastructure:** $300 per month
 
-*Assumptions:*
-- *Fixed Monthly Costs:* *$8,000 USD*
-- *User Base Distribution:* A typical "freemium" split:
-    - 90% Standard users
-    - 8% Pro users
-    - 2% Premium users
+### Break-Even Analysis for Infrastructure
+With the typical freemium distribution (90% Standard, 8% Pro, 2% Premium):
 
-### Scenario Analysis
+| Total Users | Standard (90%) | Pro (8%) | Premium (2%) | Total Revenue | Infrastructure + Request Costs | Net Profit/Loss |
+|-------------|----------------|----------|--------------|---------------|-------------------------------|-----------------|
+| 1,000       | 900           | 80       | 20           | $3,599        | $382.50                       | $3,216.50       |
+| 2,000       | 1,800         | 160      | 40           | $7,198        | $465.00                       | $6,733.00       |
+| 2,500       | 2,250         | 200      | 50           | $8,997.50     | $506.25                       | $8,491.25       |
+| 5,000       | 4,500         | 400      | 100          | $17,995       | $712.50                       | $17,282.50      |
+| 10,000      | 9,000         | 800      | 200          | $35,990       | $1,125.00                     | $34,865.00      |
 
-| Total Users | Standard Users (90%) | Pro Users (8%) | Premium Users (2%) | Total Revenue | Total Request Costs | Gross Profit | Net Profit/Loss |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| *1,000* | 900 | 80 | 20 | $3,599 | $187.50 | $3,411.50 | *-$4,588.50* |
-| *2,000* | 1,800 | 160 | 40 | $7,198 | $375.00 | $6,823.00 | *-$1,177.00* |
-| *2,500* | 2,250 | 200 | 50 | $8,997.50 | $468.75 | $8,528.75 | *$528.75* |
-| *5,000* | 4,500 | 400 | 100 | $17,995 | $937.50 | $17,057.50 | *$9,057.50* |
-| *10,000* | 9,000 | 800 | 200 | $35,990 | $1,875.00 | $34,115.00 | *$26,115.00* |
-
-*Break-Even Point:* The business becomes profitable (covers its fixed costs) with approximately *2,350 total users* under this distribution model.
+**Break-Even Point:** The infrastructure costs are covered from the very first paying users, making the model extremely sustainable from a technical infrastructure perspective.
 
 ## 4.6 Data for Visualization
 
-### Graph 1: Business Break-Even Point
-This graph shows the total revenue and total costs as the user base grows. The intersection is the break-even point.
+### Graph 1: Revenue vs Infrastructure Costs
+This graph shows the total revenue and infrastructure costs as the user base grows.
 
-*X-Axis:* Total Number of Users
-*Y-Axis:* Monthly Amount (USD)
+**X-Axis:** Total Number of Users  
+**Y-Axis:** Monthly Amount (USD)
+
+| Total Users (X) | Total Revenue | Infrastructure + Request Costs | Net Profit |
+|-----------------|---------------|-------------------------------|------------|
+| 0               | $0            | $300                          | -$300      |
+| 1,000           | $3,599        | $382.50                       | $3,216.50  |
+| 2,000           | $7,198        | $465.00                       | $6,733.00  |
+| 3,000           | $10,797       | $547.50                       | $10,249.50 |
+| 4,000           | $14,396       | $630.00                       | $13,766.00 |
+| 5,000           | $17,995       | $712.50                       | $17,282.50 |
 
 <p align="center">
-  <img src="images/fin-graph.png" alt="TaaS" />
+  <img src="images/graph.png" alt="TaaS" height="300" style="border-radius:16px;"/>
 </p>
 
-*Data Table:*
-| Total Users (X) | Total Revenue | Total Costs (Requests + $8k Fixed) |
-| :--- | :--- | :--- |
-| 0 | $0 | $8,000 |
-| 1,000 | $3,599 | $8,187.50 |
-| 2,000 | $7,198 | $8,375.00 |
-| *2,350* | *$8,457.65* | *$8,440.63* |
-| 3,000 | $10,797 | $8,562.50 |
-| 4,000 | $14,396 | $8,750.00 |
-| 5,000 | $17,995 | $8,937.50 |
-
-## 4.7 Finantial Conclusion
+## 4.7 Financial Conclusion
 
 The financial model for TaaS is demonstrably robust and commercially viable. The analysis reveals several key strategic insights:
 
-1.  *High Profit Margins:* The Pro and Premium plans are exceptionally profitable, with revenue far exceeding the variable costs associated with user requests. This core profitability is the engine of the entire business.
+**High Profit Margins:** The Pro and Premium plans are exceptionally profitable, with revenue far exceeding the variable costs associated with user requests and infrastructure. This core profitability is the engine of the entire business.
 
-2.  *Sustainable Freemium Model:* The free Standard plan, while a direct cost, is a critical driver for user acquisition and network effect. The model proves that a small conversion rate to paid plans (e.g., a combined 10%) is more than sufficient to subsidize a large free user base, making growth sustainable.
+**Sustainable Freemium Model:** The free Standard plan, while a direct cost, is a critical driver for user acquisition and network effect. The model proves that a small conversion rate to paid plans (e.g., a combined 10%) is more than sufficient to subsidize a large free user base, making growth sustainable.
 
-3.  *Clear Path to Profitability:* The break-even analysis provides a clear target. With fixed costs of $8,000 per month and a typical user distribution, profitability is achieved at approximately 2,350 total users. This is a tangible and achievable goal for an early-stage project.
+**Minimal Infrastructure Overhead:** The three-canister architecture maintains low operational costs ($300/month) that are easily covered by even a small number of paying users, ensuring platform sustainability from day one.
 
-4.  *Scalable and Efficient:* The model scales effectively. Once fixed costs are covered, a significant portion of revenue from new paying users contributes directly to net profit, allowing for reinvestment into growth and development.
+**Scalable and Efficient:** The model scales effectively with minimal infrastructure cost increases. Once basic operational costs are covered, a significant portion of revenue from new paying users contributes directly to net profit, allowing for reinvestment into growth and development.
+
+**Strong Unit Economics:** Each Pro user can subsidize 232 free users, while each Premium user can support 1,112 free users, creating a powerful economic foundation for viral growth.
+
+In summary, the TaaS business model is exceptionally well-structured for success in the Web3 space. The primary strategic focus should be on demonstrating the value of Pro/Premium features to encourage user conversion and on attracting enterprise clients for the Premium tier, as they provide the largest boost to revenue and long-term stability. The low infrastructure costs and high profit margins create significant flexibility for competitive pricing and rapid market expansion.
+
+The financial model for TaaS is demonstrably robust and commercially viable. The analysis reveals several key strategic insights:
+
+**1. High Profit Margins:** The Pro and Premium plans are exceptionally profitable, with revenue far exceeding the variable costs associated with user requests. This core profitability is the engine of the entire business.
+
+**2. Sustainable Freemium Model:** The free Standard plan, while a direct cost, is a critical driver for user acquisition and network effect. The model proves that a small conversion rate to paid plans (e.g., a combined 10%) is more than sufficient to subsidize a large free user base, making growth sustainable.
+
+**3.  Clear Path to Profitability:** The break-even analysis provides a clear target. With fixed costs of $8,000 per month and a typical user distribution, profitability is achieved at approximately 2,350 total users. This is a tangible and achievable goal for an early-stage project.
+
+**4.  Scalable and Efficient:** The model scales effectively. Once fixed costs are covered, a significant portion of revenue from new paying users contributes directly to net profit, allowing for reinvestment into growth and development.
 
 In summary, the TaaS business model is well-structured for success in the Web3 space. The primary strategic focus should be on *demonstrating the value of Pro/Premium features* to encourage user conversion and on *attracting enterprise clients* for the Premium tier, as they provide the largest boost to revenue and long-term stability.
