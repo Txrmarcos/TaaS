@@ -41,14 +41,14 @@ It's designed to combat misinformation by creating a transparent, community-driv
   - [2.3 Search News](#23-search-news)
   - [2.4 Round Table](#24-round-table)
   - [2.5 Bot Plan](#25-bot-plan)
-- [3. Financial Analysis](#4-financial-analysis)
-  - [3.1 Subscription Plans](#41-subscription-plans)
-  - [3.2. Core Financial Assumptions](#42-core-financial-assumptions)
-  - [3.3 Per-User Profitability Analysis](#43-per-user-profitability-analysis)
-  - [3.4 Sustainability Model: Subsidizing the Network](#44-sustainability-model-subsidizing-the-network)
-  - [3.5 Case Study: Path to Profitability](#45-case-study-path-to-profitability)
-  - [3.6 Data for Visualization](#46-data-for-visualization)
-  - [3.7 Finantial Conclusion](#47-finantial-conclusion)
+- [3. Financial Analysis](#3-financial-analysis)
+  - [3.1 Subscription Plans](#31-subscription-plans)
+  - [3.2. Core Financial Assumptions](#32-core-financial-assumptions)
+  - [3.3 Per-User Profitability Analysis](#33-per-user-profitability-analysis)
+  - [3.4 Sustainability Model: Subsidizing the Network](#34-sustainability-model-subsidizing-the-network)
+  - [3.5 Case Study: Path to Profitability](#35-case-study-path-to-profitability)
+  - [3.6 Data for Visualization](#36-data-for-visualization)
+  - [3.7 Finantial Conclusion](#37-finantial-conclusion)
 
 ## 0. Get Started
 Follow these steps to set up and run the TaaS project on Internet Computer Protocol (ICP).
