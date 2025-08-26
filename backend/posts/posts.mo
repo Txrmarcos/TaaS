@@ -12,7 +12,6 @@ import Nat32 "mo:base/Nat32";
 
 actor class PostsCanister() {
 
-  // --- TIPOS ---
 
   public type PostId = Nat;
   public type CommentId = Nat;
@@ -26,7 +25,6 @@ actor class PostsCanister() {
     #Error;
   };
 
-  // Tipo para o veredito completo do SearchNews
   public type Verdict = {
     result: TaaSVerification;
     source: Text;
@@ -56,20 +54,16 @@ actor class PostsCanister() {
     comments: [Comment];
     repostedFrom: ?PostId;
     taasStatus: TaaSVerification;
-    verdict: ?Verdict; // Novo campo para armazenar o veredito completo
+    verdict: ?Verdict; 
   };
-
-  // --- ESTADO ESTÁVEL ---
 
   stable var posts: Trie.Trie<PostId, Post> = Trie.empty();
   stable var nextPostId: PostId = 0;
   stable var nextCommentId: CommentId = 0;
 
-  // --- CONFIG (Canisters externos) ---
 
-  let searchNewsCanisterId = Principal.fromText("h7vld-naaaa-aaaaf-qbgsq-cai"); // SUBSTITUIR PELO ID REAL
+  let searchNewsCanisterId = Principal.fromText("h7vld-naaaa-aaaaf-qbgsq-cai");
 
-  // Interface para o SearchNews canister
   let searchNewsActor = actor(Principal.toText(searchNewsCanisterId)) : actor {
     callAgent: (Text) -> async {
       result: {#True; #False; #Uncertain; #Error};
@@ -80,7 +74,6 @@ actor class PostsCanister() {
     };
   };
 
-  // --- Funções auxiliares ---
 
   func keyFromNat(n: Nat): Trie.Key<Nat> {
     { key = n; hash = Nat32.fromNat(n % (2**32-1)) }
@@ -105,7 +98,6 @@ actor class PostsCanister() {
     }
   };
 
-  // Função para converter o resultado do SearchNews para TaaSVerification
   func convertVerdictResult(result: {#True; #False; #Uncertain; #Error}): TaaSVerification {
     switch (result) {
       case (#True) { #True };
@@ -130,7 +122,6 @@ actor class PostsCanister() {
         llm_message = verdictResponse.llm_message;
       };
 
-      // Atualizar o post com o veredito
       let post = getPostById(postId);
       let updatedPost = { 
         post with 
@@ -181,13 +172,12 @@ actor class PostsCanister() {
       comments = [];
       repostedFrom = null;
       taasStatus = #Pending;
-      verdict = null; // Inicialmente null
+      verdict = null;
     };
 
     posts := Trie.put(posts, keyFromNat(postId), Nat.equal, newPost).0;
     nextPostId += 1;
 
-    // Solicitar verificação de forma assíncrona
     ignore requestVerification(postId, content);
 
     return newPost;
@@ -228,11 +218,9 @@ actor class PostsCanister() {
     posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
   };
 
-  // Função para forçar re-verificação de um post
   public shared(msg) func reVerifyPost(id: PostId): async () {
     let post = getPostById(id);
     
-    // Resetar status para pending
     let updatedPost = { 
       post with 
       taasStatus = #Pending; 
@@ -240,7 +228,6 @@ actor class PostsCanister() {
     };
     posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
     
-    // Solicitar nova verificação
     ignore requestVerification(id, post.content);
   };
 
@@ -256,7 +243,6 @@ actor class PostsCanister() {
     );
   };
 
-  // --- FUNÇÕES QUERY ---
 
   public shared query func getPost(id: PostId): async Post {
     return getPostById(id);
@@ -298,7 +284,6 @@ actor class PostsCanister() {
     );
   };
 
-  // Nova função para obter posts por status de verificação
   public shared query func getPostsByVerificationStatus(status: TaaSVerification): async [Post] {
     let allPosts = Iter.toArray(Trie.iter(posts));
     let filteredPosts = Array.filter<Post>(
