@@ -12,7 +12,6 @@ import Nat32 "mo:base/Nat32";
 
 actor class PostsCanister() {
 
-
   public type PostId = Nat;
   public type CommentId = Nat;
   public type UserId = Principal;
@@ -40,6 +39,19 @@ actor class PostsCanister() {
     timestamp: Time.Time;
   };
 
+  public type Tag = {
+    #Politics;
+    #Health;
+    #Environment;
+    #Technology;
+    #Sports;
+    #Entertainment;
+    #Business;
+    #Science;
+    #World;
+    #Other;
+  };
+
   public type Post = {
     id: PostId;
     author: UserId;
@@ -55,6 +67,7 @@ actor class PostsCanister() {
     repostedFrom: ?PostId;
     taasStatus: TaaSVerification;
     verdict: ?Verdict; 
+    tag: Tag;
   };
 
   stable var posts: Trie.Trie<PostId, Post> = Trie.empty();
@@ -154,7 +167,7 @@ actor class PostsCanister() {
     };
   };
 
-  public shared(msg) func createPost(title: Text, subtitle: Text, content: Text, imageUrl: Text, location: Text): async Post {
+  public shared(msg) func createPost(title: Text, subtitle: Text, content: Text, imageUrl: Text, location: Text, tag: Tag): async Post {
     let caller = msg.caller;
 
     let postId = nextPostId;
@@ -173,6 +186,7 @@ actor class PostsCanister() {
       repostedFrom = null;
       taasStatus = #Pending;
       verdict = null;
+      tag = tag;
     };
 
     posts := Trie.put(posts, keyFromNat(postId), Nat.equal, newPost).0;
@@ -289,6 +303,21 @@ actor class PostsCanister() {
     let filteredPosts = Array.filter<Post>(
       Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post }),
       func(post: Post): Bool { post.taasStatus == status }
+    );
+    
+    return Array.sort<Post>(
+      filteredPosts,
+      func(a, b) {
+        Int.compare(b.timestamp, a.timestamp)
+      }
+    );
+  };
+
+  public shared query func getPostsByTag(tag: Tag): async [Post] {
+    let allPosts = Iter.toArray(Trie.iter(posts));
+    let filteredPosts = Array.filter<Post>(
+      Array.map<(PostId, Post), Post>(allPosts, func((_, post)) { post }),
+      func(post: Post): Bool { post.tag == tag }
     );
     
     return Array.sort<Post>(
