@@ -30,7 +30,7 @@ const NEWS: Array<{
     "title": "TaaS launches prototype with governance on ICP",
     "description":
       "The team presented an auditable prototype with community governance using canisters for planning and news search...",
-    "tag": "Highlights",
+    "tag": "Technology",
     "author": "dfx-principal-aaabbbccc",
     "likes": 42,
     "content":
@@ -51,7 +51,7 @@ const NEWS: Array<{
     "title": "Integration: AuthClient + Actors without friction",
     "description":
       "Guide to authenticate users and create actors on the front end seamlessly, including fallback and error handling...",
-    "tag": "Highlights",
+    "tag": "Technology",
     "author": "kaiane.icp",
     "likes": 18,
     "content":
@@ -72,7 +72,7 @@ const NEWS: Array<{
     "title": "Feed UI/UX: MiniNewsCard + BigNewsCard",
     "description":
       "How we designed a lightweight feed, with likes persisted in localStorage and detailed reading modal...",
-    "tag": "Highlights",
+    "tag": "Technology",
     "author": "marco.ui",
     "likes": 27,
     "content":
@@ -93,7 +93,7 @@ const NEWS: Array<{
     "title": "Plans & Quotas: per-request consumption design",
     "description":
       "Strategies to control quota per plan, display clear messages, and avoid user surprises...",
-    "tag": "Highlights",
+    "tag": "Technology",
     "author": "billing.bot",
     "likes": 33,
     "content":
@@ -186,12 +186,22 @@ function parseBackendPost(post: any, index: number): typeof NEWS[0] {
   const author = post.author?.toText?.() ?? post.author ?? "anonymous";
   const likes = Array.isArray(post.likes) ? post.likes.length : Number(post.likes) || 0;
   const url = post.url || "";
+  
+
+  // Motoko variant: {World: null} => "World"
+  let tag: Tag = "Other";
+  if (typeof post.tag === "string") {
+    tag = post.tag as Tag;
+  } else if (typeof post.tag === "object" && post.tag !== null) {
+    const keys = Object.keys(post.tag);
+    if (keys.length > 0) tag = keys[0] as Tag;
+  }
 
   return {
     id,
     title,
     description,
-    tag: "Highlights" as Tag,
+    tag,
     author,
     likes,
     content,
@@ -205,7 +215,8 @@ function parseBackendPost(post: any, index: number): typeof NEWS[0] {
 
 export default function NewsFeedPage() {
   const { authClient, isAuthenticated } = useAuth();
-  const [selectedTag, setSelectedTag] = React.useState<Tag>("Highlights");
+  // selectedTag pode ser null para mostrar todas
+  const [selectedTag, setSelectedTag] = React.useState<Tag | null>(null);
   const [likedIds, setLikedIds] = React.useState<number[]>([]);
   const [selected, setSelected] = React.useState<BigArticle | null>(null);
   const [supportingId, setSupportingId] = React.useState<number | null>(null);
@@ -421,7 +432,7 @@ export default function NewsFeedPage() {
   }, [authClient, isAuthenticated]);
 
   const filteredNews = React.useMemo(() => {
-    if (selectedTag === "Highlights") {
+    if (!selectedTag) {
       return newsData;
     }
     return newsData.filter((n) => n.tag === selectedTag);
@@ -537,7 +548,12 @@ export default function NewsFeedPage() {
 
             {/* Tags */}
             <div className="p-3 border-b border-white/10">
-              <TagCarousel selectedTag={selectedTag} onTagClick={setSelectedTag} />
+              <TagCarousel
+                selectedTag={selectedTag}
+                onTagClick={(tag) => setSelectedTag(tag)}
+                showAllOption
+                onAllClick={() => setSelectedTag(null)}
+              />
             </div>
 
             <div className="flex-1 p-3 space-y-3 overflow-y-auto">
