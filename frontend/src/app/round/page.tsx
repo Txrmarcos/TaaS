@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../auth/useAuth";
 import {
     Plus, ExternalLink, ThumbsUp, ThumbsDown, Globe, Clock, CheckCircle, XCircle, Shield, Link,
@@ -69,13 +69,18 @@ export default function RoundtablePage() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [showFullWhitelist, setShowFullWhitelist] = useState(false);
 
-    // Initialize actors when component mounts
+    // Initialize actors only once when authClient is available
     useEffect(() => {
+        let isMounted = true;
+        
         const initializeActors = async () => {
-            if (authClient) {
+            if (authClient && !actors) { // Só cria se não existir
                 try {
+                    console.log("🔄 Creating actors for authClient");
                     const createdActors = await createSearchNewsActor(authClient);
-                    setActors(createdActors);
+                    if (isMounted) {
+                        setActors(createdActors);
+                    }
                 } catch (error) {
                     console.error("Error initializing actors:", error);
                 }
@@ -83,7 +88,11 @@ export default function RoundtablePage() {
         };
         
         initializeActors();
-    }, [authClient]);
+        
+        return () => {
+            isMounted = false;
+        };
+    }, [authClient, actors]); // Inclui actors para evitar recriação
     
     const fetchProposals = async () => {
         if (!actors?.roundtableActor) {

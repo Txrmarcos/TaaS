@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthClient } from "@dfinity/auth-client";
 import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/navigation";
+import { clearAgentCache } from "../app/utils/canister";
 
 interface AuthContextType {
   authClient: AuthClient | null;
@@ -23,15 +24,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    AuthClient.create().then(async (client) => {
-      setAuthClient(client);
-      if (await client.isAuthenticated()) {
-        const identity = client.getIdentity();
-        setPrincipal(identity.getPrincipal());
-        setIsAuthenticated(true);
+    const initAuth = async () => {
+      try {
+        setIsLoading(true);
+        const client = await AuthClient.create();
+        setAuthClient(client);
+        
+        const authenticated = await client.isAuthenticated();
+        if (authenticated) {
+          const identity = client.getIdentity();
+          const principal = identity.getPrincipal();
+          setPrincipal(principal);
+          setIsAuthenticated(true);
+          console.log("🔐 User authenticated:", principal.toText());
+        } else {
+          console.log("🔐 User not authenticated");
+        }
+      } catch (error) {
+        console.error("❌ Auth initialization error:", error);
+      } finally {
+        setIsLoading(false);
       }
-    });
+    };
+
+    initAuth();
   }, []);
+
+  // Verify authentication on page focus/visibility change
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && authClient) {
+        try {
+          const authenticated = await authClient.isAuthenticated();
+          if (authenticated !== isAuthenticated) {
+            if (authenticated) {
+              const identity = authClient.getIdentity();
+              const principal = identity.getPrincipal();
+              setPrincipal(principal);
+              setIsAuthenticated(true);
+              console.log("🔐 Auth restored:", principal.toText());
+            } else {
+              setPrincipal(null);
+              setIsAuthenticated(false);
+              console.log("🔐 Auth lost");
+            }
+          }
+        } catch (error) {
+          console.error("❌ Auth verification error:", error);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isAuthenticated]); // Removido authClient da dependência
 
   const login = async () => {
     if (!authClient) return;
@@ -40,15 +86,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await authClient.login({
         identityProvider: "https://identity.ic0.app/#authorize",
         onSuccess: async () => {
-          const identity = authClient.getIdentity();
-          setPrincipal(identity.getPrincipal());
-          setIsAuthenticated(true);
-          router.push("/news-feed");
+          try {
+            // Verify authentication after login
+            const authenticated = await authClient.isAuthenticated();
+            if (authenticated) {
+              const identity = authClient.getIdentity();
+              const principal = identity.getPrincipal();
+              setPrincipal(principal);
+              setIsAuthenticated(true);
+              console.log("🔐 Login successful:", principal.toText());
+              router.push("/news-feed");
+            } else {
+              console.error("❌ Login verification failed");
+            }
+          } catch (error) {
+            console.error("❌ Login verification error:", error);
+          }
         },
         onError: (err: any) => {
-          console.error("Error logging in:", err);
+          console.error("❌ Login error:", err);
         },
       });
+    } catch (error) {
+      console.error("❌ Login setup error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +121,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await authClient.logout();
       setPrincipal(null);
       setIsAuthenticated(false);
+      clearAgentCache(); // Limpar cache de agentes
+      console.log("🔐 Logout successful");
+      router.push("/");
+    } catch (error) {
+      console.error("❌ Logout error:", error);
     } finally {
       setIsLoading(false);
     }
