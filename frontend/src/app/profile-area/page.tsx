@@ -666,6 +666,7 @@ export default function ProfilePage() {
                         likes={post.likesCount}
                         className="w-40 h-40"
                         onEdit={() => openFromPost(post)} // abre o BigNewsCard ao clicar no lápis
+                        onClick={() => openFromPost(post)} // abre o BigNewsCard ao clicar no card
                       />
                     </div>
                   ))}

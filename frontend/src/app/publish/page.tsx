@@ -10,15 +10,31 @@ import {
     FilePlus, Send, History, Image as ImageIcon, Video, FileText, Heading1, Heading2, Trash2, Eye, Loader2, Award, ArrowRight
 } from "lucide-react";
 
+
 // Type for a publication (article)
 type Publication = {
-    id: number;
-    title: string;
-    subtitle: string;
-    contentSnippet: string;
-    publishedAt: Date;
-    views: number;
+        id: number;
+        title: string;
+        subtitle: string;
+        contentSnippet: string;
+        publishedAt: Date;
+        views: number;
+        tag?: string;
 };
+
+// Motoko backend tags as source of truth and UI labels (exact match)
+const TAG_OPTIONS = [
+    { value: "Politics", label: "Politics" },
+    { value: "Health", label: "Health" },
+    { value: "Environment", label: "Environment" },
+    { value: "Technology", label: "Technology" },
+    { value: "Sports", label: "Sports" },
+    { value: "Entertainment", label: "Entertainment" },
+    { value: "Business", label: "Business" },
+    { value: "Science", label: "Science" },
+    { value: "World", label: "World" },
+    { value: "Other", label: "Other" },
+];
 
 // Mock data to simulate past publications
 const MOCK_PUBLICATIONS: Publication[] = [
@@ -141,12 +157,14 @@ export default function PublishPage() {
     const [title, setTitle] = useState("");
     const [subtitle, setSubtitle] = useState("");
     const [content, setContent] = useState("");
+
     const [attachment, setAttachment] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isPublishing, setIsPublishing] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [isLoadingPublications, setIsLoadingPublications] = useState(true);
     const [publications, setPublications] = useState<Publication[]>([]);
+    const [tag, setTag] = useState<string>("");
 
     const fetchPastPublications = async () => {
         setIsLoadingPublications(true);
@@ -172,9 +190,10 @@ export default function PublishPage() {
         // Validate required fields
         const titleTrimmed = title.trim();
         const contentTrimmed = content.trim();
-        
-        if (!titleTrimmed || !contentTrimmed) {
-            setMessage({ type: 'error', text: "Title and content are required." });
+        const tagTrimmed = tag.trim();
+
+        if (!titleTrimmed || !contentTrimmed || !tagTrimmed) {
+            setMessage({ type: 'error', text: "Title, content, and tag are required." });
             return;
         }
 
@@ -185,54 +204,63 @@ export default function PublishPage() {
 
         setIsPublishing(true);
         setMessage(null);
-        
+
         try {
+            // Validate tag is a Motoko variant
+            const motokoTag = TAG_OPTIONS.find(t => t.value === tagTrimmed);
+            if (!motokoTag) throw new Error("Invalid tag selection");
+
             console.log("Publishing article with data:", {
                 title: titleTrimmed,
                 subtitle: subtitle.trim(),
                 content: contentTrimmed,
+                tag: tagTrimmed,
                 hasAttachment: !!attachment
             });
 
-            // FIXED: Ensure all parameters are properly typed strings
-            // The canister expects: (title: Text, subtitle: Text, content: Text, imageUrl: Text, location: Text)
-            const subtitleToSend = subtitle.trim(); // Don't default to empty string, let it be what it is
-            const imageUrlToSend = ""; // Empty string for now
-            const locationToSend = ""; // Empty string for now
-            
-            // Validate that all strings are not null/undefined before sending
-            if (typeof titleTrimmed !== 'string' || typeof subtitleToSend !== 'string' || typeof contentTrimmed !== 'string') {
+            // The canister expects: (title: Text, subtitle: Text, content: Text, imageUrl: Text, location: Text, tag: Tag)
+            const subtitleToSend = subtitle.trim();
+            const imageUrlToSend = "";
+            const locationToSend = "";
+
+            // Motoko expects a variant object for tag, e.g. { Politics: null }
+            const tagToSend = { [tagTrimmed]: null };
+
+            if (typeof titleTrimmed !== 'string' || typeof subtitleToSend !== 'string' || typeof contentTrimmed !== 'string' || typeof tagTrimmed !== 'string') {
                 throw new Error('Invalid input types - all fields must be strings');
             }
-            
+
             console.log("Sending parameters:", {
                 title: titleTrimmed,
                 subtitle: subtitleToSend,
                 content: contentTrimmed,
                 imageUrl: imageUrlToSend,
-                location: locationToSend
+                location: locationToSend,
+                tag: tagToSend
             });
 
-            // Create post with proper parameters
+            // Create post with tag
             const post = await postsActor.createPost(
-                titleTrimmed, 
-                subtitleToSend, 
-                contentTrimmed, 
+                titleTrimmed,
+                subtitleToSend,
+                contentTrimmed,
                 imageUrlToSend,
-                locationToSend
+                locationToSend,
+                tagToSend
             );
-            
+
             console.log("Post created successfully:", post);
-            
+
             // Simulate TaaS processing
             await new Promise(resolve => setTimeout(resolve, 2000));
-            
+
             setMessage({ type: 'success', text: "Your article was successfully published on the network!" });
-            
+
             // Reset form
             setTitle("");
             setSubtitle("");
             setContent("");
+            setTag("");
             setAttachment(null);
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
@@ -245,14 +273,15 @@ export default function PublishPage() {
                 subtitle: subtitleToSend,
                 contentSnippet: contentTrimmed.substring(0, 150) + (contentTrimmed.length > 150 ? "..." : ""),
                 publishedAt: new Date(),
-                views: 0
+                views: 0,
+                tag: motokoTag.label
             };
             setPublications([newPublication, ...publications]);
-            
+
         } catch (err: any) {
             console.error("Error publishing article:", err);
             let errorMessage = "Unknown error occurred";
-            
+
             if (err.message) {
                 if (err.message.includes("Invalid text argument") || err.message.includes("IDL error")) {
                     errorMessage = "Data type error. Please check your input and try again.";
@@ -264,7 +293,7 @@ export default function PublishPage() {
                     errorMessage = err.message;
                 }
             }
-            
+
             setMessage({ type: 'error', text: `Error publishing article: ${errorMessage}` });
         } finally {
             setIsPublishing(false);
@@ -418,6 +447,34 @@ export default function PublishPage() {
                                         <div>
                                             <label className="flex items-center text-sm font-medium text-white/70 mb-2"><FileText className="w-4 h-4 mr-2" /> Article Content</label>
                                             <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={12} className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none" placeholder="Write your story here... The content supports Markdown for formatting."></textarea>
+                                        </div>
+                                        <div>
+                                            <label className="flex items-center text-sm font-medium text-white/70 mb-2">Tag <span className="ml-1 text-red-400">*</span></label>
+                                            <div className="relative">
+                                                <select
+                                                    value={tag}
+                                                    onChange={e => setTag(e.target.value)}
+                                                    className="w-full px-4 py-3 bg-[#181C23] border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 appearance-none"
+                                                    required
+                                                    style={{
+                                                        backgroundImage: `url('data:image/svg+xml;utf8,<svg fill=\'white\' height=\'20\' viewBox=\'0 0 20 20\' width=\'20\' xmlns=\'http://www.w3.org/2000/svg\'><path d=\'M7.293 7.293a1 1 0 011.414 0L10 8.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z\'/></svg>')`,
+                                                        backgroundRepeat: 'no-repeat',
+                                                        backgroundPosition: 'right 1rem center',
+                                                        backgroundSize: '1.25rem',
+                                                    }}
+                                                >
+                                                    <option value="" disabled>Select a tag</option>
+                                                    {TAG_OPTIONS.map(opt => (
+                                                        <option key={opt.value} value={opt.value} className="bg-[#181C23] text-white">{opt.label}</option>
+                                                    ))}
+                                                </select>
+                                                {/* Custom dropdown arrow for dark mode */}
+                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">
+                                                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </div>
                                         {/* <div>
                                             <label className="block text-sm font-medium text-white/70 mb-2">Attach Media (Image/Video)</label>
