@@ -8,11 +8,11 @@ import LLM "mo:llm";
 import Error "mo:base/Error";
 import Cycles "mo:base/ExperimentalCycles";
 import Time "mo:base/Time";
-import _Nat8 "mo:base/Nat8";
-import _Sha256 "mo:sha2/Sha256";
+import Nat "mo:base/Nat";
+import Nat8 "mo:base/Nat8";
+import Sha256 "mo:sha2/Sha256";
 
 actor SearchNews {
-
 
   public type VerdictResult = { #True; #False; #Uncertain; #Error };
   
@@ -24,19 +24,19 @@ actor SearchNews {
     llm_message: Text;
   };
 
-  func toHex(bytes: [_Nat8.Nat8]) : Text {
-    Array.foldLeft<_Nat8.Nat8, Text>(
+  func toHex(bytes: [Nat8]) : Text {
+    Array.foldLeft<Nat8, Text>(
       bytes,
       "",
       func (acc, byte) {
-        acc # (if (byte < 16) { "0" } else { "" }) # _Nat8.toText(byte)
+        acc # (if (byte < 16) { "0" } else { "" }) # Nat.toText(Nat8.toNat(byte))
       }
     )
   };
 
   func calculateHash(input: Text): Text {
     let blob = Text.encodeUtf8(input);
-    let hashBlob = _Sha256.fromBlob(#sha256, blob);
+    let hashBlob = Sha256.fromBlob(#sha256, blob);
     return toHex(Blob.toArray(hashBlob));
   };
 
@@ -267,8 +267,9 @@ actor SearchNews {
     };
 
     try {
-      Cycles.add<system>(25_000_000_000);
-      let response = await IC.http_request(request);
+      Debug.print("📡 Sending HTTP request with " # debug_show(Cycles.balance()) # " cycles");
+      // Use new cycles syntax for HTTP outcalls
+      let response = await (with cycles = 50_000_000_000) IC.http_request(request);
 
       Debug.print("📊 Status: " # debug_show(response.status));
       Debug.print("📋 Headers: " # debug_show(response.headers));
@@ -379,7 +380,17 @@ actor SearchNews {
     Debug.print("🔍 Looking up verdict by statement: " # statement);
     let hash = calculateHash(statement);
     Debug.print("🔐 Generated hash for statement: " # hash);
-    return await getVerdictByHash(hash);
+    Debug.print("📊 Total verdicts available: " # debug_show(storedVerdicts.size()));
+    
+    for ((h, v) in storedVerdicts.vals()) {
+      Debug.print("🔍 Checking hash: " # h);
+      if (h == hash) {
+        Debug.print("✅ Found verdict for hash: " # hash);
+        return ?v;
+      };
+    };
+    Debug.print("❌ No verdict found for hash: " # hash);
+    return null;
   };
 
 }

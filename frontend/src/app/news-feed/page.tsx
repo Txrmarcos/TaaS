@@ -313,6 +313,8 @@ export default function NewsFeedPage() {
 
   const handleComment = async (id: number, text: string) => {
     try {
+      console.log("💬 handleComment called with:", { id, text, type: typeof id });
+      
       if (!authClient || !isAuthenticated) {
         console.warn("You must be logged in to comment.");
         setError("You must be logged in to comment.");
@@ -327,8 +329,10 @@ export default function NewsFeedPage() {
       setError(null);
       const { postsActor } = await createSearchNewsActor(authClient);
       
+      console.log("📞 Calling addComment with:", { id: BigInt(id), text: text.trim() });
       // Call the backend
       await postsActor.addComment(BigInt(id), text.trim());
+      console.log("✅ addComment successful");
 
       // Update local state immediately for better UX
       const newComment: Comment = {

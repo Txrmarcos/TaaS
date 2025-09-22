@@ -77,14 +77,18 @@ actor class PostsCanister() {
 
   let searchNewsCanisterId = Principal.fromText("h7vld-naaaa-aaaaf-qbgsq-cai");
 
+  type VerdictResult = {#True; #False; #Uncertain; #Error};
+  
+  type SearchNewsVerdict = {
+    result: VerdictResult;
+    source: Text;
+    hash: Text;
+    timestamp: Time.Time;
+    llm_message: Text;
+  };
+
   let searchNewsActor = actor(Principal.toText(searchNewsCanisterId)) : actor {
-    callAgent: (Text) -> async {
-      result: {#True; #False; #Uncertain; #Error};
-      source: Text;
-      hash: Text;
-      timestamp: Time.Time;
-      llm_message: Text;
-    };
+    callAgent: (Text) -> async SearchNewsVerdict;
   };
 
 
@@ -104,14 +108,18 @@ actor class PostsCanister() {
     return Array.filter<UserId>(list, func(x) { x != user });
   };
 
-  func getPostById(id: PostId): Post {
+  func getPostById(id: PostId): ?Post {
     switch (Trie.find(posts, keyFromNat(id), Nat.equal)) {
-      case (?post) { return post; };
-      case null { Debug.trap("Post não encontrado."); };
+      case (?post) { return ?post; };
+      case null { 
+        Debug.print("⚠️ Post not found with ID: " # Nat.toText(id));
+        Debug.print("📊 Total posts stored: " # Nat.toText(Trie.size(posts)));
+        return null; 
+      };
     }
   };
 
-  func convertVerdictResult(result: {#True; #False; #Uncertain; #Error}): TaaSVerification {
+  func convertVerdictResult(result: VerdictResult): TaaSVerification {
     switch (result) {
       case (#True) { #True };
       case (#False) { #False };
@@ -135,16 +143,21 @@ actor class PostsCanister() {
         llm_message = verdictResponse.llm_message;
       };
 
-      let post = getPostById(postId);
-      let updatedPost = { 
-        post with 
-        taasStatus = verdict.result; 
-        verdict = ?verdict;
+      switch (getPostById(postId)) {
+        case (?post) {
+          let updatedPost = { 
+            post with 
+            taasStatus = verdict.result; 
+            verdict = ?verdict;
+          };
+          posts := Trie.put(posts, keyFromNat(postId), Nat.equal, updatedPost).0;
+        };
+        case null {
+          Debug.print("❌ Cannot update verification - post not found: " # Nat.toText(postId));
+        };
       };
       
-      posts := Trie.put(posts, keyFromNat(postId), Nat.equal, updatedPost).0;
-      
-      Debug.print("Verificação concluída para post " # Nat.toText(postId) # " com resultado: " # debug_show(verdict.result));
+      Debug.print("Verificação concluída para post " # Nat.toText(postId));
       
     } catch (error) {
 
@@ -156,14 +169,19 @@ actor class PostsCanister() {
         llm_message = "Erro ao processar verificação: ";
       };
 
-      let post = getPostById(postId);
-      let updatedPost = { 
-        post with 
-        taasStatus = #Error; 
-        verdict = ?errorVerdict;
+      switch (getPostById(postId)) {
+        case (?post) {
+          let updatedPost = { 
+            post with 
+            taasStatus = #Error; 
+            verdict = ?errorVerdict;
+          };
+          posts := Trie.put(posts, keyFromNat(postId), Nat.equal, updatedPost).0;
+        };
+        case null {
+          Debug.print("❌ Cannot update error status - post not found: " # Nat.toText(postId));
+        };
       };
-      
-      posts := Trie.put(posts, keyFromNat(postId), Nat.equal, updatedPost).0;
     };
   };
 
@@ -199,50 +217,80 @@ actor class PostsCanister() {
 
   public shared(msg) func likePost(id: PostId): async () {
     let caller = msg.caller;
-    let post = getPostById(id);
-    let newLikes = addUnique(post.likes, caller);
-    let newDislikes = removeUser(post.dislikes, caller);
-    let updatedPost = { post with likes = newLikes; dislikes = newDislikes };
-    posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
+    switch (getPostById(id)) {
+      case (?post) {
+        let newLikes = addUnique(post.likes, caller);
+        let newDislikes = removeUser(post.dislikes, caller);
+        let updatedPost = { post with likes = newLikes; dislikes = newDislikes };
+        posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
+        Debug.print("✅ Post " # Nat.toText(id) # " liked by " # debug_show(caller));
+      };
+      case null {
+        Debug.print("❌ Cannot like - post not found: " # Nat.toText(id));
+      };
+    };
   };
 
   public shared(msg) func dislikePost(id: PostId): async () {
     let caller = msg.caller;
-    let post = getPostById(id);
-    let newDislikes = addUnique(post.dislikes, caller);
-    let newLikes = removeUser(post.likes, caller);
-    let updatedPost = { post with dislikes = newDislikes; likes = newLikes };
-    posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
+    switch (getPostById(id)) {
+      case (?post) {
+        let newDislikes = addUnique(post.dislikes, caller);
+        let newLikes = removeUser(post.likes, caller);
+        let updatedPost = { post with dislikes = newDislikes; likes = newLikes };
+        posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
+        Debug.print("👎 Post " # Nat.toText(id) # " disliked by " # debug_show(caller));
+      };
+      case null {
+        Debug.print("❌ Cannot dislike - post not found: " # Nat.toText(id));
+      };
+    };
   };
 
   public shared(msg) func addComment(id: PostId, text: Text): async () {
     let caller = msg.caller;
-    let post = getPostById(id);
+    Debug.print("💬 addComment called with ID: " # Nat.toText(id) # " text: " # text);
+    Debug.print("👤 Caller: " # debug_show(caller));
+    Debug.print("📊 Total posts: " # Nat.toText(Trie.size(posts)));
+    
+    switch (getPostById(id)) {
+      case (?post) {
+        let comment: Comment = {
+          id = nextCommentId;
+          author = caller;
+          text = text;
+          timestamp = Time.now();
+        };
+        nextCommentId += 1;
 
-    let comment: Comment = {
-      id = nextCommentId;
-      author = caller;
-      text = text;
-      timestamp = Time.now();
+        let updatedComments = Array.append(post.comments, [comment]);
+        let updatedPost = { post with comments = updatedComments };
+        posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
+        Debug.print("💬 Comment added to post " # Nat.toText(id) # " by " # debug_show(caller));
+      };
+      case null {
+        Debug.print("❌ Cannot comment - post not found: " # Nat.toText(id));
+      };
     };
-    nextCommentId += 1;
-
-    let updatedComments = Array.append(post.comments, [comment]);
-    let updatedPost = { post with comments = updatedComments };
-    posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
   };
 
   public shared(msg) func reVerifyPost(id: PostId): async () {
-    let post = getPostById(id);
-    
-    let updatedPost = { 
-      post with 
-      taasStatus = #Pending; 
-      verdict = null;
+    switch (getPostById(id)) {
+      case (?post) {
+        let updatedPost = { 
+          post with 
+          taasStatus = #Pending; 
+          verdict = null;
+        };
+        posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
+        
+        ignore requestVerification(id, post.content);
+        Debug.print("🔄 Re-verification started for post " # Nat.toText(id));
+      };
+      case null {
+        Debug.print("❌ Cannot re-verify - post not found: " # Nat.toText(id));
+      };
     };
-    posts := Trie.put(posts, keyFromNat(id), Nat.equal, updatedPost).0;
-    
-    ignore requestVerification(id, post.content);
   };
 
   public query func getAllPosts(): async [Post] {
@@ -258,7 +306,7 @@ actor class PostsCanister() {
   };
 
 
-  public shared query func getPost(id: PostId): async Post {
+  public shared query func getPost(id: PostId): async ?Post {
     return getPostById(id);
   };
 

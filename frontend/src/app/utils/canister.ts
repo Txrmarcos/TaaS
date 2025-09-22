@@ -9,6 +9,15 @@ import { idlFactory as post_idl } from "../../../../src/declarations/posts/posts
 import { AuthClient } from "@dfinity/auth-client";
 import ids from "../../../../canister_ids.json";
 
+// Cache para reutilizar agentes e evitar recriação de identidades
+let agentCache: { [key: string]: HttpAgent } = {};
+
+// Função para limpar o cache (usar no logout)
+export function clearAgentCache() {
+  console.log("🗑️ Clearing agent cache");
+  agentCache = {};
+}
+
 interface LoadingContextCallbacks {
   startLoading: (id: string) => void;
   stopLoading: (id: string) => void;
@@ -121,14 +130,32 @@ function createActorProxy(actor: any, actorName: string) {
 
 export async function createSearchNewsActor(authClient: AuthClient | null) {
   const identity = authClient?.getIdentity();
+  console.log("🔐 Identity for actor creation:", identity ? "Present" : "Missing");
   
-  const agent = new HttpAgent({
-    identity,
-    host:"https://ic0.app",
-  });
+  // Criar chave única para o cache baseada na identidade
+  const identityKey = identity ? identity.getPrincipal().toText() : "anonymous";
   
-  if (process.env.NODE_ENV !== "production") {
-    await agent.fetchRootKey();
+  // Reutilizar agente se já existe para esta identidade
+  let agent = agentCache[identityKey];
+  
+  if (!agent) {
+    console.log("🔄 Creating new agent for identity:", identityKey);
+    agent = new HttpAgent({
+      identity,
+      host:"https://ic0.app",
+    });
+    
+    // Always fetch root key for proper authentication
+    try {
+      await agent.fetchRootKey();
+    } catch (error) {
+      console.warn("Failed to fetch root key:", error);
+    }
+    
+    // Cache o agente
+    agentCache[identityKey] = agent;
+  } else {
+    console.log("♻️ Reusing cached agent for identity:", identityKey);
   }
   
   const round = ids["round-table"]?.ic;

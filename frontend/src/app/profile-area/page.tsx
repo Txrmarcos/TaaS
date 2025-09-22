@@ -93,7 +93,7 @@ export default function ProfilePage() {
       title: post.title,
       description: post.description ?? "",
       content: post.content ?? "",
-      tag: "Highlights",                               // ajuste se tiver
+      tag: "Other",                                    // ajuste se tiver
       author: profile?.username || "You",           // ou puxe do canister
       likes: post.likesCount ?? 0,
       url: post.imageUrl,                           // se BigNewsCard usa imagem
